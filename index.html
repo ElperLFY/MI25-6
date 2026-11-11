@@ -104,6 +104,31 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
 .legacy-disclaimer{margin:0 0 10px;color:var(--mut);font-size:.82rem}
 .legacy-error{color:var(--c3);font-weight:700}
 .legacy-address{font-weight:700;color:var(--c1);margin-bottom:8px}
+
+/* Controllo file in stile MI25-6 */
+input[type="file"]{display:block;width:100%;max-width:100%;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--mut);font:inherit;overflow:hidden;cursor:pointer}
+input[type="file"]::file-selector-button{margin:0 12px 0 0;padding:11px 16px;border:0;border-right:1px solid var(--line);background:var(--soft);color:var(--c2);font:inherit;font-weight:700;cursor:pointer;transition:background .15s,color .15s}
+input[type="file"]::file-selector-button:hover{background:var(--c3);color:#fff}
+input[type="file"]::-webkit-file-upload-button{margin:0 12px 0 0;padding:11px 16px;border:0;border-right:1px solid var(--line);background:var(--soft);color:var(--c2);font:inherit;font-weight:700;cursor:pointer}
+input[type="file"]::-webkit-file-upload-button:hover{background:var(--c3);color:#fff}
+.result-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.result-actions button,.copy-report{font-size:.84rem;padding:8px 12px}
+.compare-panel{margin-top:12px;padding:14px;background:var(--bg);border:1px solid var(--line);border-radius:10px}
+.compare-panel[hidden]{display:none}
+.compare-panel h4{margin:0 0 8px;color:var(--c2);font-size:.96rem}
+.compare-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.compare-col{min-width:0;padding:11px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.compare-col h5{margin:0 0 8px;color:var(--c1);font-size:.9rem}
+.compare-row{padding:5px 0;border-bottom:1px dashed var(--line);font-size:.84rem;overflow-wrap:anywhere}
+.compare-row:last-child{border-bottom:0}
+.compare-label{font-weight:700;color:var(--c2)}
+.compare-note{margin:10px 0 0;color:var(--mut);font-size:.8rem}
+.compare-error{color:var(--c3);font-weight:700;font-size:.85rem;margin-top:8px}
+.build-tag{position:absolute;left:16px;bottom:10px;padding:3px 7px;border:0;border-radius:5px;background:transparent;color:var(--mut);font-size:.73rem;font-weight:600;opacity:.38;cursor:pointer}
+.build-tag:hover,.build-tag:focus-visible{opacity:.9;background:var(--soft);outline:2px solid var(--c3);outline-offset:2px}
+footer{position:relative;padding-bottom:38px}
+@media(max-width:560px){.compare-grid{grid-template-columns:1fr}.build-tag{left:10px;bottom:8px}}
+
 </style>
 </head>
 <body>
@@ -114,7 +139,7 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
 <main>
 <section class="card">
 <h2>Hai file più aggiornati? Caricali tu</h2>
-<p class="hint">Se disponi di dataset Infratel più recenti, puoi caricare qui i file CSV o ZIP supportati. I file caricati manualmente hanno la precedenza sui corrispondenti dati automatici. In modalità MI25-6 standard, la ricerca e l’elaborazione dei CSV avvengono nel browser. Attivando Legacy mode, invece, i campi dell’indirizzo vengono inviati alle API storiche di Handymenny per ricercare il civico nel database 2017-2024. Mappa ufficiale: <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener">Infratel su ArcGIS</a>.</p>
+<p class="hint">Se disponi di dataset Infratel più recenti, puoi caricare qui i file CSV o ZIP supportati. I file caricati manualmente hanno la precedenza sui corrispondenti dati automatici. In modalità MI25-6 standard, la ricerca e l’elaborazione dei CSV avvengono nel browser. Attivando Legacy mode, i campi dell’indirizzo vengono inviati alle API storiche di Handymenny; inoltre, il pulsante «Confronta con Legacy» trasmette a quel servizio l’ID EGON del civico selezionato. Mappa ufficiale: <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener">Infratel su ArcGIS</a>.</p>
 <input type="file" id="file" accept=".csv,.txt,.zip" multiple>
 <div class="files" id="files">Nessun file caricato.</div>
 <button type="button" class="clr" id="usedb" style="margin-top:10px">Torna ai dati automatici</button>
@@ -175,7 +200,8 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
 <footer>
 <div id="foot"></div>
 <div class="nick">Elper</div>
-<div class="opts"><button type="button" id="o-faq">FAQ</button><span aria-hidden="true">-</span><button type="button" id="o-src">Codice Sorgente</button><span aria-hidden="true">-</span><a href="https://infratelitalia.maps.arcgis.com/apps/webappviewer/index.html?id=5964d5beee264865a679c32cce8c4bc8" target="_blank" rel="noopener noreferrer">Mappa ArcGIS</a><span aria-hidden="true">-</span><a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a></div>
+<div class="opts"><button type="button" id="o-faq">FAQ</button><span aria-hidden="true">-</span><button type="button" id="o-changelog">Changelog</button><span aria-hidden="true">-</span><button type="button" id="o-src">Codice Sorgente</button><span aria-hidden="true">-</span><a href="https://infratelitalia.maps.arcgis.com/apps/webappviewer/index.html?id=5964d5beee264865a679c32cce8c4bc8" target="_blank" rel="noopener noreferrer">Mappa ArcGIS</a><span aria-hidden="true">-</span><a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a></div>
+<button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Build 23</button>
 </footer>
 <div class="ov" id="ov" hidden>
 <div class="mod" role="dialog" aria-modal="true" aria-labelledby="mt">
@@ -236,7 +262,8 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
   <summary>FAQ &gt;&gt; Che cos’è il confronto storico Handymenny?</summary>
   <p>Legacy mode è una modalità di ricerca separata che interroga l’archivio storico della mappatura Infratel 2017-2024 tramite l’API pubblicata da Handymenny.</p>
   <p>A differenza della modalità MI25-6 standard, non dipende dai CSV 2025-26 locali: recupera in sequenza Regioni, Province, Città, Vie e civici, quindi interroga il record storico associato all’ID EGON selezionato.</p>
-  <p>Quando Legacy mode è attiva, i campi dell’indirizzo selezionati vengono inviati al servizio API esterno per recuperare gli elenchi. Il servizio è gestito da terzi, può applicare limiti alle richieste e MI25-6 non ne controlla disponibilità o aggiornamenti.</p>
+  <p>Quando Legacy mode è attiva, i campi dell’indirizzo selezionati vengono inviati al servizio API esterno per recuperare gli elenchi. Anche dalla modalità standard, se premi «Confronta con Legacy» su un risultato, viene trasmesso al servizio soltanto l’ID EGON associato a quel record per recuperare i dati storici.</p>
+  <p>Il servizio è gestito da terzi, può applicare limiti alle richieste e MI25-6 non ne controlla disponibilità o aggiornamenti.</p>
   <p>I risultati descrivono esclusivamente i dati storici restituiti dall’archivio e non sostituiscono la mappatura Infratel 2025-26 né costituiscono una verifica di copertura attuale o commerciale.</p>
   <p><a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a> · <a href="https://github.com/handymenny/mappaturaInfratel" target="_blank" rel="noopener noreferrer">Codice sorgente del progetto originale</a></p>
 </details>
@@ -249,6 +276,20 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
   <p><strong>Per questo motivo, MI25-6 non deve essere considerato un verificatore di copertura in tempo reale.</strong> I risultati rappresentano le informazioni disponibili nei dataset consultati e non garantiscono che un'offerta commerciale sia effettivamente attivabile presso il singolo civico.</p>
   <p>Un'eventuale integrazione con servizi esterni potrà essere valutata in futuro, compatibilmente con le condizioni di accesso, i limiti e gli eventuali costi.</p>
 </details>
+</div>
+<div id="p-changelog" hidden>
+  <p class="hint">Registro delle modifiche di MI25-6. Le build precedenti non sono ancora documentate singolarmente.</p>
+  <details open>
+    <summary>Build 23 · 23 commit</summary>
+    <p><strong>Strumenti per consultare e condividere i risultati</strong></p>
+    <ul>
+      <li>Aggiunto il pulsante per copiare il risultato della ricerca, con indirizzo, ID EGON, fonti e date delle consultazioni.</li>
+      <li>Aggiunto il confronto affiancato tra la mappatura MI25-6 2025-26 e l’archivio storico Legacy 2017-2024, richiamabile per singolo civico.</li>
+      <li>Aggiunta la possibilità di copiare anche il confronto storico.</li>
+      <li>Aggiunto il changelog e l’indicatore Build 23 nel piè di pagina.</li>
+      <li>Rinnovato il controllo di caricamento CSV/ZIP con stile coordinato alla palette cremisi.</li>
+    </ul>
+  </details>
 </div>
 <div id="p-src" hidden><pre id="srcpre"></pre></div>
 </div>
@@ -516,7 +557,104 @@ function renderLegacyRecord(data){
   if(data.speed20_2017!==null&&data.speed20_2017!==undefined){sec=legacyAppendSection(box,"Consultazione 2017");legacyAppendRow(sec,"Velocità massima 2020",peak2017[data.speed20_2017]||legacyText(data.speed20_2017));}
   var meta=legacyAppendSection(box,"Identificativi e provenienza");
   legacyAppendRow(meta,"ID EGON",legacyText(data.egon));legacyAppendRow(meta,"ID Comune storico",legacyText(data.cityId));legacyAppendRow(meta,"Via registrata",legacyText(data.street));legacyAppendRow(meta,"Civico registrato",legacyText(data.number));
+  var legacyActions=el("div","result-actions");
+  var legacyCopy=el("button","clr copy-report","Copia risultato Legacy");legacyCopy.type="button";
+  legacyCopy.addEventListener("click",function(){copyReport(buildLegacyReport(data),legacyCopy,"Copiato!");});
+  legacyActions.appendChild(legacyCopy);box.appendChild(legacyActions);
   box.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+function copyReport(text,button,successLabel){
+  var original=button.textContent;
+  function done(ok){button.textContent=ok?(successLabel||"Copiato!"):"Copia non riuscita";button.disabled=true;setTimeout(function(){button.textContent=original;button.disabled=false;},1600);}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){done(true);}).catch(function(){done(copyFallback(text));});}
+  else done(copyFallback(text));
+}
+function copyFallback(text){
+  var area=document.createElement("textarea");area.value=text;area.setAttribute("readonly","");area.style.position="fixed";area.style.opacity="0";document.body.appendChild(area);area.select();
+  var ok=false;try{ok=document.execCommand("copy");}catch(e){}document.body.removeChild(area);return ok;
+}
+function modernReport(x,id,address){
+  var lines=["MI25-6 · Esito mappatura infrastrutture di rete fissa 2025-26", "Indirizzo: "+address, "ID EGON: "+(id||"Non disponibile")];
+  if(x.a){var c=x.a.c||"B";lines.push("Mappatura reti fisse: civico presente nell'elenco dei civici non coperti entro il 2028 o con tecnologia di picco <= 300 Mbit/s.");lines.push("Caratteristica/pallino: "+c+" — "+((DOTS[c]||DOTS.B)[1]));lines.push("Fonte: Mappatura reti fisse Infratel 2025, layer ArcGIS aggiornato il 26/02/2026.");}
+  else lines.push("Mappatura reti fisse 2025: nessuna corrispondenza nell'Allegato A generale caricato.");
+  if(x.p){lines.push("PI1G: presente nell'Allegato A degli esiti (non coperto entro il 2030 o tecnologia con picco <= 300 Mbit/s).");lines.push("Fonte: Esiti mappatura 2025 dei civici non collegabili Italia a 1 Giga, pubblicazione 16/02/2026.");}
+  else lines.push("PI1G: nessuna corrispondenza nell'Allegato A PI1G caricato. Questo dato non verifica gli interventi FNC.");
+  lines.push("Nota: risultato basato sui dataset caricati da MI25-6; non è una verifica di vendibilità commerciale né una certificazione della copertura attuale.");
+  return lines.join("\n");
+}
+function legacyReport(data,address){
+  var lines=["Archivio storico Handymenny · Mappatura Infratel 2017-2024","Indirizzo: "+address,"ID EGON: "+legacyText(data.egon)];
+  var p1g={0:"No",1:"Sì",2:"Sì",3:"Civico di prossimità ammissibile",4:"No"};
+  var peak={0:"< 30 Mbit/s",1:"< 300 Mbit/s",2:">= 300 Mbit/s",30:"30-99 Mbit/s",100:"100-199 Mbit/s",200:"200-299 Mbit/s",300:"300-999 Mbit/s",1000:">= 1000 Mbit/s"};
+  var peakWhite={0:"< 300 Mbit/s",1:">= 300 Mbit/s"};
+  var peak2017={0:"< 30 Mbit/s",30:"30-99 Mbit/s",100:">= 100 Mbit/s"};
+  lines.push("PI1G storico: "+(p1g[data.status_p1g]||legacyText(data.status_p1g)));
+  if(data.walkin_connetti!==null&&data.walkin_connetti!==undefined)lines.push("Walk-in: "+legacyText(data.walkin_connetti));
+  if(data.below300Mbps_2024!==null&&data.below300Mbps_2024!==undefined)lines.push("Consultazione 2024 · soglia 300 Mbit/s: "+(peakWhite[data.below300Mbps_2024]||legacyText(data.below300Mbps_2024)));
+  if(data.color_2021!==null&&data.color_2021!==undefined)lines.push("Consultazione 2021 · colore: "+legacyColor(data.color_2021));
+  if(data.below300Mbps_2021!==null&&data.below300Mbps_2021!==undefined)lines.push("Consultazione 2021 · velocità massima: "+(peak[data.below300Mbps_2021]||legacyText(data.below300Mbps_2021)));
+  if(data.peakSpeed_2021!==null&&data.peakSpeed_2021!==undefined)lines.push("Consultazione 2021 · velocità ore di punta: "+(peak[data.peakSpeed_2021]||legacyText(data.peakSpeed_2021)));
+  if(data.class19_2020!==null&&data.class19_2020!==undefined)lines.push("Consultazione 2020 · copertura 2019: "+legacyCodeClass(data.class19_2020));
+  if(data.class22_2020!==null&&data.class22_2020!==undefined)lines.push("Consultazione 2020 · copertura 2022: "+legacyCodeClass(data.class22_2020));
+  if(data.cat18_2019!==null&&data.cat18_2019!==undefined)lines.push("Consultazione 2019 · velocità massima 2018: "+(peak2017[data.cat18_2019]||legacyText(data.cat18_2019)));
+  if(data.cat21_2019!==null&&data.cat21_2019!==undefined)lines.push("Consultazione 2019 · velocità massima 2021: "+(peak2017[data.cat21_2019]||legacyText(data.cat21_2019)));
+  if(data.speed20_2017!==null&&data.speed20_2017!==undefined)lines.push("Consultazione 2017 · velocità massima 2020: "+(peak2017[data.speed20_2017]||legacyText(data.speed20_2017)));
+  lines.push("Fonte: API archivio storico Handymenny, https://mappatura2024.amennillo.eu");
+  lines.push("Nota: dati storici, non equivalenti a copertura commerciale o disponibilità attuale.");
+  return lines.join("\n");
+}
+function addCompareValue(container,label,value){
+  var row=el("div","compare-row");row.appendChild(el("span","compare-label",label+": "));row.appendChild(document.createTextNode(String(value)));container.appendChild(row);
+}
+function renderHistoryComparison(panel,x,id,address,data){
+  panel.textContent="";panel.hidden=false;
+  panel.appendChild(el("h4",null,"Confronto storico · stesso ID EGON"));
+  var grid=el("div","compare-grid");
+  var modern=el("section","compare-col");modern.appendChild(el("h5",null,"MI25-6 · 2025-26"));
+  addCompareValue(modern,"Indirizzo",address);addCompareValue(modern,"ID EGON",id);
+  if(x.a){var code=x.a.c||"B";addCompareValue(modern,"Caratteristica",code+" — "+((DOTS[code]||DOTS.B)[1]));addCompareValue(modern,"Mappatura generale","Presente nell'elenco dei civici non coperti entro il 2028 o con tecnologia di picco <= 300 Mbit/s");addCompareValue(modern,"Fonte","Infratel 2025 · aggiornamento 26/02/2026");}
+  else addCompareValue(modern,"Mappatura generale","Nessuna corrispondenza nell'elenco caricato");
+  if(x.p){addCompareValue(modern,"Allegato A PI1G","Presente nell'elenco degli esiti 2025");addCompareValue(modern,"Fonte PI1G","Infratel · 16/02/2026");}
+  else addCompareValue(modern,"Allegato A PI1G","Nessuna corrispondenza nell'elenco caricato");
+  var historical=el("section","compare-col");historical.appendChild(el("h5",null,"Legacy · 2017-2024"));
+  var p1g={0:"No",1:"Sì",2:"Sì",3:"Civico di prossimità ammissibile",4:"No"};
+  var peak={0:"< 30 Mbit/s",1:"< 300 Mbit/s",2:">= 300 Mbit/s",30:"30-99 Mbit/s",100:"100-199 Mbit/s",200:"200-299 Mbit/s",300:"300-999 Mbit/s",1000:">= 1000 Mbit/s"};
+  var peakWhite={0:"< 300 Mbit/s",1:">= 300 Mbit/s"};
+  var peak2017={0:"< 30 Mbit/s",30:"30-99 Mbit/s",100:">= 100 Mbit/s"};
+  var count=0;
+  function hist(label,value){if(value!==null&&value!==undefined&&value!==""){addCompareValue(historical,label,value);count++;}}
+  hist("ID EGON",legacyText(data.egon));hist("PI1G storico",p1g[data.status_p1g]||legacyText(data.status_p1g));
+  if(data.below300Mbps_2024!==null&&data.below300Mbps_2024!==undefined)hist("Consultazione 2024 · soglia 300 Mbit/s",peakWhite[data.below300Mbps_2024]||legacyText(data.below300Mbps_2024));
+  if(data.color_2021!==null&&data.color_2021!==undefined)hist("Colore 2021",legacyColor(data.color_2021));
+  if(data.below300Mbps_2021!==null&&data.below300Mbps_2021!==undefined)hist("Velocità massima 2021",(data.color_2021===null||data.color_2021===undefined?peakWhite:peak)[data.below300Mbps_2021]||legacyText(data.below300Mbps_2021));
+  if(data.peakSpeed_2021!==null&&data.peakSpeed_2021!==undefined)hist("Velocità ore di punta 2021",(data.color_2021===null||data.color_2021===undefined?peakWhite:peak)[data.peakSpeed_2021]||legacyText(data.peakSpeed_2021));
+  if(data.class19_2020!==null&&data.class19_2020!==undefined)hist("Copertura 2019",legacyCodeClass(data.class19_2020));
+  if(data.class22_2020!==null&&data.class22_2020!==undefined)hist("Copertura 2022",legacyCodeClass(data.class22_2020));
+  if(data.cat18_2019!==null&&data.cat18_2019!==undefined)hist("Velocità massima 2018",peak2017[data.cat18_2019]||legacyText(data.cat18_2019));
+  if(data.cat21_2019!==null&&data.cat21_2019!==undefined)hist("Velocità massima 2021 (consultazione 2019)",peak2017[data.cat21_2019]||legacyText(data.cat21_2019));
+  if(data.speed20_2017!==null&&data.speed20_2017!==undefined)hist("Velocità massima 2020 (consultazione 2017)",peak2017[data.speed20_2017]||legacyText(data.speed20_2017));
+  if(!count)addCompareValue(historical,"Dati","L'API non ha restituito campi storici valorizzati.");
+  grid.appendChild(modern);grid.appendChild(historical);panel.appendChild(grid);
+  panel.appendChild(el("p","compare-note","Le due colonne rappresentano fonti e consultazioni di anni diversi. Le differenze non dimostrano da sole un aggiornamento della copertura commerciale o un cambiamento fisico della rete."));
+  var actions=el("div","result-actions"),copy=el("button","clr copy-report","Copia confronto");copy.type="button";copy.addEventListener("click",function(){copyReport(modernReport(x,id,address)+"\n\n"+legacyReport(data,address),copy,"Confronto copiato!");});actions.appendChild(copy);panel.appendChild(actions);
+}
+function attachModernActions(item,x,id,address){
+  var actions=el("div","result-actions");
+  var copy=el("button","clr copy-report","Copia risultato");copy.type="button";copy.addEventListener("click",function(){copyReport(modernReport(x,id,address),copy,"Risultato copiato!");});actions.appendChild(copy);
+  var panel=el("div","compare-panel");panel.hidden=true;
+  if(id){
+    var compare=el("button","clr copy-report","Confronta con Legacy");compare.type="button";
+    compare.addEventListener("click",async function(){
+      if(!panel.hidden){panel.hidden=true;return;}
+      panel.hidden=false;panel.textContent="";panel.appendChild(el("div","files","Recupero dei dati storici da Handymenny…"));compare.disabled=true;
+      try{var historical=await legacyFetch("/egon?id="+encodeURIComponent(id));if(!historical||typeof historical!=="object")throw new Error("Risposta storica non valida.");renderHistoryComparison(panel,x,id,address,historical);compare.textContent="Nascondi confronto";}
+      catch(error){panel.textContent="";panel.appendChild(el("div","compare-error",error.message||"Impossibile recuperare il record storico."));compare.textContent="Riprova confronto Legacy";}
+      finally{compare.disabled=false;}
+    });
+    actions.appendChild(compare);
+  }
+  item.appendChild(actions);if(id)item.appendChild(panel);
 }
 
 function match(r,q){
@@ -556,6 +694,8 @@ $("run").onclick=function(){
        it.appendChild(line("(2030) >> ESITO MAPPATURA PI1G :","PRESENTE NELL’ALLEGATO A (NON COPERTO ENTRO IL 2030 O TECNOLOGIA CON PICCO <= 300 MBIT/S)"));
        it.appendChild(line("CONSULTAZIONE PI1G :","Esiti mappatura 2025 dei civici non collegabili Italia a 1 Giga (16/02/2026)"));
      }else it.appendChild(line("ELENCO PI1G :","Nessuna corrispondenza nell’Allegato A PI1G 2025 caricato; questo file non verifica gli interventi FNC."));
+     var address=[b.via,b.civ+(b.bar?"/"+b.bar:""),(b.fr?b.fr+", ":"")+b.com,"("+b.prov+")",b.reg].filter(Boolean).join(" ");
+     attachModernActions(it,x,id,address);
      box.appendChild(it);
   });
   if(order.length>40)box.appendChild(el("div","hint","Mostrati i primi 40 di "+order.length+" risultati: aggiungi via o civico per restringere."));
@@ -656,9 +796,18 @@ $("reg").addEventListener("change",function(){if(!this.value)return;if(manualA||
 $("usedb").onclick=function(){manualA=false;manualP=false;DB.A=[];DB.P=[];$("files").textContent="Nessun file caricato.";$("file").value="";if($("reg").value)loadRegion($("reg").value);else $("status").textContent=""};
 
 var ov=$("ov"),lastF=null;
-function openM(w){lastF=document.activeElement;var f=w==="faq";$("mt").textContent=f?"FAQ":"Codice Sorgente";$("p-faq").hidden=!f;$("p-src").hidden=f;if(!f)$("srcpre").textContent=SRC;ov.hidden=false;$("mc").focus()}
+function openM(w){
+  lastF=document.activeElement;
+  var isFaq=w==="faq",isSource=w==="src",isChangelog=w==="changelog";
+  $("mt").textContent=isFaq?"FAQ":(isChangelog?"Changelog":"Codice Sorgente");
+  $("p-faq").hidden=!isFaq;$("p-changelog").hidden=!isChangelog;$("p-src").hidden=!isSource;
+  if(isSource)$("srcpre").textContent=SRC;
+  ov.hidden=false;$("mc").focus();
+}
 function closeM(){ov.hidden=true;if(lastF&&lastF.focus)lastF.focus()}
 $("o-faq").onclick=function(){openM("faq")};
+$("o-changelog").onclick=function(){openM("changelog")};
+$("build-tag").onclick=function(){openM("changelog")};
 $("o-src").onclick=function(){openM("src")};
 $("mc").onclick=closeM;
 ov.onclick=function(e){if(e.target===ov)closeM()};
