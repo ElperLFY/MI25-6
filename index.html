@@ -10,7 +10,17 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#26060d;--card:#3a0b16;--line:#6b1a2c;--c1:#ffd9df;--c2:#e8788d;--c3:#c9304f;--soft:#4d1120;--txt:#fff1f3;--mut:#f0bcc6}}
 :root[data-theme="dark"]{--bg:#26060d;--card:#3a0b16;--line:#6b1a2c;--c1:#ffd9df;--c2:#e8788d;--c3:#c9304f;--soft:#4d1120;--txt:#fff1f3;--mut:#f0bcc6}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
+/* Scrollbar cremisi: supporto Firefox + Chromium, Edge, Brave e Safari */
+html{
+  scrollbar-color:var(--c3) var(--soft);
+  scrollbar-width:thin;
+}
 *{box-sizing:border-box}
+*::-webkit-scrollbar{width:12px;height:12px}
+*::-webkit-scrollbar-track{background:var(--soft);border-radius:999px}
+*::-webkit-scrollbar-thumb{background:var(--c3);border:3px solid var(--soft);border-radius:999px}
+*::-webkit-scrollbar-thumb:hover{background:var(--c2)}
+*::-webkit-scrollbar-corner{background:var(--soft)}
 body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.5}
 header{background:linear-gradient(135deg,#4a0715,#8c1230 60%,#b3203f);color:#fff;padding:28px 20px}
 header h1{margin:0 auto;max-width:860px;font-size:clamp(1.3rem,4vw,1.9rem)}
