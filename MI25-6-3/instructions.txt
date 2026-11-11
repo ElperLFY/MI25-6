@@ -1,0 +1,11 @@
+MI25-6 – Aggiornamento Allegato A PI1G
+
+1) Sostituisci il tuo index.html con quello incluso in questo pacchetto.
+2) Copia la cartella vendor/ accanto a index.html (include JSZip 3.10.1).
+3) Copia la cartella data/pi1g/ dentro la cartella del sito che già contiene data/ e index.html.
+   Non sovrascrivere i tuoi ZIP principali già presenti in data/.
+4) Mantieni la cartella data/pi1g/ e tutti i nove ZIP regionali insieme a manifest.json e README.txt.
+5) Pubblica la modifica su GitHub.
+
+La cartella data/pi1g/ contiene gli esiti dell'Allegato A da 437.951 record, già divisi per Regione.
+Il numero 707.092 si riferisce invece ai civici inizialmente oggetto della procedura.

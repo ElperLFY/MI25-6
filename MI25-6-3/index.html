@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Esiti mappatura infrastrutture di rete fissa 2025-26</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#fbeff1;--card:#fff;--line:#e8bcc4;--c1:#5c0a1c;--c2:#8c1230;--c3:#b3203f;--soft:#f6d6dc;--txt:#2b0911;--mut:#6e3b46}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#26060d;--card:#3a0b16;--line:#6b1a2c;--c1:#ffd9df;--c2:#e8788d;--c3:#c9304f;--soft:#4d1120;--txt:#fff1f3;--mut:#f0bcc6}}
+:root[data-theme="dark"]{--bg:#26060d;--card:#3a0b16;--line:#6b1a2c;--c1:#ffd9df;--c2:#e8788d;--c3:#c9304f;--soft:#4d1120;--txt:#fff1f3;--mut:#f0bcc6}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.5}
+header{background:linear-gradient(135deg,#4a0715,#8c1230 60%,#b3203f);color:#fff;padding:28px 20px}
+header h1{margin:0 auto;max-width:860px;font-size:clamp(1.3rem,4vw,1.9rem)}
+header p{margin:6px auto 0;max-width:860px;opacity:.9;font-size:.95rem}
+main{max-width:860px;margin:0 auto;padding:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+label{display:block;font-weight:600;font-size:.85rem;color:var(--c2);margin-bottom:4px}
+input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--txt);font:inherit}
+input:focus,select:focus{outline:2px solid var(--c3);border-color:var(--c3)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+button{font:inherit;font-weight:600;padding:11px 20px;border-radius:8px;cursor:pointer;border:1px solid var(--c3)}
+.go{background:var(--c3);color:#fff}.go:hover{background:var(--c2)}
+.clr{background:transparent;color:var(--c3)}.clr:hover{background:var(--soft)}
+.err{color:var(--c3);font-weight:600;margin-top:12px;min-height:1.2em}
+.files{margin-top:10px;font-size:.88rem;color:var(--mut)}
+.files div{padding:2px 0}
+h2{color:var(--c2);margin:0 0 12px;font-size:1.2rem}
+.hint{font-size:.88rem;color:var(--mut);margin:0 0 12px}
+.hint a{color:var(--c3);font-weight:600}
+.item{padding:12px 0;border-bottom:1px dashed var(--line);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.93rem}
+.item:last-child{border:0}
+.item .t{font-weight:700;color:var(--c1);margin-bottom:4px;font-family:Inter,system-ui,sans-serif}
+.k{color:var(--c2);font-weight:700}
+.dot{display:inline-block;width:15px;height:15px;border-radius:50%;background:#fff;border:4px solid;vertical-align:-2px;margin-right:4px}
+.leg div{padding:3px 0;font-size:.9rem}
+button:disabled{opacity:.6;cursor:wait}
+@keyframes sp{to{transform:rotate(360deg)}}
+.spin{display:inline-block;width:14px;height:14px;border:3px solid var(--line);border-top-color:var(--c3);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+footer{text-align:center;padding:20px 20px 30px;color:var(--mut);font-size:.88rem}
+.nick{font-weight:700;color:var(--c2);font-size:1.05rem;margin-top:10px}
+.opts{margin-top:6px;display:flex;justify-content:center;gap:8px;align-items:center}
+.opts button,.opts a{background:none;border:0;padding:4px 6px;color:var(--c3);text-decoration:underline;font:inherit;font-weight:600;border-radius:4px}.opts button:hover,.opts a:hover{color:var(--c2)}
+.ov{position:fixed;inset:0;background:rgba(30,4,10,.6);display:flex;align-items:center;justify-content:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20}
+.ov[hidden],[hidden]{display:none}
+.mod{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:14px;width:100%;max-width:760px;max-height:100%;display:flex;flex-direction:column;overflow:hidden;text-align:left}
+.mh{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;background:linear-gradient(135deg,#4a0715,#8c1230);color:#fff}
+.mh h2{margin:0;color:#fff}
+.mh button{background:transparent;color:#fff;border-color:#fff;padding:6px 12px}
+.mb{padding:16px 18px;overflow:auto}
+details{border-bottom:1px solid var(--line);padding:10px 0}
+summary{cursor:pointer;font-weight:600;color:var(--c1)}
+details p{margin:8px 0 0;color:var(--mut)}
+pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:auto;font-size:.78rem;line-height:1.45;max-height:55vh;white-space:pre}
+</style>
+</head>
+<body>
+<header>
+<h1>Esiti mappatura infrastrutture di rete fissa 2025-26</h1>
+<p>Consulta la mappatura Infratel 2025-26: caratteristiche del civico, soglie di velocità, consultazioni e riscontro nell’elenco PI1G.</p>
+</header>
+<main>
+<section class="card">
+<h2>Hai file più aggiornati? Caricali tu</h2>
+<p class="hint">Se disponi di dataset Infratel più recenti, puoi caricare qui i file CSV o ZIP supportati (mappatura generale e/o Allegato A della mappatura 2025 dei civici non collegabili Italia a 1 Giga). I file caricati manualmente hanno la precedenza sui corrispondenti dati automatici. L’elaborazione avviene nel browser: gli indirizzi cercati non vengono inviati a un server. Mappa ufficiale: <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener">Infratel su ArcGIS</a>.</p>
+<input type="file" id="file" accept=".csv,.txt,.zip" multiple>
+<div class="files" id="files">Nessun file caricato.</div>
+<button type="button" class="clr" id="usedb" style="margin-top:10px">Torna ai dati automatici</button>
+</section>
+
+<section class="card">
+<h2>Indirizzo</h2>
+<div class="grid">
+<div><label for="reg">Regione</label><select id="reg"><option value="">Tutte</option></select></div>
+<div><label for="prov">Provincia</label><input id="prov" list="dl-prov" autocomplete="off" placeholder="es. Agrigento"></div>
+<div><label for="citta">Città</label><input id="citta" list="dl-citta" autocomplete="off" placeholder="es. Agrigento"></div>
+<div><label for="via">Via</label><input id="via" list="dl-via" autocomplete="off" placeholder="es. Via Bari"></div>
+<div><label for="civ">Civico</label><input id="civ" list="dl-civ" autocomplete="off" placeholder="es. 8 oppure 8/L"><div class="hint" id="civhint" style="margin:6px 0 0"></div><datalist id="dl-prov"></datalist><datalist id="dl-citta"></datalist><datalist id="dl-via"></datalist><datalist id="dl-civ"></datalist></div>
+</div>
+<div class="btns">
+<button class="go" id="run">Esegui ricerca</button>
+<button class="clr" id="clear">Pulisci i campi</button>
+</div>
+<div class="files" id="status"></div>
+<div class="err" id="err" role="alert"></div>
+</section>
+
+<section class="card" id="out" hidden>
+<h2>Esito</h2>
+<div id="res"></div>
+</section>
+
+<section class="card leg" id="leg"><h2>Legenda pallini</h2></section>
+</main>
+
+<footer>
+<div id="foot"></div>
+<div class="nick">Elper</div>
+<div class="opts"><button type="button" id="o-faq">FAQ</button><span aria-hidden="true">-</span><button type="button" id="o-src">Codice Sorgente</button><span aria-hidden="true">-</span><a href="https://infratelitalia.maps.arcgis.com/apps/webappviewer/index.html?id=5964d5beee264865a679c32cce8c4bc8" target="_blank" rel="noopener noreferrer">Mappa ArcGIS</a></div>
+</footer>
+<div class="ov" id="ov" hidden>
+<div class="mod" role="dialog" aria-modal="true" aria-labelledby="mt">
+<div class="mh"><h2 id="mt"></h2><button type="button" id="mc">Chiudi</button></div>
+<div class="mb">
+<div id="p-faq">
+<details>
+  <summary>FAQ &gt;&gt; Come vengono caricati i dati della mia regione?</summary>
+  <p>Seleziona una Regione: MI25-6 scarica soltanto gli archivi regionali previsti per quella selezione, li apre tramite JSZip e legge i CSV necessari.</p>
+  <p>Il dataset della mappatura generale e l’elenco PI1G sono distinti. Per alcune Regioni l’Allegato A PI1G non contiene record: in quel caso non viene scaricato un archivio PI1G regionale.</p>
+  <p>I dati elaborati vengono mantenuti nella memoria del browser durante la sessione. Dopo aver chiuso o ricaricato la pagina, il caricamento automatico può essere ripetuto.</p>
+</details>
+<details>
+  <summary>FAQ &gt;&gt; Posso caricare manualmente i miei file CSV o ZIP?</summary>
+  <p>Sì. Puoi selezionare uno o più file CSV oppure archivi ZIP contenenti i dataset Infratel supportati.</p>
+  <p>MI25-6 riconosce la mappatura generale attraverso la colonna <code>caratteristica</code> e l’elenco dei civici non collegabili PI1G attraverso la struttura dell’Allegato A. I file manuali sostituiscono, per la rispettiva categoria, i dati automatici.</p>
+  <p>Usa file integri e coerenti con la struttura originale. Dataset diversi o modificati potrebbero non essere letti correttamente.</p>
+</details>
+<details>
+  <summary>FAQ &gt;&gt; Come posso cercare un indirizzo?</summary>
+  <p>Seleziona prima la Regione, poi inserisci Provincia, Città, Via e, quando disponibile, il Civico. I suggerimenti proposti durante la digitazione si basano sui dati caricati.</p>
+  <p>Premi «Esegui ricerca» per visualizzare l’esito. Puoi usare «Pulisci i campi» per iniziare una nuova ricerca.</p>
+  <p>La ricerca richiede almeno il Comune. Via e civico aiutano a restringere i risultati, soprattutto quando il Comune contiene molti indirizzi.</p>
+</details>
+<details>
+  <summary>FAQ &gt;&gt; Perché il mio civico non compare nei risultati?</summary>
+  <p>Il civico potrebbe non essere presente nei dataset caricati oppure potrebbe essere registrato con una denominazione diversa: ad esempio una variante della strada, una frazione, una numerazione barrata o la dicitura SNC.</p>
+  <p>Verifica la grafia dell’indirizzo e prova eventualmente una ricerca meno specifica.</p>
+  <p><strong>Attenzione:</strong> l’assenza di una corrispondenza non dimostra che il civico sia coperto, né consente da sola di attribuirgli una velocità. Significa soltanto che non è stata trovata una corrispondenza nei file consultati.</p>
+</details>
+<details>
+  <summary>FAQ &gt;&gt; Che cosa indica l’elenco PI1G dei 707.092 civici?</summary>
+  <p>La mappatura Infratel 2025 è stata avviata su 707.092 civici che Open Fiber aveva dichiarato non collegabili entro il 30 giugno 2026 nell’ambito del Piano Italia a 1 Giga.</p>
+  <p>L’Allegato A pubblicato da Infratel contiene però 437.951 civici risultati non coperti entro il 2030 oppure coperti da tecnologie che non consentono una velocità di picco superiore a 300 Mbit/s. È questo elenco da 437.951 record che MI25-6 importa come riscontro PI1G.</p>
+  <p>Quindi 707.092 è il numero dei civici inizialmente oggetto della mappatura; 437.951 è il numero dei record presenti nell’Allegato A degli esiti. I due valori descrivono fasi diverse della procedura e non sono in contraddizione.</p>
+  <p><a href="https://www.infratelitalia.it/archivio-documenti/documenti/esiti-mappatura-2025-delle-reti-fisse-civici-non-collegabili-italia-1" target="_blank" rel="noopener noreferrer">Fonte ufficiale: Infratel Italia – Esiti mappatura 2025</a></p>
+</details>
+<details>
+  <summary>FAQ &gt;&gt; Che cos’è il Piano Italia a 1 Giga? (PI1G)</summary>
+  <p>È un intervento pubblico finanziato attraverso il PNRR, pensato per estendere reti a banda ultralarga nelle aree individuate dalle mappature. L’obiettivo prestazionale del piano è una connessione di almeno 1 Gbit/s in download e 200 Mbit/s in upload.</p>
+  <p>La presenza di un civico in un elenco o in una fase di pianificazione non dimostra, da sola, che il collegamento sia già stato realizzato e attivabile. Occorre distinguere tra pianificazione, avanzamento dei lavori e copertura effettiva.</p>
+  <p><a href="https://www.infratelitalia.it/infratel-italia-per-il-pnrr/piano-italia-a-1-giga" target="_blank" rel="noopener noreferrer">Fonte ufficiale: Infratel Italia – Piano Italia a 1 Giga</a></p>
+</details>
+<details>
+  <summary>FAQ &gt;&gt; Che cos’è il Fondo Nazionale Connettività? (FNC)</summary>
+  <p>Il Fondo Nazionale Connettività è uno strumento pubblico volto a sostenere investimenti in infrastrutture di rete a banda ultralarga, soprattutto dove gli investimenti privati non risultano sufficienti.</p>
+  <p>FNC e PI1G sono strumenti distinti. La presenza di un civico nell’Allegato A PI1G non permette, da sola, di stabilire se quel civico sia destinatario di un intervento FNC: per questo servono gli specifici elenchi e atti del Fondo.</p>
+  <p><a href="https://innovazione.gov.it/notizie/avvisi-pubblici/fondo-nazionale-connettivita-bando-per-investimenti-privati-nelle-infrastrutture-per-la-rete-bul/" target="_blank" rel="noopener noreferrer">Fonte ufficiale: Dipartimento per la Trasformazione Digitale</a></p>
+</details>
+<details>
+  <summary>FAQ &gt;&gt; Perché è nato MI25-6?</summary>
+  <p>MI25-6 è un progetto personale e indipendente: nasce per rendere più immediata la consultazione delle mappature delle infrastrutture di rete fissa, senza costringere l’utente a scaricare e consultare manualmente numerosi CSV.</p>
+  <p>L’idea prende ispirazione anche dal lavoro di Handymenny sulla precedente mappatura Infratel 2017-2024. Il progetto è stato sviluppato con il supporto di strumenti di intelligenza artificiale, tra cui Claude.</p>
+  <p>Suggerimenti, segnalazioni e correzioni della community sono benvenuti. MI25-6 non è un servizio ufficiale di Infratel, AGCOM o degli operatori di telecomunicazioni.</p>
+</details>
+</div>
+<div id="p-src" hidden><pre id="srcpre"></pre></div>
+</div>
+</div>
+</div>
+
+<script src="vendor/jszip.min.js"></script>
+<script>
+var SRC="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+var VOCI=["Infratel","ArcGIS","Allegato A PI1G 2025"], ANNO=2026;
+var REGIONI=["Abruzzo","Basilicata","Calabria","Campania","Emilia-Romagna","Friuli-Venezia Giulia","Lazio","Liguria","Lombardia","Marche","Molise","Piemonte","Puglia","Sardegna","Sicilia","Toscana","Trentino-Alto Adige","Umbria","Valle d’Aosta","Veneto"];
+var DOTS={PA:["#ff7fd0","sede Pubblica Amministrazione in piani pubblici (scuole/sanità)"],A:["#8a8a8a","civico con scarsa qualità della coordinata"],B1:["#ffa41c","entro 50m da civici del Piano BUL fibra ottica"],B2:["#3fd62a","entro 50m da civici del Piano Italia a 1Giga"],B3:["#1f6fe5","entro 50m da civici dei privati fibra ottica realizzati al 2024"],BW:["#ffee00","entro 50m da civici del Piano BUL FWA realizzato"],C:["#e8231f","oltre 50m da reti con velocità di picco > 300 Mbit/s"],B:["#5b7fa6","entro 50m da reti con velocità di picco > 300 Mbit/s"]};
+var DB={A:[],P:[]},manualA=false,manualP=false;
+var $=function(i){return document.getElementById(i)};
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+REGIONI.forEach(function(r){var o=el("option",null,r);o.value=r;$("reg").appendChild(o)});
+$("foot").textContent="Basato su Mappatura reti fisse Infratel 2025 (layer ArcGIS aggiornato il 26/02/2026), esiti mappatura civici non collegabili PI1G 2025 (16/02/2026) e mappa ArcGIS · MI25-6 di Elper";
+["PA","A","B","C"].forEach(function(k){var d=el("div");d.appendChild(dot(k));d.appendChild(document.createTextNode(k+": "+DOTS[k][1]));$("leg").appendChild(d)});
+var extra=el("div","hint","Riferimenti della legenda ArcGIS (non ricavati direttamente dai CSV locali):");$("leg").appendChild(extra);["B2","B3","BW"].forEach(function(k){var d=el("div");d.appendChild(dot(k));d.appendChild(document.createTextNode(k+": "+DOTS[k][1]));$("leg").appendChild(d)});
+
+function dot(k){var s=el("span","dot");s.style.borderColor=(DOTS[k]||["#999"])[0];return s}
+function norm(s){return (s||"").toString().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Z0-9]+/g," ").trim()}
+function dec(buf){var t=new TextDecoder("utf-8").decode(buf);return t.indexOf("\uFFFD")>=0?new TextDecoder("windows-1252").decode(buf):t}
+
+function parse(text,name){
+  var L=text.split(/\r?\n/),hi=-1,i;
+  for(i=0;i<L.length&&i<60;i++){if(L[i].toLowerCase().indexOf("id_egon")>=0){hi=i;break}}
+  if(hi<0)return null;
+  var h=L[hi],d=h.indexOf("\t")>=0?"\t":(h.indexOf(";")>=0?";":",");
+  var cols=h.split(d).map(function(x){return x.replace(/"/g,"").trim().toLowerCase()}),ix={};
+  cols.forEach(function(c,n){ix[c]=n});
+  var isA=ix.caratteristica!=null,out=[];
+  for(i=hi+1;i<L.length;i++){
+    if(!L[i])continue;
+    var r=L[i].split(d),off=r.length>cols.length?r.length-cols.length:0;
+    var g=function(k){var v=ix[k]==null?"":r[ix[k]+off];return (v||"").replace(/"/g,"").trim()};
+    var o={id:g("id_egon"),c:(g("caratteristica")||"").toUpperCase(),reg:g("regione"),prov:g("provincia"),com:g("comune"),fr:g("frazione"),via:g("strada"),civ:g("civico"),bar:g("barrato")};
+    if(!o.id&&!o.via)continue;
+    o.nr=norm(o.reg);o.np=norm(o.prov);o.nc=norm(o.com);o.nv=norm(o.via);o.nk=norm(o.civ);o.nb=norm(o.civ+" "+o.bar);
+    out.push(o);
+  }
+  return {isA:isA,rows:out,name:name};
+}
+function addParsed(p,msgs){
+  if(!p){msgs.push("File non riconosciuto (manca la colonna id_egon).");return}
+  if(p.isA){if(!manualA){DB.A=[];manualA=true}}else{if(!manualP){DB.P=[];manualP=true}}
+  var T=p.isA?DB.A:DB.P;for(var j=0;j<p.rows.length;j++)T.push(p.rows[j]);
+  var regs={};p.rows.slice(0,50).forEach(function(r){regs[r.reg]=1});
+  msgs.push((p.isA?"Allegato A":"Civici non collegabili PI1G")+" · "+Object.keys(regs).join(", ")+" · "+p.rows.length.toLocaleString("it-IT")+" righe · "+p.name);
+}
+$("file").onchange=async function(e){
+  var msgs=[],fs=Array.prototype.slice.call(e.target.files);
+  $("files").textContent="Lettura in corso…";
+  for(var n=0;n<fs.length;n++){
+    var f=fs[n];
+    try{
+      var buf=await f.arrayBuffer();
+      if(/\.zip$/i.test(f.name)){
+        if(typeof JSZip==="undefined"){msgs.push("ZIP non leggibile: libreria non caricata. Estrai i CSV e caricali.");continue}
+        var z=await JSZip.loadAsync(buf),names=Object.keys(z.files).filter(function(k){return /\.(csv|txt)$/i.test(k)&&!z.files[k].dir});
+        for(var m=0;m<names.length;m++){addParsed(parse(dec(await z.files[names[m]].async("arraybuffer")),names[m]),msgs)}
+      }else addParsed(parse(dec(buf),f.name),msgs);
+    }catch(x){msgs.push("Errore su "+f.name+": "+x.message)}
+  }
+  var box=$("files");box.textContent="";
+  msgs.forEach(function(t){box.appendChild(el("div",null,t))});
+  if(!msgs.length)box.textContent="Nessun file caricato.";
+};
+
+function line(k,v){var d=el("div");d.appendChild(el("span","k",k));if(typeof v==="string")d.appendChild(document.createTextNode(" "+v));else{d.appendChild(document.createTextNode(" "));d.appendChild(v)}return d}
+function match(r,q){
+  return (!q.nr||r.nr.indexOf(q.nr)===0)&&(!q.np||r.np.indexOf(q.np)>=0)&&(!q.nc||r.nc.indexOf(q.nc)>=0)&&(!q.nv||r.nv.indexOf(q.nv)>=0)&&(!q.nk||r.nk===q.nk||r.nb===q.nk||(q.nk==="SNC"&&(r.nk==="0"||r.nk===""||r.nb.indexOf("SNC")>=0)));
+}
+$("run").onclick=function(){
+  var q={nr:norm($("reg").value),np:norm($("prov").value),nc:norm($("citta").value),nv:norm($("via").value),nk:norm($("civ").value)};
+  var box=$("res");box.textContent="";
+  if(!DB.A.length&&!DB.P.length){$("err").textContent="Scegli la Regione (o carica un file a mano).";return}
+  if(!q.nc){$("err").textContent="Inserisci almeno la Città.";return}
+  $("err").textContent="";
+  var map={},order=[];
+  DB.A.forEach(function(r){if(match(r,q)){map[r.id]={a:r};order.push(r.id)}});
+  DB.P.forEach(function(r){if(match(r,q)){if(map[r.id])map[r.id].p=r;else{map[r.id]={p:r};order.push(r.id)}}});
+  var pid={};DB.P.forEach(function(r){pid[r.id]=r});
+  order.forEach(function(id){if(map[id].a&&!map[id].p&&pid[id])map[id].p=pid[id]});
+  if(!order.length){
+    var known=DB.A.some(function(r){return r.nc.indexOf(q.nc)>=0})||DB.P.some(function(r){return r.nc.indexOf(q.nc)>=0});
+    var it=el("div","item");
+    if(!known){it.appendChild(el("div","t","Comune non presente nei file caricati"));it.appendChild(el("div",null,"Carica il file della regione giusta."))}
+    else{
+      it.appendChild(el("div","t","Nessuna corrispondenza esatta nei dataset"));
+       it.appendChild(el("div",null,"L’indirizzo non è stato trovato nei file consultati. Questo risultato non consente di dedurre la copertura o la velocità disponibile. Verifica la grafia di Comune, Via e Civico e consulta le fonti ufficiali."));
+    }
+    box.appendChild(it);$("out").hidden=false;return;
+  }
+  order.slice(0,40).forEach(function(id){
+    var x=map[id],b=x.a||x.p,it=el("div","item");
+    it.appendChild(el("div","t",[b.via,b.civ+(b.bar?"/"+b.bar:""),"· "+(b.fr?b.fr+", ":"")+b.com+" ("+b.prov+")"].join(" ")));
+    if(x.a){
+      var k=x.a.c||"B",s=el("span");s.appendChild(dot(k));s.appendChild(document.createTextNode(k+": "+(DOTS[k]||DOTS.B)[1]));
+      it.appendChild(line("("+(ANNO+2)+") >> ESITO MAPPATURA RETI FISSE :","NON COPERTO ENTRO IL 2028 O TECNOLOGIA CON PICCO <= 300 MBIT/S"));
+      it.appendChild(line("PALLINO :",s));
+      it.appendChild(line("CONSULTAZIONI :","Mappatura reti fisse 2025 (aggiornamento 26/02/2026)"));
+    }
+    if(x.p){
+       it.appendChild(line("(2030) >> ESITO MAPPATURA PI1G :","PRESENTE NELL’ALLEGATO A (NON COPERTO ENTRO IL 2030 O TECNOLOGIA CON PICCO <= 300 MBIT/S)"));
+       it.appendChild(line("CONSULTAZIONE PI1G :","Esiti mappatura 2025 dei civici non collegabili Italia a 1 Giga (16/02/2026)"));
+     }else it.appendChild(line("ELENCO PI1G :","Nessuna corrispondenza nell’Allegato A PI1G 2025 caricato; questo file non verifica gli interventi FNC."));
+    box.appendChild(it);
+  });
+  if(order.length>40)box.appendChild(el("div","hint","Mostrati i primi 40 di "+order.length+" risultati: aggiungi via o civico per restringere."));
+  $("out").hidden=false;$("out").scrollIntoView({behavior:"smooth",block:"nearest"});
+};
+$("clear").onclick=function(){["prov","citta","via","civ"].forEach(function(i){$(i).value=""});$("reg").value="";$("err").textContent="";$("civhint").textContent="";$("out").hidden=true};
+
+var tm={};
+function starts(v,q){return v.indexOf(q)===0||v.indexOf(" "+q)>=0}
+function first(fn){var a=[DB.A,DB.P],k,i;for(k=0;k<2;k++)for(i=0;i<a[k].length;i++)if(fn(a[k][i]))return a[k][i]}
+function opts(f,q){
+  var c={nr:norm($("reg").value),np:f==="prov"?"":norm($("prov").value),nc:f==="citta"?"":norm($("citta").value),nv:f==="via"?"":norm($("via").value),nk:""};
+  var K={prov:["prov","np"],citta:["com","nc"],via:["via","nv"]}[f],seen={},out=[];
+  function add(r){
+    if(!match(r,c))return;
+    var v,t;
+    if(f==="civ"){v=(r.nk===""||r.nk==="0")?"SNC":r.civ+(r.bar&&norm(r.bar)!=="SNC"?"/"+r.bar:"");t=norm(v)}
+    else{v=r[K[0]];t=r[K[1]]}
+    if(!v||seen[v]||(q&&!starts(t,q)))return;
+    seen[v]=1;out.push(v);
+  }
+  DB.A.forEach(add);DB.P.forEach(add);
+  return out.sort(function(a,b){var x=parseInt(a,10),y=parseInt(b,10);return (isNaN(x)||isNaN(y)||x===y)?a.localeCompare(b):x-y});
+}
+function fillDl(f,a){var dl=$("dl-"+f);dl.textContent="";a.slice(0,40).forEach(function(v){var o=document.createElement("option");o.value=v;dl.appendChild(o)})}
+function hint(){
+  var h=$("civhint");h.textContent="";
+  if(!$("via").value.trim()||!(DB.A.length+DB.P.length))return;
+  var a=opts("civ","");
+  h.textContent=!a.length?"Nessun civico negli elenchi per questa via.":(a.length===1&&a[0]==="SNC"?"Nessun civico da inserire: questa via ha solo civici senza numero (SNC).":"Civico facoltativo: "+a.length+" opzioni nei file caricati"+(a.indexOf("SNC")>=0?" (compreso SNC, senza numero).":"."));
+}
+function sched(f){clearTimeout(tm[f]);tm[f]=setTimeout(function(){var q=norm($(f).value);fillDl(f,(q||f==="civ")?opts(f,q):[]);if(f!=="civ")hint()},150)}
+["prov","citta","via","civ"].forEach(function(f){$(f).addEventListener("input",function(){sched(f)})});
+$("civ").addEventListener("focus",function(){sched("civ")});
+$("citta").addEventListener("change",function(){
+  var q=norm(this.value),r=q&&first(function(x){return x.nc===q});
+  if(!r)return;
+  if(!$("prov").value)$("prov").value=r.prov;
+  if(!$("reg").value)Array.prototype.forEach.call($("reg").options,function(o){if(norm(o.value)===r.nr)$("reg").value=o.value});
+});
+
+var loadTok=0,dataCard=$("file").closest("section");
+var PI1G_FILES={
+  "Campania":"campania.zip",
+  "Emilia-Romagna":"emilia-romagna.zip",
+  "Friuli-Venezia Giulia":"friuli-venezia-giulia.zip",
+  "Lazio":"lazio.zip",
+  "Lombardia":"lombardia.zip",
+  "Puglia":"puglia.zip",
+  "Sicilia":"sicilia.zip",
+  "Toscana":"toscana.zip",
+  "Veneto":"veneto.zip"
+};
+async function readFirstCsv(url){
+  var response=await fetch(url);
+  if(!response.ok)throw new Error("HTTP "+response.status+" su "+url);
+  var archive=await JSZip.loadAsync(await response.arrayBuffer());
+  var fileName=Object.keys(archive.files).filter(function(n){return /\.csv$/i.test(n)&&!archive.files[n].dir})[0];
+  if(!fileName)throw new Error("CSV non trovato in "+url);
+  var parsed=parse(dec(await archive.files[fileName].async("arraybuffer")),fileName);
+  if(!parsed)throw new Error("CSV non riconosciuto in "+url);
+  return parsed;
+}
+async function loadRegion(name){
+  var tok=++loadTok,slugs=name==="Trentino-Alto Adige"?["trentino-alto-adige-bolzano","trentino-alto-adige-trento"]:[norm(name).toLowerCase().replace(/ /g,"-")];
+  $("run").disabled=true;var st=$("status");st.textContent="";st.appendChild(el("span","spin"));st.appendChild(document.createTextNode(" Caricamento dati di "+name+"…"));
+  await new Promise(function(r){setTimeout(r,40)});
+  try{
+    var rows=[],pRows=[];
+    if(!manualA){
+      for(var i=0;i<slugs.length;i++){
+        var mainParsed=await readFirstCsv("data/"+slugs[i]+".zip");
+        for(var j=0;j<mainParsed.rows.length;j++)rows.push(mainParsed.rows[j]);
+      }
+    }
+    if(!manualP&&PI1G_FILES[name]){
+      var pi1gParsed=await readFirstCsv("data/pi1g/"+PI1G_FILES[name]);
+      if(pi1gParsed.isA)throw new Error("Il file PI1G contiene una struttura inattesa");
+      pRows=pi1gParsed.rows;
+    }
+    if(tok!==loadTok)return;
+    if(!manualA)DB.A=rows;
+    if(!manualP)DB.P=pRows;
+    var parts=[];
+    parts.push(manualA?"Mappatura generale: file manuale attivo":"Mappatura generale: "+rows.length.toLocaleString("it-IT")+" record");
+    parts.push(manualP?"Elenco PI1G: file manuale attivo":(PI1G_FILES[name]?"Allegato A PI1G: "+pRows.length.toLocaleString("it-IT")+" record":"Allegato A PI1G: nessun record regionale in questo estratto"));
+    st.textContent=name+" · "+parts.join(" · ");
+  }catch(x){
+    if(tok===loadTok){
+      if(!manualA)DB.A=[];if(!manualP)DB.P=[];
+      st.textContent="Dati di "+name+" non disponibili in automatico ("+x.message+"). Usa il caricamento manuale.";
+      dataCard.hidden=false;
+    }
+  }
+  if(tok===loadTok)$("run").disabled=false;
+}
+$("reg").addEventListener("change",function(){if(!this.value)return;if(manualA||manualP){loadRegion(this.value)}else loadRegion(this.value)});
+$("usedb").onclick=function(){manualA=false;manualP=false;DB.A=[];DB.P=[];$("files").textContent="Nessun file caricato.";$("file").value="";if($("reg").value)loadRegion($("reg").value);else $("status").textContent=""};
+
+var ov=$("ov"),lastF=null;
+function openM(w){lastF=document.activeElement;var f=w==="faq";$("mt").textContent=f?"FAQ":"Codice Sorgente";$("p-faq").hidden=!f;$("p-src").hidden=f;if(!f)$("srcpre").textContent=SRC;ov.hidden=false;$("mc").focus()}
+function closeM(){ov.hidden=true;if(lastF&&lastF.focus)lastF.focus()}
+$("o-faq").onclick=function(){openM("faq")};
+$("o-src").onclick=function(){openM("src")};
+$("mc").onclick=closeM;
+ov.onclick=function(e){if(e.target===ov)closeM()};
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!ov.hidden)closeM()});
+</script>
+</body>
+</html>
