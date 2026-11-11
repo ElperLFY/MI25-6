@@ -1,5 +1,7 @@
 # MI25-6
 
+*Link : __https://elperlfy.github.io/MI25-6/__*
+
 **Esiti mappatura infrastrutture di rete fissa 2025-26**, basato su Mappatura Infratel, ArcGIS 2025-2026 (da qui il nome abbreviato, MI25-6).
 
 ## Architettura del sito
@@ -16,3 +18,4 @@ Infratel Italia, Esiti della Mappatura 2025 delle reti fisse (aggiornamento febb
 
 *DISCLAIMER :*
 ***SE LEGGI QUESTO TESTO AL POSTO DEL SITO FUNZIONANTE, SIGNIFICA CHE È STATO BUTTATO GIÙ MOMENTANEAMENTE ED È IN MANUTENZIONE.***
+
