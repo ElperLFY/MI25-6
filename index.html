@@ -306,7 +306,6 @@ function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null
 REGIONI.forEach(function(r){var o=el("option",null,r);o.value=r;$("reg").appendChild(o)});
 $("foot").textContent="Basato su Mappatura reti fisse Infratel 2025 (layer ArcGIS aggiornato il 26/02/2026), esiti mappatura civici non collegabili PI1G 2025 (16/02/2026) e mappa ArcGIS · MI25-6 di Elper";
 ["PA","A","B","C"].forEach(function(k){var d=el("div");d.appendChild(dot(k));d.appendChild(document.createTextNode(k+": "+DOTS[k][1]));$("leg").appendChild(d)});
-var extra=el("div","hint","Riferimenti della legenda ArcGIS (non ricavati direttamente dai CSV locali):");$("leg").appendChild(extra);["B2","B3","BW"].forEach(function(k){var d=el("div");d.appendChild(dot(k));d.appendChild(document.createTextNode(k+": "+DOTS[k][1]));$("leg").appendChild(d)});
 
 function dot(k){var s=el("span","dot");s.style.borderColor=(DOTS[k]||["#999"])[0];return s}
 function norm(s){return (s||"").toString().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Z0-9]+/g," ").trim()}
