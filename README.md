@@ -12,4 +12,7 @@ Sito statico, estremamente semplice: `index.html` e la cartella `data/`, senza s
 
 ## Fonte dati
 
-Infratel Italia, Esiti Mappatura 2025 delle reti fisse (aggiornamento febbraio 2026).
+Infratel Italia, Esiti della Mappatura 2025 delle reti fisse (aggiornamento febbraio 2026).
+
+*DISCLAIMER :*
+***SE LEGGI QUESTO TESTO AL POSTO DEL SITO FUNZIONANTE, SIGNIFICA CHE È STATO BUTTATO GIÙ MOMENTANEAMENTE ED È IN MANUTENZIONE.***
