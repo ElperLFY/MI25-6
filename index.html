@@ -1,4 +1,16 @@
 <!DOCTYPE html>
+<!--
+Third-party attribution and license notice:
+This Legacy-mode integration reuses the public API contract and historical field definitions from
+https://github.com/handymenny/mappaturaInfratel and https://github.com/handymenny/mappatura-backend.
+Copyright 2021 Edoardo Ranghieri. BSD 3-Clause License.
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that:
+1. Redistributions of source code retain the above copyright notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE.
+-->
 <html lang="it">
 <head>
 <meta charset="utf-8">
@@ -56,17 +68,35 @@ summary{cursor:pointer;font-weight:600;color:var(--c1)}
 details p{margin:8px 0 0;color:var(--mut)}
 pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:auto;font-size:.78rem;line-height:1.45;max-height:55vh;white-space:pre}
 
-/* Confronto storico facoltativo con API Handymenny */
-.legacy-check{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-.legacy-check button{font-size:.84rem;padding:7px 11px}
-.legacy-note{display:block;margin-top:6px;color:var(--mut);font-size:.78rem;line-height:1.4}
-.legacy-panel{margin-top:9px;padding:11px 13px;background:var(--soft);border:1px solid var(--line);border-radius:9px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:.86rem}
-.legacy-panel[hidden]{display:none}
-.legacy-panel .legacy-row{padding:4px 0;border-bottom:1px dashed var(--line);overflow-wrap:anywhere}
-.legacy-panel .legacy-row:last-child{border-bottom:0}
-.legacy-panel .legacy-label{font-weight:700;color:var(--c2)}
-.legacy-panel .legacy-disclaimer{margin:0 0 7px;color:var(--mut);font-size:.8rem}
-.legacy-panel .legacy-error{color:var(--c3);font-weight:600}
+/* Scrollbar coordinata con la palette cremisi */
+*{scrollbar-color:var(--c3) var(--soft);scrollbar-width:thin}
+*::-webkit-scrollbar{width:11px;height:11px}
+*::-webkit-scrollbar-track{background:var(--soft);border-radius:10px}
+*::-webkit-scrollbar-thumb{background:var(--c3);border:2px solid var(--soft);border-radius:10px}
+*::-webkit-scrollbar-thumb:hover{background:var(--c2)}
+*::-webkit-scrollbar-corner{background:var(--soft)}
+
+/* Switch e interfaccia Legacy indipendente */
+.mode-card{display:flex;flex-direction:column;gap:9px}
+.mode-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mode-head h2{margin:0}
+.mode-toggle{min-width:148px}
+.mode-toggle[aria-pressed="true"]{background:var(--c3);color:#fff}
+.mode-help{margin:0;color:var(--mut);font-size:.88rem}
+.legacy-search-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.legacy-search-grid input:disabled{opacity:.55;cursor:not-allowed}
+.legacy-search-grid .field-note{font-size:.76rem;color:var(--mut);margin-top:4px}
+.legacy-results{margin-top:16px;padding:16px;background:var(--soft);border:1px solid var(--line);border-radius:10px}
+.legacy-results[hidden]{display:none}
+.legacy-results h3{margin:0 0 10px;color:var(--c1);font-size:1.05rem}
+.legacy-section{margin-top:13px;padding-top:10px;border-top:1px solid var(--line)}
+.legacy-section h4{margin:0 0 5px;color:var(--c2);font-size:.95rem}
+.legacy-row{padding:5px 0;border-bottom:1px dashed var(--line);overflow-wrap:anywhere;font-size:.9rem}
+.legacy-row:last-child{border-bottom:0}
+.legacy-label{font-weight:700;color:var(--c2)}
+.legacy-disclaimer{margin:0 0 10px;color:var(--mut);font-size:.82rem}
+.legacy-error{color:var(--c3);font-weight:700}
+.legacy-address{font-weight:700;color:var(--c1);margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -77,13 +107,21 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
 <main>
 <section class="card">
 <h2>Hai file più aggiornati? Caricali tu</h2>
-<p class="hint">Se disponi di dataset Infratel più recenti, puoi caricare qui i file CSV o ZIP supportati (mappatura generale e/o Allegato A della mappatura 2025 dei civici non collegabili Italia a 1 Giga). I file caricati manualmente hanno la precedenza sui corrispondenti dati automatici. La ricerca principale e l’elaborazione dei CSV avvengono nel browser: l’indirizzo digitato non viene inviato a un server. Solo se scegli esplicitamente il confronto storico, viene trasmesso all’API esterna di Handymenny il relativo ID EGON. Mappa ufficiale: <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener">Infratel su ArcGIS</a>.</p>
+<p class="hint">Se disponi di dataset Infratel più recenti, puoi caricare qui i file CSV o ZIP supportati. I file caricati manualmente hanno la precedenza sui corrispondenti dati automatici. In modalità MI25-6 standard, la ricerca e l’elaborazione dei CSV avvengono nel browser. Attivando Legacy mode, invece, i campi dell’indirizzo vengono inviati alle API storiche di Handymenny per ricercare il civico nel database 2017-2024. Mappa ufficiale: <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener">Infratel su ArcGIS</a>.</p>
 <input type="file" id="file" accept=".csv,.txt,.zip" multiple>
 <div class="files" id="files">Nessun file caricato.</div>
 <button type="button" class="clr" id="usedb" style="margin-top:10px">Torna ai dati automatici</button>
 </section>
 
-<section class="card">
+<section class="card mode-card" aria-label="Selezione modalità di ricerca">
+  <div class="mode-head">
+    <h2>Modalità di consultazione</h2>
+    <button type="button" class="clr mode-toggle" id="legacy-toggle" aria-pressed="false">Legacy mode OFF</button>
+  </div>
+  <p class="mode-help" id="mode-help">Modalità standard: ricerca locale sui dataset Infratel 2025-26 caricati per Regione. Attiva Legacy mode per interrogare separatamente l’archivio storico 2017-2024 di Handymenny.</p>
+</section>
+
+<section class="card" id="modern-search-card">
 <h2>Indirizzo</h2>
 <div class="grid">
 <div><label for="reg">Regione</label><select id="reg"><option value="">Tutte</option></select></div>
@@ -98,6 +136,25 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
 </div>
 <div class="files" id="status"></div>
 <div class="err" id="err" role="alert"></div>
+</section>
+
+<section class="card" id="legacy-search-card" hidden>
+  <h2>Ricerca archivio storico 2017-2024 · Handymenny</h2>
+  <p class="hint">Questa modalità usa un archivio esterno indipendente dai CSV MI25-6. Seleziona in sequenza Regione, Provincia, Città, Via e Civico. Gli elenchi vengono recuperati dall’API di Handymenny; al termine viene richiesto il record storico associato all’ID EGON. Il servizio può applicare limiti alle richieste e non certifica la copertura attuale.</p>
+  <div class="legacy-search-grid">
+    <div><label for="legacy-region">Regione</label><input id="legacy-region" list="legacy-regions-list" autocomplete="off" placeholder="Caricamento regioni…" disabled><datalist id="legacy-regions-list"></datalist></div>
+    <div><label for="legacy-province">Provincia</label><input id="legacy-province" list="legacy-provinces-list" autocomplete="off" placeholder="Seleziona prima la Regione" disabled><datalist id="legacy-provinces-list"></datalist></div>
+    <div><label for="legacy-city">Città</label><input id="legacy-city" list="legacy-cities-list" autocomplete="off" placeholder="Seleziona prima la Provincia" disabled><datalist id="legacy-cities-list"></datalist></div>
+    <div><label for="legacy-street">Via</label><input id="legacy-street" list="legacy-streets-list" autocomplete="off" placeholder="Seleziona prima la Città" disabled><datalist id="legacy-streets-list"></datalist></div>
+    <div><label for="legacy-number">Civico</label><input id="legacy-number" list="legacy-numbers-list" autocomplete="off" placeholder="Seleziona prima la Via" disabled><datalist id="legacy-numbers-list"></datalist><div class="field-note" id="legacy-number-note">Le voci duplicate possono avere un suffisso distintivo.</div></div>
+  </div>
+  <div class="btns">
+    <button type="button" class="go" id="legacy-search" disabled>Esegui ricerca Legacy</button>
+    <button type="button" class="clr" id="legacy-clear">Pulisci i campi Legacy</button>
+  </div>
+  <div class="files" id="legacy-status" role="status" aria-live="polite"></div>
+  <div class="err" id="legacy-error" role="alert"></div>
+  <div class="legacy-results" id="legacy-results" hidden aria-live="polite"></div>
 </section>
 
 <section class="card" id="out" hidden>
@@ -170,10 +227,10 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
 
 <details>
   <summary>FAQ &gt;&gt; Che cos’è il confronto storico Handymenny?</summary>
-  <p>Per alcuni civici MI25-6 offre una consultazione facoltativa dell’archivio storico associato alla precedente mappatura Infratel 2017-2024, tramite l’API pubblicata da Handymenny.</p>
-  <p>Il confronto può restituire attributi storici relativi, tra l’altro, alle consultazioni precedenti, alla classificazione dell’area e alle soglie di velocità degli anni passati. Questi dati non sostituiscono la mappatura Infratel 2025-26 e non descrivono necessariamente la copertura attuale.</p>
-  <p>La richiesta parte soltanto quando premi il pulsante dedicato nel risultato. In quel momento viene trasmesso all’API esterna l’identificativo EGON del civico, non il testo dell’indirizzo inserito. Se l’identificativo non è presente nell’archivio storico, il servizio può restituire un risultato non disponibile.</p>
-  <p>Il servizio è gestito da terzi: MI25-6 non ne controlla disponibilità, aggiornamenti o limiti di utilizzo.</p>
+  <p>Legacy mode è una modalità di ricerca separata che interroga l’archivio storico della mappatura Infratel 2017-2024 tramite l’API pubblicata da Handymenny.</p>
+  <p>A differenza della modalità MI25-6 standard, non dipende dai CSV 2025-26 locali: recupera in sequenza Regioni, Province, Città, Vie e civici, quindi interroga il record storico associato all’ID EGON selezionato.</p>
+  <p>Quando Legacy mode è attiva, i campi dell’indirizzo selezionati vengono inviati al servizio API esterno per recuperare gli elenchi. Il servizio è gestito da terzi, può applicare limiti alle richieste e MI25-6 non ne controlla disponibilità o aggiornamenti.</p>
+  <p>I risultati descrivono esclusivamente i dati storici restituiti dall’archivio e non sostituiscono la mappatura Infratel 2025-26 né costituiscono una verifica di copertura attuale o commerciale.</p>
   <p><a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a> · <a href="https://github.com/handymenny/mappaturaInfratel" target="_blank" rel="noopener noreferrer">Codice sorgente del progetto originale</a></p>
 </details>
 <details>
@@ -256,81 +313,205 @@ $("file").onchange=async function(e){
 
 function line(k,v){var d=el("div");d.appendChild(el("span","k",k));if(typeof v==="string")d.appendChild(document.createTextNode(" "+v));else{d.appendChild(document.createTextNode(" "));d.appendChild(v)}return d}
 
-// Consultazione storica esplicita: nessuna chiamata API durante la ricerca locale.
+// Legacy mode: ricerca gerarchica completa tramite API Handymenny.
+// Endpoint e shape confermati dal backend pubblico: liste stringa, numeri {number, egon}, dettaglio /egon.
 var HANDY_API="https://mappatura2024.amennillo.eu";
-var handyCache=new Map();
-function historicalStatus(value){
-  var labels={0:"0 · Non incluso",1:"1 · Open Fiber",2:"2 · TIM",3:"3 · Consultazione di prossimità: sì",4:"4 · Consultazione di prossimità: no"};
-  return Object.prototype.hasOwnProperty.call(labels,String(value))?labels[String(value)]:String(value);
+var legacyMode=false;
+var legacyCache=new Map();
+var legacyLists={regions:[],provinces:[],cities:[],streets:[],numbers:[]};
+var legacyState={region:"",province:"",city:"",street:"",number:"",egon:""};
+var legacyTokens={provinces:0,cities:0,streets:0,numbers:0,detail:0};
+var legacyNumberItems=[];
+function legacyField(id){return $("legacy-"+id)}
+function legacyNorm(value){return norm(value).replace(/\s+/g," ").trim()}
+function legacyFindExact(items,value,property){
+  var wanted=legacyNorm(value);
+  for(var i=0;i<items.length;i++){
+    var candidate=property?items[i][property]:items[i];
+    if(legacyNorm(candidate)===wanted)return items[i];
+  }
+  return null;
 }
-function renderHistorical(data,panel){
-  panel.textContent="";
-  var intro=el("p","legacy-disclaimer","Archivio storico Handymenny · valori restituiti dall’API. Non rappresentano una verifica della copertura attuale.");
-  panel.appendChild(intro);
-  var fields=[
-    ["below300Mbps_2024","Soglia 300 Mbit/s · 2024",false],
-    ["color_2021","Colore area · 2021",false],
-    ["peakSpeed_2021","Velocità di picco · 2021",false],
-    ["below300Mbps_2021","Indicatore sotto 300 Mbit/s · 2021",false],
-    ["status_p1g","Stato PI1G nell’archivio storico",true],
-    ["walkin_connetti","walkin_connetti · valore originale",false],
-    ["class19_2020","class19_2020",false],
-    ["class22_2020","class22_2020",false],
-    ["cat18_2019","cat18_2019",false],
-    ["cat21_2019","cat21_2019",false],
-    ["speed20_2017","speed20_2017",false]
-  ];
-  var count=0;
-  fields.forEach(function(field){
-    var value=data[field[0]];
-    if(value===null||value===undefined||value==="")return;
-    var row=el("div","legacy-row");
-    row.appendChild(el("span","legacy-label",field[1]+": "));
-    row.appendChild(document.createTextNode(field[2]?historicalStatus(value):String(value)));
-    panel.appendChild(row);count++;
+function legacyFetch(path){
+  if(legacyCache.has(path))return legacyCache.get(path);
+  var task=fetch(HANDY_API+path,{headers:{"Accept":"application/json"}}).then(async function(response){
+    if(!response.ok){
+      var message=response.status===404?"Nessun dato trovato per la selezione effettuata.":response.status===429?"Limite richieste API raggiunto (HTTP 429). Attendi prima di riprovare.":"Errore API HTTP "+response.status+".";
+      var error=new Error(message);error.status=response.status;throw error;
+    }
+    return response.json();
   });
-  if(!count)panel.appendChild(el("div","legacy-row","L’API ha restituito il record, ma non contiene valori storici valorizzati tra i campi gestiti da MI25-6."));
+  legacyCache.set(path,task);
+  task.catch(function(){legacyCache.delete(path);});
+  return task;
 }
-function makeHistoricalLookup(egon){
-  var wrap=el("div","legacy-check");
-  var button=el("button","clr","Confronta con archivio storico Handymenny");
-  button.type="button";
-  var note=el("span","legacy-note","Consultazione facoltativa su un servizio esterno: al clic viene trasmesso l’ID EGON associato a questo civico. La ricerca principale resta locale.");
-  var panel=el("div","legacy-panel");
-  panel.hidden=true;panel.setAttribute("aria-live","polite");
-  button.addEventListener("click",async function(){
-    panel.hidden=false;
-    button.disabled=true;
-    button.textContent="Consultazione in corso…";
-    panel.textContent="Contatto l’API storica di Handymenny…";
-    try{
-      var data;
-      if(handyCache.has(String(egon))){
-        data=await handyCache.get(String(egon));
-      }else{
-        var request=(async function(){
-          var response=await fetch(HANDY_API+"/egon?id="+encodeURIComponent(egon),{headers:{"Accept":"application/json"}});
-          if(!response.ok){
-            var error=new Error(response.status===404?"Questo ID EGON non è presente nell’archivio storico.":response.status===429?"Limite di richieste dell’API raggiunto (HTTP 429). Riprova più tardi.":"L’API storica ha risposto con HTTP "+response.status+".");
-            error.status=response.status;throw error;
-          }
-          return await response.json();
-        })();
-        handyCache.set(String(egon),request);
-        try{data=await request}catch(error){handyCache.delete(String(egon));throw error;}
-      }
-      renderHistorical(data,panel);
-      button.textContent="Confronto storico caricato";
-    }catch(error){
-      panel.textContent="";
-      panel.appendChild(el("div","legacy-error",error.message||"Errore durante la consultazione dell’API storica."));
-      if(error.status===429)panel.appendChild(el("div","legacy-disclaimer","Il servizio applica un limite alle richieste. Evita di ripetere rapidamente la consultazione."));
-      button.textContent="Riprova il confronto storico";
-    }finally{button.disabled=false;}
+function legacyFillList(key,items){
+  legacyLists[key]=items;
+  var input=legacyField(({regions:"region",provinces:"province",cities:"city",streets:"street",numbers:"number"})[key]);
+  var dl=$("legacy-"+key+"-list");
+  dl.textContent="";
+  items.forEach(function(item){
+    var option=document.createElement("option");
+    option.value=key==="numbers"?String(item.number):String(item);
+    if(key==="numbers")option.label="ID EGON: "+item.egon;
+    dl.appendChild(option);
   });
-  wrap.appendChild(button);wrap.appendChild(note);wrap.appendChild(panel);
-  return wrap;
+  input.disabled=false;
 }
+function legacySetStatus(message){$("legacy-status").textContent=message||""}
+function legacySetError(message){$("legacy-error").textContent=message||""}
+function legacyResetResult(){var box=$("legacy-results");box.textContent="";box.hidden=true}
+function legacyResetFrom(level){
+  var order=["region","province","city","street","number"];
+  var index=order.indexOf(level);
+  for(var i=index+1;i<order.length;i++){
+    var key=order[i];legacyState[key]="";legacyField(key).value="";legacyField(key).disabled=true;
+    var listKey=({province:"provinces",city:"cities",street:"streets",number:"numbers"})[key];
+    if(listKey){legacyTokens[listKey]++;legacyLists[listKey]=[];$("legacy-"+listKey+"-list").textContent="";}
+  }
+  if(index<4){legacyState.egon="";legacyNumberItems=[];$("legacy-search").disabled=true;}
+  legacyResetResult();legacySetError("");
+}
+function legacySetNumberSelection(value){
+  var selected=legacyFindExact(legacyNumberItems,value,"number");
+  if(!selected){
+    // Se il numero base corrisponde a più record duplicati, non scegliere un EGON arbitrariamente.
+    var base=legacyNorm(value).replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]+$/g,"");
+    var candidates=legacyNumberItems.filter(function(item){return legacyNorm(item.number).replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]+$/g,"")===base;});
+    if(candidates.length===1)selected=candidates[0];
+    else if(candidates.length>1){legacyState.egon="";$("legacy-search").disabled=true;legacySetError("Questo numero civico ha più record distinti. Seleziona la voce completa dall’elenco, compreso l’eventuale suffisso.");return;}
+  }
+  if(!selected){legacyState.egon="";$("legacy-search").disabled=true;legacySetError("Seleziona un civico presente nell’elenco suggerito dall’API.");return;}
+  legacyState.number=selected.number;legacyState.egon=String(selected.egon);legacyField("number").value=selected.number;
+  $("legacy-search").disabled=!legacyState.egon;legacySetError("");legacySetStatus("Civico selezionato · ID EGON "+legacyState.egon);
+}
+async function legacyLoadList(key,path,label){
+  var token=++legacyTokens[key];
+  var input=legacyField(({provinces:"province",cities:"city",streets:"street",numbers:"number"})[key]);
+  input.disabled=true;
+  legacySetStatus("Caricamento "+label+" dall’API Handymenny…");legacySetError("");
+  try{
+    var data=await legacyFetch(path);
+    if(token!==legacyTokens[key])return;
+    if(!Array.isArray(data))throw new Error("Formato della risposta API non riconosciuto per "+label+".");
+    if(key==="numbers"){
+      data=data.filter(function(x){return x&&x.number!==undefined&&x.egon!==undefined;});
+      legacyNumberItems=data;
+    }
+    legacyFillList(key,data);
+    legacySetStatus(data.length.toLocaleString("it-IT")+" "+label+" disponibili.");
+    if(!data.length)legacySetError("L’API non restituisce voci per questa selezione.");
+  }catch(error){
+    if(token!==legacyTokens[key])return;
+    input.disabled=true;legacySetStatus("");legacySetError(error.message||"Impossibile caricare i dati Legacy.");
+  }
+}
+async function legacyLoadRegions(){
+  var input=legacyField("region");input.disabled=true;legacySetStatus("Caricamento elenco Regioni dall’API Handymenny…");legacySetError("");
+  try{
+    var regions=await legacyFetch("/regions");
+    if(!Array.isArray(regions))throw new Error("Formato dell’elenco Regioni non riconosciuto.");
+    legacyFillList("regions",regions);legacySetStatus(regions.length+" Regioni disponibili.");
+  }catch(error){legacySetStatus("");legacySetError(error.message||"API Handymenny non raggiungibile. Controlla la connessione e riprova.");}
+}
+function legacyBindChange(key){
+  var input=legacyField(key);
+  input.addEventListener("change",function(){
+    var listKey=({region:"regions",province:"provinces",city:"cities",street:"streets"})[key];
+    var selected=legacyFindExact(legacyLists[listKey]||[],input.value);
+    if(!selected){legacySetError("Seleziona una voce valida dall’elenco suggerito.");return;}
+    input.value=selected;legacyState[key]=selected;legacyResetFrom(key);
+    if(key==="region")legacyLoadList("provinces","/"+encodeURIComponent(selected)+"/provinces","Province");
+    if(key==="province")legacyLoadList("cities","/"+encodeURIComponent(selected)+"/cities","Comuni");
+    if(key==="city")legacyLoadList("streets","/"+encodeURIComponent(legacyState.province)+"/"+encodeURIComponent(selected)+"/streets","Vie");
+    if(key==="street")legacyLoadList("numbers","/"+encodeURIComponent(legacyState.province)+"/"+encodeURIComponent(legacyState.city)+"/"+encodeURIComponent(selected)+"/numbers","Civici");
+  });
+  input.addEventListener("input",function(){
+    // Se l'utente modifica un livello già selezionato, invalida immediatamente i livelli discendenti.
+    if(legacyNorm(input.value)!==legacyNorm(legacyState[key])){
+      legacyState[key]="";legacyResetFrom(key);
+      if(key==="number"){legacyState.egon="";$("legacy-search").disabled=true;legacySetStatus("");}
+    }
+  });
+}
+["region","province","city","street"].forEach(legacyBindChange);
+legacyField("number").addEventListener("change",function(){legacySetNumberSelection(this.value);});
+legacyField("number").addEventListener("input",function(){if(legacyNorm(this.value)!==legacyNorm(legacyState.number)){legacyState.number="";legacyState.egon="";$("legacy-search").disabled=true;legacyResetResult();}});
+function setLegacyMode(enabled){
+  legacyMode=!!enabled;
+  var toggle=$("legacy-toggle");toggle.textContent=legacyMode?"Legacy mode ON":"Legacy mode OFF";toggle.setAttribute("aria-pressed",legacyMode?"true":"false");
+  $("modern-search-card").hidden=legacyMode;
+  $("legacy-search-card").hidden=!legacyMode;
+  $("out").hidden=true;legacyResetResult();
+  $("mode-help").textContent=legacyMode
+    ?"Legacy mode ON: ricerca autonoma nell’archivio storico 2017-2024 di Handymenny. Regione, Provincia, Città, Via e Civico vengono richiesti al servizio API esterno; la ricerca non dipende dai CSV MI25-6."
+    :"Modalità standard: ricerca locale sui dataset Infratel 2025-26 caricati per Regione. Attiva Legacy mode per interrogare separatamente l’archivio storico 2017-2024 di Handymenny.";
+  if(legacyMode&&!legacyLists.regions.length)legacyLoadRegions();
+}
+$("legacy-toggle").addEventListener("click",function(){setLegacyMode(!legacyMode);});
+$("legacy-search").addEventListener("click",async function(){
+  if(!legacyState.egon){legacySetError("Completa la selezione fino al Civico.");return;}
+  var token=++legacyTokens.detail,button=this;button.disabled=true;button.textContent="Consultazione in corso…";legacyResetResult();legacySetError("");legacySetStatus("Recupero del record storico EGON "+legacyState.egon+"…");
+  try{
+    var data=await legacyFetch("/egon?id="+encodeURIComponent(legacyState.egon));
+    if(token!==legacyTokens.detail)return;
+    if(!data||typeof data!=="object")throw new Error("L’API non ha restituito un record EGON valido.");
+    renderLegacyRecord(data);legacySetStatus("Consultazione storica completata · ID EGON "+legacyState.egon);
+  }catch(error){if(token===legacyTokens.detail){legacySetError(error.message||"Errore durante la consultazione storica.");legacySetStatus("");}}
+  finally{if(token===legacyTokens.detail){button.disabled=false;button.textContent="Riesegui ricerca Legacy";}}
+});
+$("legacy-clear").addEventListener("click",function(){
+  legacyState={region:"",province:"",city:"",street:"",number:"",egon:""};legacyNumberItems=[];
+  ["region","province","city","street","number"].forEach(function(key){legacyField(key).value="";legacyField(key).disabled=key!=="region";});
+  ["provinces","cities","streets","numbers"].forEach(function(key){legacyLists[key]=[];$("legacy-"+key+"-list").textContent="";});
+  $("legacy-search").disabled=true;$("legacy-search").textContent="Esegui ricerca Legacy";legacyResetResult();legacySetError("");
+  if(!legacyLists.regions.length)legacyLoadRegions();else legacySetStatus("Elenco Regioni pronto.");
+});
+function legacyText(value){return value===null||value===undefined||value===""?"Non disponibile":String(value);}
+function legacyColor(value){var map={"":"BIANCO","n":"NERO","g":"GRIGIO"};return Object.prototype.hasOwnProperty.call(map,String(value))?map[String(value)]:"Codice: "+String(value);}
+function legacyCodeClass(value){
+  if(value===null||value===undefined||value==="")return "Non disponibile";
+  var v=String(value),parts=[legacyColor(v.charAt(0))];
+  if(v.charAt(1)==="v")parts.push("VHCN");else if(v.charAt(1)==="n"||v.charAt(0)==="n")parts.push("NGA");
+  if(v.charAt(2)==="r")parts.push("RAME");else if(v.charAt(2)==="w")parts.push("FWA");else if(v.charAt(2)==="f")parts.push("FTTH");
+  return parts.join(" · ");
+}
+function legacyAppendRow(section,label,value){
+  if(value===null||value===undefined||value==="")return;
+  var row=el("div","legacy-row");row.appendChild(el("span","legacy-label",label+": "));row.appendChild(document.createTextNode(String(value)));section.appendChild(row);
+}
+function legacyAppendSection(root,title){var section=el("section","legacy-section");section.appendChild(el("h4",null,title));root.appendChild(section);return section;}
+function renderLegacyRecord(data){
+  var box=$("legacy-results");box.textContent="";box.hidden=false;
+  box.appendChild(el("h3",null,"Esito archivio storico Handymenny"));
+  box.appendChild(el("p","legacy-disclaimer","Dati storici della mappatura Infratel 2017-2024. Non costituiscono una verifica della copertura commerciale o della disponibilità attuale."));
+  box.appendChild(el("div","legacy-address",[legacyState.region,legacyState.province,legacyState.city,legacyState.street,legacyState.number].filter(Boolean).join(" · ")+" · EGON "+legacyState.egon));
+  var peak={0:"< 30 Mbit/s",1:"< 300 Mbit/s",2:">= 300 Mbit/s",30:"30-99 Mbit/s",100:"100-199 Mbit/s",200:"200-299 Mbit/s",300:"300-999 Mbit/s",1000:">= 1000 Mbit/s"};
+  var peakWhite={0:"< 300 Mbit/s",1:">= 300 Mbit/s"};
+  var peak2017={0:"< 30 Mbit/s",30:"30-99 Mbit/s",100:">= 100 Mbit/s"};
+  var p1g={0:"No",1:"Sì",2:"Sì",3:"Civico di prossimità ammissibile",4:"No"};
+  var winners={1:"Open Fiber",2:"FiberCop",3:"Open Fiber",4:"Open Fiber"};
+  var walkin={0:"Ignoto",1:"Ignoto",2:"Inesistente",3:"Escluso no UI",4:"Escluso residuale",5:"Escluso già coperto",10:"Ignoto",11:"Esistente",12:"Inesistente",13:"Escluso no UI",14:"Escluso residuale",15:"Escluso già coperto"};
+  var sec=legacyAppendSection(box,"Piano Italia 1 Giga · archivio storico");
+  legacyAppendRow(sec,"Incluso nel bando",p1g[data.status_p1g]||legacyText(data.status_p1g));
+  if(data.status_p1g&&String(data.status_p1g)!=="4")legacyAppendRow(sec,"Vincitore bando",winners[data.status_p1g]||"Non specificato");
+  if(data.walkin_connetti!==null&&data.walkin_connetti!==undefined)legacyAppendRow(sec,"Esito Walk-in",walkin[data.walkin_connetti]||legacyText(data.walkin_connetti));
+  if(data.below300Mbps_2024!==null&&data.below300Mbps_2024!==undefined){sec=legacyAppendSection(box,"Consultazione 2024");legacyAppendRow(sec,"Velocità ore di punta 2026",peakWhite[data.below300Mbps_2024]||legacyText(data.below300Mbps_2024));}
+  if(data.below300Mbps_2021!==null&&data.below300Mbps_2021!==undefined){
+    sec=legacyAppendSection(box,"Consultazione 2021");
+    if(data.color_2021!==null&&data.color_2021!==undefined)legacyAppendRow(sec,"Colore civico 2026",legacyColor(data.color_2021));
+    var isWhite=data.color_2021===null||data.color_2021===undefined;
+    legacyAppendRow(sec,"Velocità massima 2026",(isWhite?peakWhite:peak)[data.below300Mbps_2021]||legacyText(data.below300Mbps_2021));
+    legacyAppendRow(sec,"Velocità ore di punta 2026",(isWhite?peakWhite:peak)[data.peakSpeed_2021]||legacyText(data.peakSpeed_2021));
+  }
+  if(data.class19_2020!==null&&data.class19_2020!==undefined){sec=legacyAppendSection(box,"Consultazione 2020");legacyAppendRow(sec,"Copertura 2019",legacyCodeClass(data.class19_2020));legacyAppendRow(sec,"Copertura 2022",legacyCodeClass(data.class22_2020));}
+  if(data.cat18_2019!==null&&data.cat18_2019!==undefined){sec=legacyAppendSection(box,"Consultazione 2019");legacyAppendRow(sec,"Velocità massima 2018",peak2017[data.cat18_2019]||legacyText(data.cat18_2019));legacyAppendRow(sec,"Velocità massima 2021",peak2017[data.cat21_2019]||legacyText(data.cat21_2019));}
+  if(data.speed20_2017!==null&&data.speed20_2017!==undefined){sec=legacyAppendSection(box,"Consultazione 2017");legacyAppendRow(sec,"Velocità massima 2020",peak2017[data.speed20_2017]||legacyText(data.speed20_2017));}
+  var meta=legacyAppendSection(box,"Identificativi e provenienza");
+  legacyAppendRow(meta,"ID EGON",legacyText(data.egon));legacyAppendRow(meta,"ID Comune storico",legacyText(data.cityId));legacyAppendRow(meta,"Via registrata",legacyText(data.street));legacyAppendRow(meta,"Civico registrato",legacyText(data.number));
+  box.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
 function match(r,q){
   return (!q.nr||r.nr.indexOf(q.nr)===0)&&(!q.np||r.np.indexOf(q.np)>=0)&&(!q.nc||r.nc.indexOf(q.nc)>=0)&&(!q.nv||r.nv.indexOf(q.nv)>=0)&&(!q.nk||r.nk===q.nk||r.nb===q.nk||(q.nk==="SNC"&&(r.nk==="0"||r.nk===""||r.nb.indexOf("SNC")>=0)));
 }
@@ -368,7 +549,6 @@ $("run").onclick=function(){
        it.appendChild(line("(2030) >> ESITO MAPPATURA PI1G :","PRESENTE NELL’ALLEGATO A (NON COPERTO ENTRO IL 2030 O TECNOLOGIA CON PICCO <= 300 MBIT/S)"));
        it.appendChild(line("CONSULTAZIONE PI1G :","Esiti mappatura 2025 dei civici non collegabili Italia a 1 Giga (16/02/2026)"));
      }else it.appendChild(line("ELENCO PI1G :","Nessuna corrispondenza nell’Allegato A PI1G 2025 caricato; questo file non verifica gli interventi FNC."));
-    if(b.id)it.appendChild(makeHistoricalLookup(b.id));
      box.appendChild(it);
   });
   if(order.length>40)box.appendChild(el("div","hint","Mostrati i primi 40 di "+order.length+" risultati: aggiungi via o civico per restringere."));
