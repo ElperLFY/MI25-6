@@ -1,0 +1,32 @@
+{
+  "id": "./",
+  "name": "MI25-6 – Mappatura Infratel 2025-26",
+  "short_name": "MI25-6",
+  "description": "Consultazione indipendente delle mappature delle infrastrutture di rete fissa 2025-26.",
+  "lang": "it-IT",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbeff1",
+  "theme_color": "#8c1230",
+  "icons": [
+    {
+      "src": "./android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./android-chrome-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
