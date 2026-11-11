@@ -1,0 +1,65 @@
+{
+  "dataset": "Esiti mappatura 2025 delle reti fisse: civici non collegabili Italia a 1 Giga",
+  "publisher": "Infratel Italia",
+  "publication_date": "2026-02-16",
+  "initial_civics_declared_unconnectable_by_open_fiber_by": "2026-06-30",
+  "initial_population": 707092,
+  "records_in_allegato_a": 437951,
+  "scope": "Civici non coperti entro il 2030 oppure coperti da tecnologie che non consentono una velocità di picco superiore a 300 Mbit/s.",
+  "regional_files": {
+    "CAMPANIA": {
+      "file": "campania.zip",
+      "records": 13422,
+      "bytes_zip": 248500,
+      "sha256": "e0d7691b83262fee641b79eadf637959fa837088400dce2677abe77e91a9a7cb"
+    },
+    "EMILIA-ROMAGNA": {
+      "file": "emilia-romagna.zip",
+      "records": 81952,
+      "bytes_zip": 1468992,
+      "sha256": "423680d5649d8ae5d97fb716fcd7234dec6d308996a01ead99cfebdb61dee760"
+    },
+    "FRIULI-VENEZIA GIULIA": {
+      "file": "friuli-venezia-giulia.zip",
+      "records": 5693,
+      "bytes_zip": 108608,
+      "sha256": "32ae6062652d3f683d737fade53f765c0746fc94307aed00b06efc2ab6beb9ef"
+    },
+    "LAZIO": {
+      "file": "lazio.zip",
+      "records": 49227,
+      "bytes_zip": 884382,
+      "sha256": "608acf482199053cc81741b2c0326da88005906a83e88c91b956de0ac6c52a93"
+    },
+    "LOMBARDIA": {
+      "file": "lombardia.zip",
+      "records": 53580,
+      "bytes_zip": 972374,
+      "sha256": "061f687e858593e9bc60e4aae5a512d99392245eb851a0ea149edbd642c6ac0c"
+    },
+    "PUGLIA": {
+      "file": "puglia.zip",
+      "records": 19117,
+      "bytes_zip": 352842,
+      "sha256": "fd1b8cc0f002cba8f4ebe97f0003ad0590a743b4bd3396446636ea1371bc0d1e"
+    },
+    "SICILIA": {
+      "file": "sicilia.zip",
+      "records": 5660,
+      "bytes_zip": 117820,
+      "sha256": "d66e2121de14f9c9aab0a97d96ea0b7809d7df51cd567a9e9d76cb987041760f"
+    },
+    "TOSCANA": {
+      "file": "toscana.zip",
+      "records": 129863,
+      "bytes_zip": 2245681,
+      "sha256": "38112ba7c7b5e2ecf65b399eb9bb758a73d5fcaf3779424791b3c52773eef194"
+    },
+    "VENETO": {
+      "file": "veneto.zip",
+      "records": 79437,
+      "bytes_zip": 1389196,
+      "sha256": "056fa8d67bdfb5e36aa9ebf0061fd98016f58de2c3ac29908f75deeba74b6415"
+    }
+  }
+}
