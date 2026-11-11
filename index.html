@@ -107,7 +107,7 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
 <main>
 <section class="card">
 <h2>Hai file più aggiornati? Caricali tu</h2>
-<p class="hint">Se disponi di dataset Infratel più recenti, puoi caricare qui i file CSV o ZIP supportati. I file caricati manualmente hanno la precedenza sui corrispondenti dati automatici. In modalità MI25-6 standard, la ricerca e l’elaborazione dei CSV avvengono nel browser. Attivando Legacy mode, invece, i campi dell’indirizzo vengono inviati alle API storiche di Handymenny per ricercare il civico nel database 2017-2024. Mappa ufficiale: <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener">Infratel su ArcGIS</a>.</p>
+<p class="hint">Se disponi di dataset Infratel più recenti, puoi caricare qui i file CSV o ZIP supportati. I file caricati manualmente hanno la precedenza sui corrispondenti dati automatici. In modalità MI25-6 standard, la ricerca e l’elaborazione dei CSV avvengono nel browser. Mappa ufficiale: <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener">Infratel su ArcGIS</a>.</p>
 <input type="file" id="file" accept=".csv,.txt,.zip" multiple>
 <div class="files" id="files">Nessun file caricato.</div>
 <button type="button" class="clr" id="usedb" style="margin-top:10px">Torna ai dati automatici</button>
@@ -224,7 +224,12 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
   <p>L’idea prende ispirazione anche dal lavoro di Handymenny sulla precedente mappatura Infratel 2017-2024. Il progetto è stato sviluppato con il supporto di strumenti di intelligenza artificiale, tra cui Claude.</p>
   <p>Suggerimenti, segnalazioni e correzioni della community sono benvenuti. MI25-6 non è un servizio ufficiale di Infratel, AGCOM o degli operatori di telecomunicazioni.</p>
 </details>
-
+  <details>
+  <summary>FAQ &gt;&gt;Cos'è la Legacy Mode?</summary>
+  <p>Attivando Legacy mode, i campi dell’indirizzo vengono inviati alle API storiche di Handymenny per ricercare il civico nel database 2017-2024, che è molto più ampio e completo, ma altrettanto (possibilmente) inaccurato.</p>
+  <p>Data la possibile copertura decisa sul momento da compagnie come *FiberCop* o *OpenFiber* sotto la copertura privata dopo aver rivalutato un'area precedentemente valutata sul mercato.</p>
+  <p>DISCLAIMER : "Io non sono Handymenny, e quindi non gestisco la vecchia infrastruttura e le sue API. Se la Legacy Mode non dice quello che dovrebbe, probabilmente è per questo che si chiama 'Legacy Mode'."</p>
+</details>
 <details>
   <summary>FAQ &gt;&gt; Che cos’è il confronto storico Handymenny?</summary>
   <p>Legacy mode è una modalità di ricerca separata che interroga l’archivio storico della mappatura Infratel 2017-2024 tramite l’API pubblicata da Handymenny.</p>
