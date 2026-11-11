@@ -10,17 +10,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#26060d;--card:#3a0b16;--line:#6b1a2c;--c1:#ffd9df;--c2:#e8788d;--c3:#c9304f;--soft:#4d1120;--txt:#fff1f3;--mut:#f0bcc6}}
 :root[data-theme="dark"]{--bg:#26060d;--card:#3a0b16;--line:#6b1a2c;--c1:#ffd9df;--c2:#e8788d;--c3:#c9304f;--soft:#4d1120;--txt:#fff1f3;--mut:#f0bcc6}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-/* Scrollbar cremisi: supporto Firefox + Chromium, Edge, Brave e Safari */
-html{
-  scrollbar-color:var(--c3) var(--soft);
-  scrollbar-width:thin;
-}
 *{box-sizing:border-box}
-*::-webkit-scrollbar{width:12px;height:12px}
-*::-webkit-scrollbar-track{background:var(--soft);border-radius:999px}
-*::-webkit-scrollbar-thumb{background:var(--c3);border:3px solid var(--soft);border-radius:999px}
-*::-webkit-scrollbar-thumb:hover{background:var(--c2)}
-*::-webkit-scrollbar-corner{background:var(--soft)}
 body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.5}
 header{background:linear-gradient(135deg,#4a0715,#8c1230 60%,#b3203f);color:#fff;padding:28px 20px}
 header h1{margin:0 auto;max-width:860px;font-size:clamp(1.3rem,4vw,1.9rem)}
@@ -65,6 +55,18 @@ details{border-bottom:1px solid var(--line);padding:10px 0}
 summary{cursor:pointer;font-weight:600;color:var(--c1)}
 details p{margin:8px 0 0;color:var(--mut)}
 pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:auto;font-size:.78rem;line-height:1.45;max-height:55vh;white-space:pre}
+
+/* Confronto storico facoltativo con API Handymenny */
+.legacy-check{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.legacy-check button{font-size:.84rem;padding:7px 11px}
+.legacy-note{display:block;margin-top:6px;color:var(--mut);font-size:.78rem;line-height:1.4}
+.legacy-panel{margin-top:9px;padding:11px 13px;background:var(--soft);border:1px solid var(--line);border-radius:9px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:.86rem}
+.legacy-panel[hidden]{display:none}
+.legacy-panel .legacy-row{padding:4px 0;border-bottom:1px dashed var(--line);overflow-wrap:anywhere}
+.legacy-panel .legacy-row:last-child{border-bottom:0}
+.legacy-panel .legacy-label{font-weight:700;color:var(--c2)}
+.legacy-panel .legacy-disclaimer{margin:0 0 7px;color:var(--mut);font-size:.8rem}
+.legacy-panel .legacy-error{color:var(--c3);font-weight:600}
 </style>
 </head>
 <body>
@@ -75,7 +77,7 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
 <main>
 <section class="card">
 <h2>Hai file più aggiornati? Caricali tu</h2>
-<p class="hint">Se disponi di dataset Infratel più recenti, puoi caricare qui i file CSV o ZIP supportati (mappatura generale e/o Allegato A della mappatura 2025 dei civici non collegabili Italia a 1 Giga). I file caricati manualmente hanno la precedenza sui corrispondenti dati automatici. L’elaborazione avviene nel browser: gli indirizzi cercati non vengono inviati a un server. Mappa ufficiale: <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener">Infratel su ArcGIS</a>.</p>
+<p class="hint">Se disponi di dataset Infratel più recenti, puoi caricare qui i file CSV o ZIP supportati (mappatura generale e/o Allegato A della mappatura 2025 dei civici non collegabili Italia a 1 Giga). I file caricati manualmente hanno la precedenza sui corrispondenti dati automatici. La ricerca principale e l’elaborazione dei CSV avvengono nel browser: l’indirizzo digitato non viene inviato a un server. Solo se scegli esplicitamente il confronto storico, viene trasmesso all’API esterna di Handymenny il relativo ID EGON. Mappa ufficiale: <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener">Infratel su ArcGIS</a>.</p>
 <input type="file" id="file" accept=".csv,.txt,.zip" multiple>
 <div class="files" id="files">Nessun file caricato.</div>
 <button type="button" class="clr" id="usedb" style="margin-top:10px">Torna ai dati automatici</button>
@@ -109,7 +111,7 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
 <footer>
 <div id="foot"></div>
 <div class="nick">Elper</div>
-<div class="opts"><button type="button" id="o-faq">FAQ</button><span aria-hidden="true">-</span><button type="button" id="o-src">Codice Sorgente</button><span aria-hidden="true">-</span><a href="https://infratelitalia.maps.arcgis.com/apps/webappviewer/index.html?id=5964d5beee264865a679c32cce8c4bc8" target="_blank" rel="noopener noreferrer">Mappa ArcGIS</a></div>
+<div class="opts"><button type="button" id="o-faq">FAQ</button><span aria-hidden="true">-</span><button type="button" id="o-src">Codice Sorgente</button><span aria-hidden="true">-</span><a href="https://infratelitalia.maps.arcgis.com/apps/webappviewer/index.html?id=5964d5beee264865a679c32cce8c4bc8" target="_blank" rel="noopener noreferrer">Mappa ArcGIS</a><span aria-hidden="true">-</span><a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a></div>
 </footer>
 <div class="ov" id="ov" hidden>
 <div class="mod" role="dialog" aria-modal="true" aria-labelledby="mt">
@@ -166,6 +168,14 @@ pre{margin:0;padding:12px;background:var(--bg);border:1px solid var(--line);bord
   <p>Suggerimenti, segnalazioni e correzioni della community sono benvenuti. MI25-6 non è un servizio ufficiale di Infratel, AGCOM o degli operatori di telecomunicazioni.</p>
 </details>
 
+<details>
+  <summary>FAQ &gt;&gt; Che cos’è il confronto storico Handymenny?</summary>
+  <p>Per alcuni civici MI25-6 offre una consultazione facoltativa dell’archivio storico associato alla precedente mappatura Infratel 2017-2024, tramite l’API pubblicata da Handymenny.</p>
+  <p>Il confronto può restituire attributi storici relativi, tra l’altro, alle consultazioni precedenti, alla classificazione dell’area e alle soglie di velocità degli anni passati. Questi dati non sostituiscono la mappatura Infratel 2025-26 e non descrivono necessariamente la copertura attuale.</p>
+  <p>La richiesta parte soltanto quando premi il pulsante dedicato nel risultato. In quel momento viene trasmesso all’API esterna l’identificativo EGON del civico, non il testo dell’indirizzo inserito. Se l’identificativo non è presente nell’archivio storico, il servizio può restituire un risultato non disponibile.</p>
+  <p>Il servizio è gestito da terzi: MI25-6 non ne controlla disponibilità, aggiornamenti o limiti di utilizzo.</p>
+  <p><a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a> · <a href="https://github.com/handymenny/mappaturaInfratel" target="_blank" rel="noopener noreferrer">Codice sorgente del progetto originale</a></p>
+</details>
 <details>
   <summary>FAQ &gt;&gt; MI25-6 verifica la copertura commerciale in tempo reale?</summary>
   <p>No. MI25-6 è uno strumento indipendente di consultazione ed elaborazione delle mappature infrastrutturali pubblicate da Infratel e ArcGIS. Non interroga direttamente i sistemi commerciali degli operatori e non certifica la vendibilità di un indirizzo.</p>
@@ -245,6 +255,82 @@ $("file").onchange=async function(e){
 };
 
 function line(k,v){var d=el("div");d.appendChild(el("span","k",k));if(typeof v==="string")d.appendChild(document.createTextNode(" "+v));else{d.appendChild(document.createTextNode(" "));d.appendChild(v)}return d}
+
+// Consultazione storica esplicita: nessuna chiamata API durante la ricerca locale.
+var HANDY_API="https://mappatura2024.amennillo.eu";
+var handyCache=new Map();
+function historicalStatus(value){
+  var labels={0:"0 · Non incluso",1:"1 · Open Fiber",2:"2 · TIM",3:"3 · Consultazione di prossimità: sì",4:"4 · Consultazione di prossimità: no"};
+  return Object.prototype.hasOwnProperty.call(labels,String(value))?labels[String(value)]:String(value);
+}
+function renderHistorical(data,panel){
+  panel.textContent="";
+  var intro=el("p","legacy-disclaimer","Archivio storico Handymenny · valori restituiti dall’API. Non rappresentano una verifica della copertura attuale.");
+  panel.appendChild(intro);
+  var fields=[
+    ["below300Mbps_2024","Soglia 300 Mbit/s · 2024",false],
+    ["color_2021","Colore area · 2021",false],
+    ["peakSpeed_2021","Velocità di picco · 2021",false],
+    ["below300Mbps_2021","Indicatore sotto 300 Mbit/s · 2021",false],
+    ["status_p1g","Stato PI1G nell’archivio storico",true],
+    ["walkin_connetti","walkin_connetti · valore originale",false],
+    ["class19_2020","class19_2020",false],
+    ["class22_2020","class22_2020",false],
+    ["cat18_2019","cat18_2019",false],
+    ["cat21_2019","cat21_2019",false],
+    ["speed20_2017","speed20_2017",false]
+  ];
+  var count=0;
+  fields.forEach(function(field){
+    var value=data[field[0]];
+    if(value===null||value===undefined||value==="")return;
+    var row=el("div","legacy-row");
+    row.appendChild(el("span","legacy-label",field[1]+": "));
+    row.appendChild(document.createTextNode(field[2]?historicalStatus(value):String(value)));
+    panel.appendChild(row);count++;
+  });
+  if(!count)panel.appendChild(el("div","legacy-row","L’API ha restituito il record, ma non contiene valori storici valorizzati tra i campi gestiti da MI25-6."));
+}
+function makeHistoricalLookup(egon){
+  var wrap=el("div","legacy-check");
+  var button=el("button","clr","Confronta con archivio storico Handymenny");
+  button.type="button";
+  var note=el("span","legacy-note","Consultazione facoltativa su un servizio esterno: al clic viene trasmesso l’ID EGON associato a questo civico. La ricerca principale resta locale.");
+  var panel=el("div","legacy-panel");
+  panel.hidden=true;panel.setAttribute("aria-live","polite");
+  button.addEventListener("click",async function(){
+    panel.hidden=false;
+    button.disabled=true;
+    button.textContent="Consultazione in corso…";
+    panel.textContent="Contatto l’API storica di Handymenny…";
+    try{
+      var data;
+      if(handyCache.has(String(egon))){
+        data=await handyCache.get(String(egon));
+      }else{
+        var request=(async function(){
+          var response=await fetch(HANDY_API+"/egon?id="+encodeURIComponent(egon),{headers:{"Accept":"application/json"}});
+          if(!response.ok){
+            var error=new Error(response.status===404?"Questo ID EGON non è presente nell’archivio storico.":response.status===429?"Limite di richieste dell’API raggiunto (HTTP 429). Riprova più tardi.":"L’API storica ha risposto con HTTP "+response.status+".");
+            error.status=response.status;throw error;
+          }
+          return await response.json();
+        })();
+        handyCache.set(String(egon),request);
+        try{data=await request}catch(error){handyCache.delete(String(egon));throw error;}
+      }
+      renderHistorical(data,panel);
+      button.textContent="Confronto storico caricato";
+    }catch(error){
+      panel.textContent="";
+      panel.appendChild(el("div","legacy-error",error.message||"Errore durante la consultazione dell’API storica."));
+      if(error.status===429)panel.appendChild(el("div","legacy-disclaimer","Il servizio applica un limite alle richieste. Evita di ripetere rapidamente la consultazione."));
+      button.textContent="Riprova il confronto storico";
+    }finally{button.disabled=false;}
+  });
+  wrap.appendChild(button);wrap.appendChild(note);wrap.appendChild(panel);
+  return wrap;
+}
 function match(r,q){
   return (!q.nr||r.nr.indexOf(q.nr)===0)&&(!q.np||r.np.indexOf(q.np)>=0)&&(!q.nc||r.nc.indexOf(q.nc)>=0)&&(!q.nv||r.nv.indexOf(q.nv)>=0)&&(!q.nk||r.nk===q.nk||r.nb===q.nk||(q.nk==="SNC"&&(r.nk==="0"||r.nk===""||r.nb.indexOf("SNC")>=0)));
 }
@@ -282,7 +368,8 @@ $("run").onclick=function(){
        it.appendChild(line("(2030) >> ESITO MAPPATURA PI1G :","PRESENTE NELL’ALLEGATO A (NON COPERTO ENTRO IL 2030 O TECNOLOGIA CON PICCO <= 300 MBIT/S)"));
        it.appendChild(line("CONSULTAZIONE PI1G :","Esiti mappatura 2025 dei civici non collegabili Italia a 1 Giga (16/02/2026)"));
      }else it.appendChild(line("ELENCO PI1G :","Nessuna corrispondenza nell’Allegato A PI1G 2025 caricato; questo file non verifica gli interventi FNC."));
-    box.appendChild(it);
+    if(b.id)it.appendChild(makeHistoricalLookup(b.id));
+     box.appendChild(it);
   });
   if(order.length>40)box.appendChild(el("div","hint","Mostrati i primi 40 di "+order.length+" risultati: aggiungi via o civico per restringere."));
   $("out").hidden=false;$("out").scrollIntoView({behavior:"smooth",block:"nearest"});
