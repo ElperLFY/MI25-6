@@ -50,6 +50,25 @@ const PI1G_FILES = {
   Veneto: "veneto.zip"
 };
 
+const FIXED_SURVEY_2021_FILES = Object.freeze({
+  Abruzzo: "ABRUZZO.zip",
+  Basilicata: "BASILICATA.zip",
+  Calabria: "CALABRIA.zip",
+  Campania: "CAMPANIA.zip",
+  "Emilia-Romagna": "EMILIA-ROMAGNA.zip",
+  "Friuli-Venezia Giulia": "FRIULI-VENEZIAGIULIA.zip",
+  Lazio: "LAZIO.zip",
+  Liguria: "LIGURIA.zip",
+  Marche: "MARCHE.zip",
+  Molise: "MOLISE.zip",
+  Puglia: "PUGLIA.zip",
+  Sardegna: "SARDEGNA.zip",
+  Sicilia: "SICILIA.zip",
+  Toscana: "TOSCANA.zip",
+  "Trentino-Alto Adige": "TRENTINO-ALTOADIGE.zip",
+  "Valle d’Aosta": "VALLEDAOSTA.zip"
+});
+
 const MAX_FILE_SIZE = 200 * 1024 * 1024;
 const MAX_ARCHIVE_SIZE = 1024 * 1024 * 1024;
 const HEADER_SCAN_LIMIT = 100;
@@ -544,16 +563,26 @@ function collectDatasets(parsed) {
 async function readOptionalRegionalDataset(key, region) {
   const definition = DATASET_DEFINITIONS[key];
   const slug = regionSlug(region);
-  const paths = [
+  const uploadedRegionalFile = key === "fixedSurvey2021"
+    ? FIXED_SURVEY_2021_FILES[region]
+    : "";
+  const paths = Array.from(new Set([
+    uploadedRegionalFile
+      ? "data/" + definition.folder + "/" + uploadedRegionalFile
+      : "",
     "data/" + definition.folder + "/" + slug + ".zip",
     "data/" + definition.folder + "/italia.zip",
+    "data/" + definition.folder + "/Italia.zip",
     "data/" + definition.folder + "/" + definition.archiveName
-  ];
+  ].filter(Boolean)));
   const parsed = await fetchArchive(paths, key, region);
-  if (!parsed) return [];
+  if (!parsed) return { records: [], available: false };
 
   const groups = collectDatasets(parsed);
-  return recordsForRegion(groups[key] || [], region);
+  return {
+    records: recordsForRegion(groups[key] || [], region),
+    available: true
+  };
 }
 
 async function readGeneralRegion(region) {
@@ -615,12 +644,11 @@ export async function loadRegionalData(region, options = {}) {
 
   const extra = {};
   const extraErrors = {};
+  const extraAvailable = {};
   for (const [key, value] of extraResults) {
-    if (Array.isArray(value)) extra[key] = value;
-    else {
-      extra[key] = value.records;
-      extraErrors[key] = value.error;
-    }
+    extra[key] = value.records || [];
+    extraAvailable[key] = value.available !== false;
+    if (value.error) extraErrors[key] = value.error;
   }
 
   return {
@@ -628,6 +656,7 @@ export async function loadRegionalData(region, options = {}) {
     pi1g: pi1gResult.records,
     hasPi1gArchive: pi1gResult.available,
     extra,
+    extraAvailable,
     extraErrors
   };
 }
