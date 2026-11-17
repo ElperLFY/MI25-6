@@ -74,6 +74,48 @@ export const FIELD_ALIASES = {
   sectionCode: ["istsez", "codicesezione", "sezioneistat"]
 };
 
+export const FIXED_SURVEY_2021_COLOR_LABELS = Object.freeze({
+  "": "Bianco",
+  b: "Bianco",
+  g: "Grigio",
+  n: "Nero"
+});
+
+const FIXED_SURVEY_2021_SPEED_WITH_COLOR = Object.freeze({
+  "0": "< 30 Mbit/s",
+  "1": "< 300 Mbit/s",
+  "2": "≥ 300 Mbit/s",
+  "30": "30–99 Mbit/s",
+  "100": "100–199 Mbit/s",
+  "200": "200–299 Mbit/s",
+  "300": "300–999 Mbit/s",
+  "1000": "≥ 1.000 Mbit/s"
+});
+
+const FIXED_SURVEY_2021_SPEED_WITHOUT_COLOR = Object.freeze({
+  "0": "< 300 Mbit/s",
+  "1": "≥ 300 Mbit/s"
+});
+
+export function decodeFixedSurvey2021Color(value, columnPresent = true) {
+  if (!columnPresent) return "";
+  const code = String(value ?? "").trim().toLowerCase();
+  return Object.prototype.hasOwnProperty.call(FIXED_SURVEY_2021_COLOR_LABELS, code)
+    ? FIXED_SURVEY_2021_COLOR_LABELS[code]
+    : "Codice colore non riconosciuto (" + code + ")";
+}
+
+export function decodeFixedSurvey2021Speed(value, hasColorColumn = true) {
+  const code = String(value ?? "").trim();
+  if (!code) return "";
+  const mapping = hasColorColumn
+    ? FIXED_SURVEY_2021_SPEED_WITH_COLOR
+    : FIXED_SURVEY_2021_SPEED_WITHOUT_COLOR;
+  return Object.prototype.hasOwnProperty.call(mapping, code)
+    ? mapping[code]
+    : "Codice velocità non documentato (" + code + ")";
+}
+
 export const DOTS = {
   PA: ["#ff7fd0", "sede Pubblica Amministrazione in piani pubblici (scuole/sanità)"],
   A: ["#8a8a8a", "civico con scarsa qualità della coordinata"],
