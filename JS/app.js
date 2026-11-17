@@ -1348,6 +1348,7 @@ function setLegacyMode(enabled) {
   if (state.legacyMode && state.csvReaderMode) setCsvReaderMode(false);
   $("legacy-toggle").textContent = state.legacyMode ? "Legacy mode ON" : "Legacy mode OFF";
   $("legacy-toggle").setAttribute("aria-pressed", String(state.legacyMode));
+  $("csv-reader-toggle").disabled = state.legacyMode;
   $("modern-search-card").hidden = state.legacyMode;
   $("legacy-search-card").hidden = !state.legacyMode;
   $("results-card").hidden = true;
