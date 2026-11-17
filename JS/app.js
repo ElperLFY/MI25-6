@@ -31,7 +31,16 @@ const state = {
   extra: Object.fromEntries(EXTRA_DATASET_KEYS.map((key) => [key, []])),
   manualExtras: new Set(),
   loadToken: 0,
-  legacyMode: false
+  searchToken: 0,
+  pi1gAvailable: false,
+  extraAvailability: {},
+  checkedExtras: new Set(),
+  legacyMode: false,
+  csvReaderMode: false,
+  readerRecords: [],
+  readerPage: 0,
+  readerPageSize: 100,
+  readerLoadToken: 0
 };
 
 const legacyState = {
@@ -61,6 +70,7 @@ const legacyTokens = {
 
 const legacyNumberItems = [];
 const suggestionTimers = {};
+const suggestionValues = { province: [], city: [], street: [], number: [] };
 
 function createElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -195,7 +205,7 @@ function setFileMessages(messages) {
   for (const message of messages) list.appendChild(createElement("div", "file-entry", message));
 }
 
-function setAutomaticStatus(region, pi1gAvailable, extraAvailable = {}) {
+function setAutomaticStatus(region, pi1gAvailable, extraAvailable = state.extraAvailability) {
   const messages = [
     "Mappatura generale: " + state.general.length.toLocaleString("it-IT") + " record",
     pi1gAvailable
@@ -205,21 +215,19 @@ function setAutomaticStatus(region, pi1gAvailable, extraAvailable = {}) {
 
   for (const key of EXTRA_DATASET_KEYS) {
     const count = state.extra[key].length;
-    if (count) {
-      messages.push(DATASET_DEFINITIONS[key].label + ": " + count.toLocaleString("it-IT") + " record");
-    } else if (key === "fixedSurvey2021" && extraAvailable[key] === false) {
+    if (state.manualExtras.has(key)) {
+      messages.push(DATASET_DEFINITIONS[key].label + ": file manuale · " + count.toLocaleString("it-IT") + " record");
+    } else if (state.checkedExtras.has(key)) {
+      messages.push(DATASET_DEFINITIONS[key].label + ": " + count.toLocaleString("it-IT") + " corrispondenze per l'indirizzo");
+    } else if (extraAvailable[key] === false) {
       messages.push(DATASET_DEFINITIONS[key].label + ": archivio regionale non disponibile");
+    } else {
+      messages.push(DATASET_DEFINITIONS[key].label + ": consultazione mirata dopo l'invio della ricerca");
     }
   }
 
   if (state.manualGeneral) messages[0] = "Mappatura generale: file manuale attivo · " + state.general.length.toLocaleString("it-IT") + " record";
   if (state.manualPi1g) messages[1] = "Allegato A PI1G: file manuale attivo · " + state.pi1g.length.toLocaleString("it-IT") + " record";
-  for (const key of state.manualExtras) {
-    const index = messages.findIndex((message) => message.startsWith(DATASET_DEFINITIONS[key].label));
-    const line = DATASET_DEFINITIONS[key].label + " · file manuale · " + state.extra[key].length.toLocaleString("it-IT") + " record";
-    if (index >= 0) messages[index] = line;
-    else messages.push(line);
-  }
 
   $("data-status").textContent = region + " · " + messages.join(" · ");
 }
@@ -227,8 +235,11 @@ function setAutomaticStatus(region, pi1gAvailable, extraAvailable = {}) {
 async function loadSelectedRegion() {
   const region = $("region").value;
   const token = ++state.loadToken;
+  state.searchToken += 1;
   $("results-card").hidden = true;
   $("search-error").textContent = "";
+  state.checkedExtras.clear();
+  state.extraAvailability = {};
 
   if (!region) {
     if (!state.manualGeneral) state.general = [];
@@ -236,45 +247,62 @@ async function loadSelectedRegion() {
     for (const key of EXTRA_DATASET_KEYS) {
       if (!state.manualExtras.has(key)) state.extra[key] = [];
     }
-    $("data-status").textContent = "Seleziona una Regione per caricare i dataset automatici.";
+    $("region-hint").textContent = "Seleziona una Regione per attivare i suggerimenti.";
+    $("data-status").textContent = "Seleziona una Regione per caricare i dataset principali.";
     $("search-button").disabled = false;
+    if (state.csvReaderMode) {
+      state.readerRecords = [];
+      $("csv-reader-status").textContent = "Seleziona una Regione per leggere il CSV.";
+      renderCsvReaderPage();
+    }
     return;
   }
 
+  $("region-hint").textContent = "Suggerimenti dai dataset principali; gli archivi aggiuntivi vengono interrogati dopo la ricerca.";
   const loadGeneral = !state.manualGeneral;
   const loadPi1g = !state.manualPi1g;
-  const loadExtras = EXTRA_DATASET_KEYS.filter((key) => !state.manualExtras.has(key));
 
-  if (!loadGeneral && !loadPi1g && !loadExtras.length) {
-    setAutomaticStatus(region, true);
+  for (const key of EXTRA_DATASET_KEYS) {
+    if (!state.manualExtras.has(key)) state.extra[key] = [];
+  }
+
+  if (!loadGeneral && !loadPi1g) {
+    setAutomaticStatus(region, state.pi1gAvailable);
+    if (state.csvReaderMode) await loadCsvReaderDataset();
     return;
   }
 
   $("search-button").disabled = true;
-  $("data-status").textContent = "Caricamento dei dataset di " + region + "…";
+  $("data-status").textContent = "Caricamento dei dataset principali di " + region + "…";
 
   try {
-    const loaded = await loadRegionalData(region, { loadGeneral, loadPi1g, loadExtras });
+    const loaded = await loadRegionalData(region, {
+      loadGeneral,
+      loadPi1g,
+      loadExtras: []
+    });
     if (token !== state.loadToken) return;
 
     if (loadGeneral) state.general = loaded.general || [];
     if (loadPi1g) state.pi1g = loaded.pi1g || [];
-    for (const key of loadExtras) state.extra[key] = loaded.extra[key] || [];
-    setAutomaticStatus(region, loaded.hasPi1gArchive, loaded.extraAvailable);
+    state.pi1gAvailable = loaded.hasPi1gArchive;
+    setAutomaticStatus(region, loaded.hasPi1gArchive, state.extraAvailability);
 
-    const extraErrors = Object.entries(loaded.extraErrors || {});
-    if (extraErrors.length) {
-      const warnings = extraErrors.map(([key, message]) => DATASET_DEFINITIONS[key].label + ": " + message);
-      $("data-status").textContent += " · " + warnings.join(" · ");
+    const errors = Object.entries(loaded.extraErrors || {});
+    if (errors.length) {
+      $("data-status").textContent += " · " + errors.map(([key, message]) => DATASET_DEFINITIONS[key].label + ": " + message).join(" · ");
     }
+    scheduleSuggestions("province");
   } catch (error) {
     if (token !== state.loadToken) return;
     if (loadGeneral) state.general = [];
     if (loadPi1g) state.pi1g = [];
-    for (const key of loadExtras) state.extra[key] = [];
     $("data-status").textContent = "Impossibile caricare i dataset principali di " + region + ". " + (error.message || "Verifica i file o carica i dataset manualmente.");
   } finally {
-    if (token === state.loadToken) $("search-button").disabled = false;
+    if (token === state.loadToken) {
+      $("search-button").disabled = false;
+      if (state.csvReaderMode) await loadCsvReaderDataset();
+    }
   }
 }
 
