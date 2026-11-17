@@ -73,6 +73,34 @@ test("fixed network 2021 recognises the supplied speed fields", () => {
   assert.equal(parsed.records[0].suffix, "");
 });
 
+test("targeted CSV parsing keeps only the requested address and can retain original fields", () => {
+  const csv = [
+    "id_egon;regione;provincia;nome_com;strada;civico;indirunito;colore_26;peak_vel_down_26;vel_max_down_26;campo_extra",
+    "380100150514555;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA DELLO SPORT;10;VIA DELLO SPORT, 10;g;1000;2;valore originale",
+    "380100150514556;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA GARIBALDI;2;VIA GARIBALDI, 2;n;300;1;altro"
+  ].join("\n");
+
+  const parsed = parseDataset(csv, "mappatura-reti-fisse-2021.csv", "", {
+    query: {
+      region: "SICILIA",
+      province: "AGRIGENTO",
+      city: "PORTO EMPEDOCLE",
+      street: "VIA DELLO SPORT",
+      number: "10"
+    },
+    includeSourceFields: true
+  });
+
+  assert.equal(parsed.records.length, 1);
+  assert.equal(parsed.records[0].id, "380100150514555");
+  assert.equal(parsed.records[0].sourceFields[0].name, "id_egon");
+  assert.equal(parsed.records[0].sourceFields[7].name, "colore_26");
+  assert.equal(parsed.records[0].sourceFields[7].value, "g");
+  assert.equal(parsed.records[0].sourceFields[10].name, "campo_extra");
+  assert.equal(parsed.records[0].sourceFields[10].value, "valore originale");
+  assert.equal(parsed.records[0].sourceFile, "mappatura-reti-fisse-2021.csv");
+});
+
 test("fixed survey 2021 decodes color and 2026 speed bands", () => {
   assert.equal(decodeFixedSurvey2021Color("g"), "Grigio");
   assert.equal(decodeFixedSurvey2021Color("b"), "Bianco");
@@ -232,7 +260,8 @@ test("2021 regional data loads from the uploaded uppercase regional ZIP", async 
   const toArrayBuffer = (value) => encoder.encode(value).buffer;
   const csv = [
     "id_egon;regione;provincia;nome_com;strada;civico;indirunito;colore_26;peak_vel_down_26;vel_max_down_26",
-    "380100150514555;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA DELLO SPORT;10;VIA DELLO SPORT, 10;g;1000;2"
+    "380100150514555;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA DELLO SPORT;10;VIA DELLO SPORT, 10;g;1000;2",
+    "380100150514556;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA GARIBALDI;2;VIA GARIBALDI, 2;n;300;1"
   ].join("\n");
   const entry = {
     name: "MAPPATURA.csv",
@@ -263,7 +292,14 @@ test("2021 regional data loads from the uploaded uppercase regional ZIP", async 
     const result = await loadRegionalData("Sicilia", {
       loadGeneral: false,
       loadPi1g: false,
-      loadExtras: ["fixedSurvey2021"]
+      loadExtras: ["fixedSurvey2021"],
+      query: {
+        region: "SICILIA",
+        province: "AGRIGENTO",
+        city: "PORTO EMPEDOCLE",
+        street: "VIA DELLO SPORT",
+        number: "10"
+      }
     });
     assert.deepEqual(requested, ["data/fixed-2021/SICILIA.zip"]);
     assert.equal(result.extraAvailable.fixedSurvey2021, true);
@@ -271,6 +307,17 @@ test("2021 regional data loads from the uploaded uppercase regional ZIP", async 
     assert.equal(result.extra.fixedSurvey2021[0].id, "380100150514555");
     assert.equal(result.extra.fixedSurvey2021[0].networkColor2026, "g");
     assert.equal(result.extra.fixedSurvey2021[0].maxDownload2026, "2");
+
+    const reader = await loadRegionalData("Sicilia", {
+      loadGeneral: false,
+      loadPi1g: false,
+      loadExtras: ["fixedSurvey2021"],
+      includeSourceFields: true
+    });
+    assert.equal(reader.extra.fixedSurvey2021.length, 2);
+    assert.equal(reader.extra.fixedSurvey2021[0].sourceFields[0].name, "id_egon");
+    assert.equal(reader.extra.fixedSurvey2021[0].sourceFields[7].name, "colore_26");
+    assert.equal(reader.extra.fixedSurvey2021[0].sourceFields[7].value, "g");
   } finally {
     if (oldWindow === undefined) delete globalThis.window;
     else globalThis.window = oldWindow;
