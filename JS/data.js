@@ -201,8 +201,6 @@ function inferDatasetType(headers, name, forcedType = "") {
     return "proximity2025";
   }
   if (hasEligibility && hasExclusion) return "fiberCopProximity2025";
-    return "proximity2025";
-  }
   if (filename.includes("pi1g") || filename.includes("mapp707k") || forcedType === "pi1g2025") {
     return "pi1g2025";
   }
