@@ -368,7 +368,10 @@ function handleAutocompleteEnter(field, event) {
   const typed = input.value.trim();
   if (!typed && field !== "number") return;
 
-  const values = suggestionValues[field] || [];
+  const values = typed
+    ? getSuggestions(field, typed, currentSearchState(), allRecords()).slice(0, 40)
+    : (suggestionValues[field] || []);
+  suggestionValues[field] = values;
   const normalised = normalise(typed);
   const selected = values.find((value) => normalise(value) === normalised)
     || values.find((value) => normalise(value).startsWith(normalised))
@@ -968,11 +971,8 @@ async function runSearch(event) {
     });
 
     if (region) setAutomaticStatus(region, state.pi1gAvailable, state.extraAvailability);
-    const checkedCounts = requestedExtras.map((key) =>
-      DATASET_DEFINITIONS[key].label + ": " + state.extra[key].length.toLocaleString("it-IT") + " record"
-    );
-    if (checkedCounts.length) {
-      $("data-status").textContent += " · Ricerca mirata · " + checkedCounts.join(" · ");
+    if (requestedExtras.length) {
+      $("data-status").textContent += " · Archivi aggiuntivi filtrati per l'indirizzo inserito.";
     }
   } catch (error) {
     if (token !== state.searchToken) return;
