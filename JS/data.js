@@ -487,7 +487,7 @@ function recordsForRegion(records, region) {
   return filtered;
 }
 
-async function readArchiveEntries(archive, name, forcedType, region, budget, depth = 0) {
+async function readArchiveEntries(archive, name, forcedType, region, budget, depth = 0, options = {}) {
   const allEntries = Object.values(archive.files).filter((entry) => !entry.dir);
   let archiveType = forcedType;
   const metadataEntry = allEntries.find((entry) => /(^|\/)dataset\.json$/i.test(entry.name));
@@ -535,7 +535,8 @@ async function readArchiveEntries(archive, name, forcedType, region, budget, dep
       archiveType,
       region,
       budget,
-      depth + 1
+      depth + 1,
+      options
     );
     for (const dataset of nestedParsed) parsed.push(dataset);
   }
@@ -546,17 +547,17 @@ async function readArchiveEntries(archive, name, forcedType, region, budget, dep
       throw new Error("L’archivio supera il limite di dimensione espansa consentito.");
     }
     const content = decodeBuffer(await entry.async("arraybuffer"));
-    const dataset = parseDataset(content, entry.name || name, archiveType);
+    const dataset = parseDataset(content, entry.name || name, archiveType, options);
     if (dataset) parsed.push(dataset);
   }
 
   return parsed;
 }
 
-async function readArchiveBuffer(buffer, name, forcedType = "", region = "") {
+async function readArchiveBuffer(buffer, name, forcedType = "", region = "", options = {}) {
   if (!window.JSZip) throw new Error("La libreria JSZip non è disponibile.");
   const archive = await window.JSZip.loadAsync(buffer);
-  const parsed = await readArchiveEntries(archive, name, forcedType, region, { expandedBytes: 0 });
+  const parsed = await readArchiveEntries(archive, name, forcedType, region, { expandedBytes: 0 }, 0, options);
 
   if (!parsed.length) {
     throw new Error("Nell’archivio non è stato trovato un CSV riconoscibile. Controlla che italia.zip contenga ZIP regionali (ad esempio SICILIA.zip) e che questi contengano CSV con intestazioni supportate.");
@@ -577,7 +578,7 @@ async function getArchiveBytes(path) {
   return archiveBytesCache.get(path);
 }
 
-async function fetchArchive(paths, forcedType = "", region = "") {
+async function fetchArchive(paths, forcedType = "", region = "", options = {}) {
   let lastError = null;
   for (const path of paths) {
     try {
@@ -586,7 +587,7 @@ async function fetchArchive(paths, forcedType = "", region = "") {
         archiveBytesCache.delete(path);
         continue;
       }
-      return await readArchiveBuffer(buffer, path, forcedType, region);
+      return await readArchiveBuffer(buffer, path, forcedType, region, options);
     } catch (error) {
       lastError = error;
       archiveBytesCache.delete(path);
@@ -607,7 +608,7 @@ function collectDatasets(parsed) {
   return grouped;
 }
 
-async function readOptionalRegionalDataset(key, region) {
+async function readOptionalRegionalDataset(key, region, options = {}) {
   const definition = DATASET_DEFINITIONS[key];
   const slug = regionSlug(region);
   const uploadedRegionalFile = key === "fixedSurvey2021"
@@ -622,7 +623,7 @@ async function readOptionalRegionalDataset(key, region) {
     "data/" + definition.folder + "/Italia.zip",
     "data/" + definition.folder + "/" + definition.archiveName
   ].filter(Boolean)));
-  const parsed = await fetchArchive(paths, key, region);
+  const parsed = await fetchArchive(paths, key, region, options);
   if (!parsed) return { records: [], available: false };
 
   const groups = collectDatasets(parsed);
@@ -632,7 +633,7 @@ async function readOptionalRegionalDataset(key, region) {
   };
 }
 
-async function readGeneralRegion(region) {
+async function readGeneralRegion(region, options = {}) {
   const slugs = region === "Trentino-Alto Adige"
     ? ["trentino-alto-adige-bolzano", "trentino-alto-adige-trento"]
     : [regionSlug(region)];
@@ -643,7 +644,7 @@ async function readGeneralRegion(region) {
       "data/fixed-2025/" + slug + ".zip",
       "data/" + slug + ".zip"
     ];
-    const parsed = await fetchArchive(paths, "general2025", region);
+    const parsed = await fetchArchive(paths, "general2025", region, options);
     if (!parsed) throw new Error("Archivio generale non trovato per " + region + ".");
     const groups = collectDatasets(parsed);
     const rows = groups.general2025 || [];
@@ -652,7 +653,7 @@ async function readGeneralRegion(region) {
   return records;
 }
 
-async function readPi1gRegion(region) {
+async function readPi1gRegion(region, options = {}) {
   const filename = PI1G_FILES[region];
   if (!filename) return { records: [], available: false };
 
@@ -660,7 +661,7 @@ async function readPi1gRegion(region) {
     "data/pi1g-2025/" + filename,
     "data/pi1g/" + filename
   ];
-  const parsed = await fetchArchive(paths, "pi1g2025", region);
+  const parsed = await fetchArchive(paths, "pi1g2025", region, options);
   if (!parsed) return { records: [], available: false };
   const groups = collectDatasets(parsed);
   return { records: recordsForRegion(groups.pi1g2025 || [], region), available: true };
@@ -671,13 +672,14 @@ export async function loadRegionalData(region, options = {}) {
   const loadPi1g = options.loadPi1g !== false;
   const requestedExtras = options.loadExtras || EXTRA_DATASET_KEYS;
 
-  const generalPromise = loadGeneral ? readGeneralRegion(region) : Promise.resolve(null);
+  const parseOptions = { query: options.query, includeSourceFields: options.includeSourceFields === true };
+  const generalPromise = loadGeneral ? readGeneralRegion(region, parseOptions) : Promise.resolve(null);
   const pi1gPromise = loadPi1g
-    ? readPi1gRegion(region)
+    ? readPi1gRegion(region, parseOptions)
     : Promise.resolve({ records: null, available: false });
   const extrasPromise = Promise.all(requestedExtras.map(async (key) => {
     try {
-      return [key, await readOptionalRegionalDataset(key, region)];
+      return [key, await readOptionalRegionalDataset(key, region, parseOptions)];
     } catch (error) {
       return [key, { error: error.message || String(error), records: [] }];
     }
