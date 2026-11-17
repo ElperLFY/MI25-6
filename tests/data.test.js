@@ -259,9 +259,9 @@ test("2021 regional data loads from the uploaded uppercase regional ZIP", async 
   const encoder = new TextEncoder();
   const toArrayBuffer = (value) => encoder.encode(value).buffer;
   const csv = [
-    "id_egon;regione;provincia;nome_com;strada;civico;indirunito;colore_26;peak_vel_down_26;vel_max_down_26",
-    "380100150514555;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA DELLO SPORT;10;VIA DELLO SPORT, 10;g;1000;2",
-    "380100150514556;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA GARIBALDI;2;VIA GARIBALDI, 2;n;300;1"
+    "id_egon;regione;provincia;nome_com;strada;civico;indirunito;colore_26;peak_vel_down_26;vel_max_down_26;custom;custom",
+    "380100150514555;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA DELLO SPORT;10;VIA DELLO SPORT, 10;g;1000;2;raw-one;raw-one-second",
+    "380100150514556;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA GARIBALDI;2;VIA GARIBALDI, 2;n;300;1;raw-two;raw-two-second"
   ].join("\n");
   const entry = {
     name: "MAPPATURA.csv",
@@ -329,7 +329,10 @@ test("2021 regional data loads from the uploaded uppercase regional ZIP", async 
     assert.equal(lightweightReader.extra.fixedSurvey2021.length, 2);
     assert.equal(rawRow.sourceHeaders[7], "colore_26");
     assert.equal(rawRow.sourceValues[7], "g");
-    assert.equal(rawRow.sourceValues[10], undefined);
+    assert.equal(rawRow.sourceHeaders[10], "custom");
+    assert.equal(rawRow.sourceHeaders[11], "custom");
+    assert.equal(rawRow.sourceValues[10], "raw-one");
+    assert.equal(rawRow.sourceValues[11], "raw-one-second");
     assert.equal(rawRow.normalisedRegion, "SICILIA");
     assert.equal(rawRow.key, undefined);
     assert.equal(rawRow.sourceFile, "MAPPATURA.csv");
