@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { loadRegionalData, parseDataset, parseUploadedFiles, searchRecords } from "../JS/data.js";
+import { decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, searchRecords } from "../JS/data.js";
 
 const proximityHeaders = [
   "cod_egon_civ",
@@ -67,9 +67,24 @@ test("fixed network 2021 recognises the supplied speed fields", () => {
   assert.equal(parsed.records[0].city, "CANICATTI'");
   assert.equal(parsed.records[0].fullAddress, "VIA ALDO MORO, 10");
   assert.equal(parsed.records[0].networkColor2026, "n");
+  assert.equal(parsed.records[0].networkColor2026Present, true);
   assert.equal(parsed.records[0].peakDownload2026, "300");
   assert.equal(parsed.records[0].maxDownload2026, "2");
   assert.equal(parsed.records[0].suffix, "");
+});
+
+test("fixed survey 2021 decodes color and 2026 speed bands", () => {
+  assert.equal(decodeFixedSurvey2021Color("g"), "Grigio");
+  assert.equal(decodeFixedSurvey2021Color("b"), "Bianco");
+  assert.equal(decodeFixedSurvey2021Color("n"), "Nero");
+  assert.equal(decodeFixedSurvey2021Color(""), "Bianco");
+  assert.equal(decodeFixedSurvey2021Color("", false), "");
+
+  assert.equal(decodeFixedSurvey2021Speed("2", true), "≥ 300 Mbit/s");
+  assert.equal(decodeFixedSurvey2021Speed("1000", true), "≥ 1.000 Mbit/s");
+  assert.equal(decodeFixedSurvey2021Speed("0", false), "< 300 Mbit/s");
+  assert.equal(decodeFixedSurvey2021Speed("1", false), "≥ 300 Mbit/s");
+  assert.equal(decodeFixedSurvey2021Speed("42", true), "Codice velocità non documentato (42)");
 });
 
 test("the original 2025 general and PI1G datasets remain recognised", () => {
