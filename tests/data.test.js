@@ -80,7 +80,13 @@ test("fixed survey 2021 decodes color and 2026 speed bands", () => {
   assert.equal(decodeFixedSurvey2021Color(""), "Bianco");
   assert.equal(decodeFixedSurvey2021Color("", false), "");
 
+  assert.equal(decodeFixedSurvey2021Speed("0", true), "< 30 Mbit/s");
+  assert.equal(decodeFixedSurvey2021Speed("1", true), "< 300 Mbit/s");
   assert.equal(decodeFixedSurvey2021Speed("2", true), "≥ 300 Mbit/s");
+  assert.equal(decodeFixedSurvey2021Speed("30", true), "30–99 Mbit/s");
+  assert.equal(decodeFixedSurvey2021Speed("100", true), "100–199 Mbit/s");
+  assert.equal(decodeFixedSurvey2021Speed("200", true), "200–299 Mbit/s");
+  assert.equal(decodeFixedSurvey2021Speed("300", true), "300–999 Mbit/s");
   assert.equal(decodeFixedSurvey2021Speed("1000", true), "≥ 1.000 Mbit/s");
   assert.equal(decodeFixedSurvey2021Speed("0", false), "< 300 Mbit/s");
   assert.equal(decodeFixedSurvey2021Speed("1", false), "≥ 300 Mbit/s");
