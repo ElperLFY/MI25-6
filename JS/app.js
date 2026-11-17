@@ -868,12 +868,14 @@ function setCsvReaderMode(enabled) {
   $("results-card").hidden = true;
 
   if (state.csvReaderMode) {
+    $("mode-help").textContent = "CSV Reader ON: carica tutte le righe del dataset selezionato per la Regione scelta. La tabella conserva le intestazioni originali e l'ordine del CSV, mostrando 100 righe per pagina.";
     loadCsvReaderDataset();
   } else {
     state.readerLoadToken += 1;
     state.readerRecords = [];
     state.readerPage = 0;
     $("csv-reader-status").textContent = "CSV Reader disattivato.";
+    $("mode-help").textContent = "Ricerca indirizzo: carica i dataset principali per i suggerimenti e consulta gli archivi aggiuntivi soltanto dopo l'invio dell'indirizzo. CSV Reader apre volontariamente l'archivio completo.";
     renderCsvReaderPage();
   }
 }
@@ -892,7 +894,7 @@ async function runSearch(event) {
   $("results-list").textContent = "";
   $("search-error").textContent = "";
 
-  if (!$("region").value && !state.manualGeneral && !state.manualPi1g) {
+  if (!$("region").value && !state.manualGeneral && !state.manualPi1g && !state.manualExtras.size) {
     $("search-error").textContent = "Seleziona una Regione.";
     return;
   }
@@ -960,7 +962,11 @@ async function runSearch(event) {
 function clearSearch() {
   ["region", "province", "city", "street", "street-number"].forEach((id) => { $(id).value = ""; });
   ["province-options", "city-options", "street-options", "number-options"].forEach((id) => { $(id).textContent = ""; });
-  $("number-hint").textContent = "";
+  for (const field of ["region", "province", "city", "street", "number"]) {
+    const hint = $(field + "-hint");
+    if (hint) hint.textContent = "";
+  }
+  for (const field of Object.keys(suggestionValues)) suggestionValues[field] = [];
   $("search-error").textContent = "";
   $("results-card").hidden = true;
   loadSelectedRegion();
@@ -1016,7 +1022,7 @@ async function handleFileUpload(event) {
     }
     $("data-status").textContent = "Dataset manuali attivi · " + counts.join(" · ");
     $("results-card").hidden = true;
-    updateNumberHint();
+    for (const field of ["province", "city", "street", "number"]) scheduleSuggestions(field);
   }
   event.target.value = "";
 }
@@ -1395,7 +1401,8 @@ function initialise() {
   populateRegions();
   renderLegend();
   $("footer-source").textContent = "Basato sulla Mappatura reti fisse Infratel 2025 (layer ArcGIS aggiornato il 26/02/2026), sugli esiti PI1G 2025 (16/02/2026) e sulla mappa ArcGIS · MI25-6 di Elper.";
-  $("data-status").textContent = "Seleziona una Regione per caricare i dataset automatici.";
+  state.readerPageSize = Number($("csv-reader-page-size").value) || 100;
+  $("data-status").textContent = "Seleziona una Regione per caricare i dataset principali.";
   setFileMessages([]);
   bindEvents();
 }
