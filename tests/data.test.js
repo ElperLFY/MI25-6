@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseDataset, parseUploadedFiles, searchRecords } from "../JS/data.js";
+import { loadRegionalData, parseDataset, parseUploadedFiles, searchRecords } from "../JS/data.js";
 
 const proximityHeaders = [
   "cod_egon_civ",
@@ -194,5 +194,67 @@ test("FiberCop is inferred from eligibility and exclusion headers inside a regio
     assert.equal(imported.datasets.fiberCopProximity2025[0].eligibility, "SI");
   } finally {
     delete globalThis.window;
+  }
+});
+
+
+
+test("regional lookup opens only the matching uppercase ZIP from italia.zip", async () => {
+  const encoder = new TextEncoder();
+  const toArrayBuffer = (value) => encoder.encode(value).buffer;
+  const csv = [
+    proximityHeaders.join(";"),
+    ["380600457590056", "SICILIA", "PALERMO", "PALERMO", "", "64001", "VIA TEST", "12", "", "38.1157", "13.3615", "SI", "SI"].join(";")
+  ].join("\\n");
+  const entry = (name, payload) => ({
+    name, dir: false,
+    _data: { uncompressedSize: encoder.encode(payload).length },
+    async: async (type) => type === "string" ? payload : toArrayBuffer(payload)
+  });
+  const archives = {
+    ROOT_REGION_FILTER: {
+      files: {
+        "ABRUZZO.zip": entry("ABRUZZO.zip", "REGION_ABRUZZO_FILTER"),
+        "SICILIA.zip": entry("SICILIA.zip", "REGION_SICILIA_FILTER")
+      }
+    },
+    REGION_SICILIA_FILTER: { files: { "CIVICI.csv": entry("CIVICI.csv", csv) } }
+  };
+  const loaded = [];
+  const oldWindow = globalThis.window;
+  const oldFetch = globalThis.fetch;
+  globalThis.window = {
+    JSZip: {
+      loadAsync: async (buffer) => {
+        const key = new TextDecoder().decode(buffer);
+        if (key.startsWith("REGION_")) loaded.push(key);
+        assert.ok(archives[key], "unexpected ZIP fixture: " + key);
+        return archives[key];
+      }
+    }
+  };
+  globalThis.fetch = async (path) => {
+    if (path.endsWith("/sicilia.zip")) return { status: 404, ok: false };
+    if (path.endsWith("/italia.zip")) return {
+      status: 200,
+      ok: true,
+      arrayBuffer: async () => toArrayBuffer("ROOT_REGION_FILTER")
+    };
+    throw new Error("Unexpected fetch path: " + path);
+  };
+  try {
+    const result = await loadRegionalData("Sicilia", {
+      loadGeneral: false,
+      loadPi1g: false,
+      loadExtras: ["proximity2025"]
+    });
+    assert.equal(result.extra.proximity2025.length, 1);
+    assert.equal(result.extra.proximity2025[0].region, "SICILIA");
+    assert.deepEqual(loaded, ["REGION_SICILIA_FILTER"]);
+  } finally {
+    if (oldWindow === undefined) delete globalThis.window;
+    else globalThis.window = oldWindow;
+    if (oldFetch === undefined) delete globalThis.fetch;
+    else globalThis.fetch = oldFetch;
   }
 });
