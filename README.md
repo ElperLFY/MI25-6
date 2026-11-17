@@ -19,7 +19,7 @@ MI25-6 è un'applicazione statica per consultare le mappature delle infrastruttu
 
 ## Dataset aggiuntivi
 
-Gli archivi nazionali aggiuntivi devono chiamarsi `italia.zip` e contenere uno o più CSV. I tre archivi aggiuntivi sono indipendenti e vanno collocati nella rispettiva cartella sotto `data/`. I CSV possono avere colonne riordinate e campi opzionali mancanti, inclusa la colonna `barrato`.
+Gli archivi nazionali aggiuntivi devono chiamarsi `italia.zip` e contenere gli archivi ZIP regionali, nominati con il nome della regione in maiuscolo (ad esempio `ABRUZZO.zip`, `SICILIA.zip`). Ogni ZIP regionale contiene uno o più CSV/TXT. Il loader apre entrambi i livelli e, quando si consulta una regione, legge solo gli ZIP regionali corrispondenti. I tre archivi aggiuntivi sono indipendenti e vanno collocati nella rispettiva cartella sotto `data/`. I CSV possono avere colonne riordinate e campi opzionali mancanti, inclusa la colonna `barrato`.
 
 Il riconoscimento utilizza intestazioni normalizzate: maiuscole/minuscole, spazi, accenti, underscore e altri separatori non cambiano il nome logico della colonna. Le colonne non conosciute vengono comunque conservate nel risultato come campi aggiuntivi.
 
@@ -43,6 +43,6 @@ Con Node.js 22 o successivo:
 npm test
 ```
 
-I test verificano i formati CSV forniti, le intestazioni facoltative e riordinate, i dataset esistenti e un caricamento da 150.000 record. Il parser non applica un limite al numero di righe; restano solo limiti di dimensione dei file e degli archivi per evitare caricamenti binari eccessivi.
+I test verificano i formati CSV forniti, le intestazioni facoltative e riordinate, gli archivi nazionali con ZIP regionali annidati in maiuscolo, i dataset esistenti e un caricamento da 150.000 record. Il parser non applica un limite al numero di righe; restano solo limiti di dimensione dei file e degli archivi per evitare caricamenti binari eccessivi.
 
 MI25-6 non è un verificatore commerciale in tempo reale e non certifica che un servizio sia attivabile presso un indirizzo.

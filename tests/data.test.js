@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseDataset, searchRecords } from "../JS/data.js";
+import { parseDataset, parseUploadedFiles, searchRecords } from "../JS/data.js";
 
 const proximityHeaders = [
   "cod_egon_civ",
@@ -107,4 +107,92 @@ test("CSV parsing has no record-count ceiling and handles large imports", () => 
   assert.equal(parsed.id, "fixedSurvey2021");
   assert.equal(parsed.records.length, rows);
   assert.equal(parsed.records.at(-1).id, String(380000000000000 + rows - 1));
+});
+
+
+test("italia.zip opens uppercase regional ZIPs and imports their CSV files", async () => {
+  const encoder = new TextEncoder();
+  const toArrayBuffer = (value) => encoder.encode(value).buffer;
+  const csv = [
+    proximityHeaders.join(";"),
+    ["380600457590056", "SICILIA", "PALERMO", "PALERMO", "", "64001", "VIA TEST", "12", "", "38.1157", "13.3615", "SI", "SI"].join(";")
+  ].join("\\n");
+  const entry = (name, payload) => ({
+    name, dir: false,
+    _data: { uncompressedSize: encoder.encode(payload).length },
+    async: async (type) => type === "string" ? payload : toArrayBuffer(payload)
+  });
+  const archives = {
+    ROOT: {
+      files: {
+        "ABRUZZO.zip": entry("ABRUZZO.zip", "REGION_ABRUZZO"),
+        "SICILIA.zip": entry("SICILIA.zip", "REGION_SICILIA")
+      }
+    },
+    REGION_ABRUZZO: {
+      files: { "CIVICI.csv": entry("CIVICI.csv", csv.replace("SICILIA", "ABRUZZO").replace("PALERMO", "L'AQUILA")) }
+    },
+    REGION_SICILIA: { files: { "CIVICI.csv": entry("CIVICI.csv", csv) } }
+  };
+  globalThis.window = {
+    JSZip: {
+      loadAsync: async (buffer) => {
+        const key = new TextDecoder().decode(buffer);
+        assert.ok(archives[key], "unexpected ZIP fixture: " + key);
+        return archives[key];
+      }
+    }
+  };
+  try {
+    const imported = await parseUploadedFiles([{
+      name: "italia.zip",
+      size: encoder.encode("ROOT").length,
+      arrayBuffer: async () => toArrayBuffer("ROOT")
+    }]);
+    assert.equal(imported.datasets.proximity2025.length, 2);
+    assert.deepEqual(
+      imported.datasets.proximity2025.map((record) => record.region).sort(),
+      ["ABRUZZO", "SICILIA"]
+    );
+  } finally {
+    delete globalThis.window;
+  }
+});
+
+test("FiberCop is inferred from eligibility and exclusion headers inside a regional ZIP", async () => {
+  const encoder = new TextEncoder();
+  const toArrayBuffer = (value) => encoder.encode(value).buffer;
+  const csv = [
+    ["cod_egon_civ", "regione", "provincia", "comune", "strada", "civico", "Ammissibile (SI/NO)", "Cause esclusione"].join(";"),
+    ["820530000000001", "SICILIA", "PALERMO", "PALERMO", "VIA TEST", "1", "SI", ""].join(";")
+  ].join("\\n");
+  const entry = (name, payload) => ({
+    name, dir: false,
+    _data: { uncompressedSize: encoder.encode(payload).length },
+    async: async (type) => type === "string" ? payload : toArrayBuffer(payload)
+  });
+  const archives = {
+    ROOT_FC: { files: { "SICILIA.zip": entry("SICILIA.zip", "REGION_FC") } },
+    REGION_FC: { files: { "CIVICI.csv": entry("CIVICI.csv", csv) } }
+  };
+  globalThis.window = {
+    JSZip: {
+      loadAsync: async (buffer) => {
+        const key = new TextDecoder().decode(buffer);
+        assert.ok(archives[key], "unexpected ZIP fixture: " + key);
+        return archives[key];
+      }
+    }
+  };
+  try {
+    const imported = await parseUploadedFiles([{
+      name: "italia.zip",
+      size: encoder.encode("ROOT_FC").length,
+      arrayBuffer: async () => toArrayBuffer("ROOT_FC")
+    }]);
+    assert.equal(imported.datasets.fiberCopProximity2025.length, 1);
+    assert.equal(imported.datasets.fiberCopProximity2025[0].eligibility, "SI");
+  } finally {
+    delete globalThis.window;
+  }
 });

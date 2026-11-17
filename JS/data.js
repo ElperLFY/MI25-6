@@ -200,7 +200,7 @@ function inferDatasetType(headers, name, forcedType = "") {
   if (privateCoverageHeader || hasJuneCoverage || forcedType === "proximity2025") {
     return "proximity2025";
   }
-  if (hasEligibility && hasExclusion && (filename.includes("prossimita") || filename.includes("proximity"))) {
+  if (hasEligibility && hasExclusion) return "fiberCopProximity2025";
     return "proximity2025";
   }
   if (filename.includes("pi1g") || filename.includes("mapp707k") || forcedType === "pi1g2025") {
@@ -394,7 +394,7 @@ function regionEntrySlugs(region) {
 }
 
 function entryMatchesRegion(filename, region) {
-  const key = headerKey(filename.split("/").pop().replace(/\.(csv|txt)$/i, ""));
+  const key = headerKey(filename.split("/").pop().replace(/\.(csv|txt|zip)$/i, ""));
   return regionEntrySlugs(region).some((slug) => key.includes(headerKey(slug)));
 }
 
@@ -414,15 +414,10 @@ function recordsForRegion(records, region) {
   return filtered;
 }
 
-async function readArchiveBuffer(buffer, name, forcedType = "", region = "") {
-  if (!window.JSZip) throw new Error("La libreria JSZip non è disponibile.");
-  const archive = await window.JSZip.loadAsync(buffer);
-  let entries = Object.values(archive.files)
-    .filter((entry) => !entry.dir && /\.(csv|txt)$/i.test(entry.name))
-    .sort((first, second) => first.name.localeCompare(second.name));
-
-  const metadataEntry = Object.values(archive.files).find((entry) => !entry.dir && /(^|\/)dataset\.json$/i.test(entry.name));
+async function readArchiveEntries(archive, name, forcedType, region, budget, depth = 0) {
+  const allEntries = Object.values(archive.files).filter((entry) => !entry.dir);
   let archiveType = forcedType;
+  const metadataEntry = allEntries.find((entry) => /(^|\\/)dataset\\.json$/i.test(entry.name));
   if (metadataEntry) {
     try {
       const metadata = JSON.parse(await metadataEntry.async("string"));
@@ -432,16 +427,49 @@ async function readArchiveBuffer(buffer, name, forcedType = "", region = "") {
     }
   }
 
-  if (region && entries.length > 1) {
-    const regionalEntries = entries.filter((entry) => entryMatchesRegion(entry.name, region));
-    if (regionalEntries.length) entries = regionalEntries;
+  let nestedArchives = allEntries
+    .filter((entry) => /\\.zip$/i.test(entry.name))
+    .sort((first, second) => first.name.localeCompare(second.name));
+  let dataEntries = allEntries
+    .filter((entry) => /\\.(csv|txt)$/i.test(entry.name))
+    .sort((first, second) => first.name.localeCompare(second.name));
+
+  // Nationwide Infratel packages contain one ZIP per region (for example SICILIA.zip).
+  // Select only the requested region for a regional lookup; manual imports read all regions.
+  if (region && nestedArchives.length > 1) {
+    const regionalArchives = nestedArchives.filter((entry) => entryMatchesRegion(entry.name, region));
+    if (regionalArchives.length) nestedArchives = regionalArchives;
+  }
+  if (region && dataEntries.length > 1) {
+    const regionalEntries = dataEntries.filter((entry) => entryMatchesRegion(entry.name, region));
+    if (regionalEntries.length) dataEntries = regionalEntries;
   }
 
-  let expandedBytes = 0;
   const parsed = [];
-  for (const entry of entries) {
-    expandedBytes += entry._data?.uncompressedSize ?? 0;
-    if (expandedBytes > MAX_ARCHIVE_SIZE) {
+  for (const entry of nestedArchives) {
+    if (depth >= 1) {
+      throw new Error("Gli archivi ZIP regionali non devono contenere ulteriori archivi ZIP annidati.");
+    }
+    budget.expandedBytes += entry._data?.uncompressedSize ?? 0;
+    if (budget.expandedBytes > MAX_ARCHIVE_SIZE) {
+      throw new Error("L’archivio supera il limite di dimensione espansa consentito.");
+    }
+    const nestedBuffer = await entry.async("arraybuffer");
+    const nestedArchive = await window.JSZip.loadAsync(nestedBuffer);
+    const nestedParsed = await readArchiveEntries(
+      nestedArchive,
+      entry.name || name,
+      archiveType,
+      region,
+      budget,
+      depth + 1
+    );
+    for (const dataset of nestedParsed) parsed.push(dataset);
+  }
+
+  for (const entry of dataEntries) {
+    budget.expandedBytes += entry._data?.uncompressedSize ?? 0;
+    if (budget.expandedBytes > MAX_ARCHIVE_SIZE) {
       throw new Error("L’archivio supera il limite di dimensione espansa consentito.");
     }
     const content = decodeBuffer(await entry.async("arraybuffer"));
@@ -449,12 +477,19 @@ async function readArchiveBuffer(buffer, name, forcedType = "", region = "") {
     if (dataset) parsed.push(dataset);
   }
 
-  if (!parsed.length) {
-    throw new Error("Nell’archivio non è stato trovato un CSV riconoscibile. Controlla intestazioni, nome del file e tipo di dataset.");
-  }
   return parsed;
 }
 
+async function readArchiveBuffer(buffer, name, forcedType = "", region = "") {
+  if (!window.JSZip) throw new Error("La libreria JSZip non è disponibile.");
+  const archive = await window.JSZip.loadAsync(buffer);
+  const parsed = await readArchiveEntries(archive, name, forcedType, region, { expandedBytes: 0 });
+
+  if (!parsed.length) {
+    throw new Error("Nell’archivio non è stato trovato un CSV riconoscibile. Controlla che italia.zip contenga ZIP regionali (ad esempio SICILIA.zip) e che questi contengano CSV con intestazioni supportate.");
+  }
+  return parsed;
+}
 async function getArchiveBytes(path) {
   if (!archiveBytesCache.has(path)) {
     const task = (async () => {
