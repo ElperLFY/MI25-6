@@ -195,7 +195,7 @@ function setFileMessages(messages) {
   for (const message of messages) list.appendChild(createElement("div", "file-entry", message));
 }
 
-function setAutomaticStatus(region, pi1gAvailable) {
+function setAutomaticStatus(region, pi1gAvailable, extraAvailable = {}) {
   const messages = [
     "Mappatura generale: " + state.general.length.toLocaleString("it-IT") + " record",
     pi1gAvailable
@@ -205,7 +205,11 @@ function setAutomaticStatus(region, pi1gAvailable) {
 
   for (const key of EXTRA_DATASET_KEYS) {
     const count = state.extra[key].length;
-    if (count) messages.push(DATASET_DEFINITIONS[key].label + ": " + count.toLocaleString("it-IT") + " record");
+    if (count) {
+      messages.push(DATASET_DEFINITIONS[key].label + ": " + count.toLocaleString("it-IT") + " record");
+    } else if (key === "fixedSurvey2021" && extraAvailable[key] === false) {
+      messages.push(DATASET_DEFINITIONS[key].label + ": archivio regionale non presente");
+    }
   }
 
   if (state.manualGeneral) messages[0] = "Mappatura generale: file manuale attivo · " + state.general.length.toLocaleString("it-IT") + " record";
@@ -256,7 +260,7 @@ async function loadSelectedRegion() {
     if (loadGeneral) state.general = loaded.general || [];
     if (loadPi1g) state.pi1g = loaded.pi1g || [];
     for (const key of loadExtras) state.extra[key] = loaded.extra[key] || [];
-    setAutomaticStatus(region, loaded.hasPi1gArchive);
+    setAutomaticStatus(region, loaded.hasPi1gArchive, loaded.extraAvailable);
 
     const extraErrors = Object.entries(loaded.extraErrors || {});
     if (extraErrors.length) {
