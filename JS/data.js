@@ -719,7 +719,7 @@ function datasetHintFromFilename(filename) {
   return "";
 }
 
-export async function parseUploadedFiles(files) {
+export async function parseUploadedFiles(files, options = {}) {
   const imported = { datasets: {}, messages: [] };
 
   for (const file of files) {
@@ -732,9 +732,9 @@ export async function parseUploadedFiles(files) {
       const fileHint = datasetHintFromFilename(file.name);
       let parsed = [];
       if (/\.zip$/i.test(file.name)) {
-        parsed = await readArchiveBuffer(await file.arrayBuffer(), file.name, fileHint);
+        parsed = await readArchiveBuffer(await file.arrayBuffer(), file.name, fileHint, "", options);
       } else if (/\.(csv|txt)$/i.test(file.name)) {
-        const dataset = parseDataset(decodeBuffer(await file.arrayBuffer()), file.name, fileHint);
+        const dataset = parseDataset(decodeBuffer(await file.arrayBuffer()), file.name, fileHint, options);
         if (dataset) parsed.push(dataset);
       } else {
         imported.messages.push(file.name + " · formato non supportato.");
