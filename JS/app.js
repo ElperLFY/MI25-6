@@ -983,7 +983,7 @@ async function handleFileUpload(event) {
   if (!files.length) return;
 
   setFileMessages(["Lettura dei file selezionati…"]);
-  const imported = await parseUploadedFiles(files);
+  const imported = await parseUploadedFiles(files, { includeSourceFields: state.csvReaderMode });
   let importedCount = 0;
 
   for (const [key, records] of Object.entries(imported.datasets)) {
@@ -1029,6 +1029,21 @@ async function handleFileUpload(event) {
     $("data-status").textContent = "Dataset manuali attivi · " + counts.join(" · ");
     $("results-card").hidden = true;
     for (const field of ["province", "city", "street", "number"]) scheduleSuggestions(field);
+  }
+  if (state.csvReaderMode) {
+    const dataset = $("csv-reader-dataset").value;
+    const manualRecords = dataset === "general2025"
+      ? state.general
+      : dataset === "pi1g2025"
+        ? state.pi1g
+        : state.extra[dataset] || [];
+    if (manualRecords.length && manualRecords.every((record) => Array.isArray(record.sourceFields))) {
+      state.readerRecords = manualRecords;
+      state.readerPage = 0;
+      $("csv-reader-status").textContent = DATASET_DEFINITIONS[dataset].label
+        + " · file manuale · " + manualRecords.length.toLocaleString("it-IT") + " righe complete.";
+      renderCsvReaderPage();
+    }
   }
   event.target.value = "";
 }
