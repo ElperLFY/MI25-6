@@ -384,11 +384,12 @@ function modernReport(result, address) {
     lines.push("Fonte: Infratel · 16/02/2026.");
   }
 
+  const primaryExtraKey = getPrimaryExtraKey(result);
   for (const key of EXTRA_DATASET_KEYS) {
     const records = result.datasets[key] || [];
     for (const record of records) {
       lines.push("");
-      lines.push(DATASET_DEFINITIONS[key].label);
+      if (key !== primaryExtraKey) lines.push(DATASET_DEFINITIONS[key].label);
       for (const row of getDatasetDisplayRows(key, record)) {
         lines.push(row.label + ": " + row.value);
       }
