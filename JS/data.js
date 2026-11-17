@@ -647,7 +647,7 @@ export async function loadRegionalData(region, options = {}) {
   const extraAvailable = {};
   for (const [key, value] of extraResults) {
     extra[key] = value.records || [];
-    extraAvailable[key] = value.available !== false;
+    extraAvailable[key] = value.available === true;
     if (value.error) extraErrors[key] = value.error;
   }
 
