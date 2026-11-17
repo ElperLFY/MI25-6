@@ -30,22 +30,31 @@ The 2021 mapping's `colore_26`, `vel_max_down_26`, and `peak_vel_down_26` values
 
 Search results identify the primary dataset in the heading, place the address immediately below it, and show the EGON identifier once. A missing match in the 2025 published outcomes is described as absence from that published subset, not as proof of no coverage.
 
+## Targeted search and CSV Reader
+
+The standard search loads the 2025 general mapping and PI1G list for autocomplete. It does not eagerly parse all optional regional datasets on region selection. On search submission it reads the selected regional ZIPs for the additional datasets, filters CSV rows against the normalized region/province/city/street/number query before record objects are created, and retains only matching records. The full regional ZIP still has to be downloaded and the CSV scanned in a static GitHub Pages deployment; this is not a server-side per-record API, but avoids retaining millions of unrelated record objects.
+
+CSV Reader is opt-in and loads one selected dataset in full. When enabled, parsing preserves every original header/value pair and source filename on each record. The UI renders only the current 50/100/250-row page, in the source CSV order, with original column names and a source-file column. Turning the mode off releases the in-memory full-reader array. Manual files loaded while CSV Reader is active also retain their raw columns; manual files imported beforehand must be reloaded to recover the original column order.
+
+Autocomplete uses the main mapping and PI1G records. Pressing Enter resolves the best available matching suggestion and advances Provincia → Città → Via → Civico → search. Crimson hints show suggestion counts and permit manual entry when a prefix has no match. Additional datasets are checked after Comune and Via are supplied; the civic remains optional.
+
 ## Automated checks
 
-The suite now contains ten tests:
+The suite now contains eleven tests:
 
 1. Proximity 2025, including the long header and missing `barrato`.
 2. FiberCop proximity 2025, including an exported leading index column and an SNC suffix.
 3. Fixed-network mapping 2021 and its three supplied `_26` fields.
 4. Semantic interpretation of all 2021 speed classes, color codes, and the missing-color-column fallback.
-5. Existing general 2025 and PI1G recognition and EGON-based search join.
-6. A 150,000-record CSV import with exact record-count verification.
-7. National ZIP containing uppercase regional ZIP files.
-8. FiberCop type inference from eligibility/exclusion fields inside a regional ZIP.
-9. Direct loading of a 2021 regional ZIP with its uploaded uppercase filename.
-10. Regional lookup selecting only the matching nested regional archive, including the capitalized `Italia.zip` path.
+5. Targeted row filtering by normalized region, province, city, street, and civic while preserving all original CSV columns.
+6. Existing general 2025 and PI1G recognition and EGON-based search join.
+7. A 150,000-record CSV import with exact record-count verification.
+8. National ZIP containing uppercase regional ZIP files.
+9. FiberCop type inference from eligibility/exclusion fields inside a regional ZIP.
+10. Direct loading of a 2021 regional ZIP with its uploaded uppercase filename, both filtered address lookup and full source-field read.
+11. Regional lookup selecting only the matching nested regional archive, including the capitalized `Italia.zip` path.
 
-JavaScript syntax checks and synthetic runtime smoke tests for the 2021 regional path, the unavailable-region flag, and capitalized `Italia.zip` fallback pass. A full `npm test` run in Node and a browser end-to-end run against GitHub Pages have not been performed in this environment.
+All changed JavaScript modules and the test file pass syntax checks. A synthetic runtime smoke test confirms that the target address returns a single record while preserving its exact raw columns. A full `npm test` run in Node and a browser end-to-end run against GitHub Pages have not been performed in this environment.
 
 ## Remaining runtime verification
 
