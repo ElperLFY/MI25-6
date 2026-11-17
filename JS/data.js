@@ -2,10 +2,18 @@ import {
   DATASET_DEFINITIONS,
   DOTS,
   EXTRA_DATASET_KEYS,
-  FIELD_ALIASES
+  FIELD_ALIASES,
+  decodeFixedSurvey2021Color,
+  decodeFixedSurvey2021Speed
 } from "./datasets.js";
 
-export { DATASET_DEFINITIONS, DOTS, EXTRA_DATASET_KEYS };
+export {
+  DATASET_DEFINITIONS,
+  DOTS,
+  EXTRA_DATASET_KEYS,
+  decodeFixedSurvey2021Color,
+  decodeFixedSurvey2021Speed
+};
 
 export const REGIONS = [
   "Abruzzo",
@@ -286,6 +294,7 @@ function makeRecord(row, originalHeaders, headers, columns, datasetId, intern, c
     eligibility: readValue(row, columns.eligibility),
     exclusionReason: readValue(row, columns.exclusionReason),
     networkColor2026: readValue(row, columns.networkColor2026),
+    networkColor2026Present: columns.networkColor2026 >= 0,
     peakDownload2026: readValue(row, columns.peakDownload2026),
     maxDownload2026: readValue(row, columns.maxDownload2026),
     sourceRow: readValue(row, columns.sourceRow),
