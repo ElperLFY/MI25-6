@@ -2,6 +2,8 @@ import {
   DATASET_DEFINITIONS,
   DOTS,
   EXTRA_DATASET_KEYS,
+  decodeFixedSurvey2021Color,
+  decodeFixedSurvey2021Speed,
   REGIONS,
   collectRecords,
   cityIsKnown,
@@ -108,6 +110,18 @@ function getPrimaryRecord(result) {
     if (record) return record;
   }
   return null;
+}
+
+function getPrimaryExtraKey(result) {
+  if (result.general || result.pi1g) return "";
+  return EXTRA_DATASET_KEYS.find((key) => (result.datasets[key] || []).length > 0) || "";
+}
+
+function getPrimaryDatasetLabel(result) {
+  if (result.general) return DATASET_DEFINITIONS.general2025.label;
+  if (result.pi1g) return DATASET_DEFINITIONS.pi1g2025.label;
+  const key = getPrimaryExtraKey(result);
+  return key ? DATASET_DEFINITIONS[key].label : "Indirizzo";
 }
 
 function allRecords() {
@@ -316,9 +330,9 @@ function getDatasetDisplayRows(key, record) {
   }
 
   if (key === "fixedSurvey2021") {
-    add("Colore 2026", record.networkColor2026);
-    add("Velocità di picco download 2026", record.peakDownload2026);
-    add("Velocità massima download 2026", record.maxDownload2026);
+    add("Colore civico al 2026", decodeFixedSurvey2021Color(record.networkColor2026, record.networkColor2026Present));
+    add("Velocità massima download al 2026", decodeFixedSurvey2021Speed(record.maxDownload2026, record.networkColor2026Present));
+    add("Velocità di download nelle ore di punta al 2026", decodeFixedSurvey2021Speed(record.peakDownload2026, record.networkColor2026Present));
     add("Operatore", record.operator);
     add("NGA", record.nga);
     add("Tecnologia", record.technology);
@@ -329,7 +343,6 @@ function getDatasetDisplayRows(key, record) {
     add("Anno di copertura", record.coverageYear);
   }
 
-  add("ID EGON", record.id);
   add("Codice Comune", record.procom || record.municipalityCode);
   add("Chilometrica", record.km);
   add("Civico", record.number);
@@ -353,26 +366,35 @@ function collectReportLines(result) {
 
 function modernReport(result, address) {
   const lines = [
-    "MI25-6 · Esiti mappatura infrastrutture di rete fissa",
+    "MI25-6 · Esito: " + getPrimaryDatasetLabel(result),
     "Indirizzo: " + address,
     "ID EGON: " + (result.id || "Non disponibile")
   ];
 
   if (result.general) {
     const code = result.general.characteristic;
-    lines.push("Mappatura reti fisse 2025: presente nell’elenco degli esiti.");
     lines.push("Caratteristica: " + (code || "ND") + (DOTS[code] ? " — " + DOTS[code][1] : " — non disponibile nel CSV"));
     lines.push("Fonte: Infratel 2025 · aggiornamento febbraio 2026.");
   } else {
-    lines.push("Mappatura reti fisse 2025: nessuna corrispondenza nel dataset consultato.");
+    lines.push("Mappatura reti fisse 2025: nessuna corrispondenza nel sottoinsieme degli esiti pubblicati. Questo dato, da solo, non dimostra assenza di copertura.");
   }
 
   if (result.pi1g) {
-    lines.push("PI1G 2025: presente nell’Allegato A.");
+    lines.push("Allegato A PI1G 2025: presente.");
     lines.push("Fonte: Infratel · 16/02/2026.");
   }
 
-  for (const line of collectReportLines(result)) lines.push(line);
+  for (const key of EXTRA_DATASET_KEYS) {
+    const records = result.datasets[key] || [];
+    for (const record of records) {
+      lines.push("");
+      lines.push(DATASET_DEFINITIONS[key].label);
+      for (const row of getDatasetDisplayRows(key, record)) {
+        lines.push(row.label + ": " + row.value);
+      }
+    }
+  }
+  lines.push("");
   lines.push("Nota: i dati descrivono le fonti consultate e non certificano la vendibilità commerciale o la copertura attuale.");
   return lines.join("\n");
 }
@@ -513,13 +535,15 @@ function attachResultActions(item, result, address) {
   item.appendChild(actions);
 }
 
-function renderExtraDatasets(item, result) {
+function renderExtraDatasets(item, result, primaryKey = "") {
   for (const key of EXTRA_DATASET_KEYS) {
     const records = result.datasets[key] || [];
     if (!records.length) continue;
 
     const section = createElement("section", "legacy-section");
-    section.appendChild(createElement("h4", "", DATASET_DEFINITIONS[key].label));
+    if (key !== primaryKey) {
+      section.appendChild(createElement("h4", "", DATASET_DEFINITIONS[key].label));
+    }
 
     for (const record of records) {
       const standardRows = getDatasetDisplayRows(key, record);
@@ -569,7 +593,10 @@ function renderResults(results, query) {
     if (!record) continue;
     const item = createElement("article", "result-item");
     const address = formatAddress(record);
-    item.appendChild(createElement("h3", "item-title", address));
+    const primaryExtraKey = getPrimaryExtraKey(result);
+    item.appendChild(createElement("h3", "item-title", "Esito: " + getPrimaryDatasetLabel(result)));
+    item.appendChild(createElement("h4", "item-address", address));
+    addLine(item, "ID EGON", result.id || record.id || "Non disponibile");
 
     if (result.general) {
       const code = result.general.characteristic;
@@ -590,7 +617,11 @@ function renderResults(results, query) {
       addLine(item, "Consultazione PI1G", "Pubblicazione Infratel · 16/02/2026");
     }
 
-    renderExtraDatasets(item, result);
+    if (!result.general) {
+      addLine(item, "Mappatura reti fisse 2025", "Nessuna corrispondenza nel sottoinsieme degli esiti pubblicati; questo non dimostra da solo assenza di copertura.");
+    }
+
+    renderExtraDatasets(item, result, primaryExtraKey);
     attachResultActions(item, result, address);
     fragment.appendChild(item);
   }
