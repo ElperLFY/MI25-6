@@ -208,7 +208,7 @@ function setAutomaticStatus(region, pi1gAvailable, extraAvailable = {}) {
     if (count) {
       messages.push(DATASET_DEFINITIONS[key].label + ": " + count.toLocaleString("it-IT") + " record");
     } else if (key === "fixedSurvey2021" && extraAvailable[key] === false) {
-      messages.push(DATASET_DEFINITIONS[key].label + ": archivio regionale non presente");
+      messages.push(DATASET_DEFINITIONS[key].label + ": archivio regionale non disponibile");
     }
   }
 
