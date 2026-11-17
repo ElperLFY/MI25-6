@@ -273,7 +273,31 @@ function alignRow(row, headers, idColumn) {
   return row.slice(0, headers.length);
 }
 
-function makeRecord(row, originalHeaders, headers, columns, datasetId, intern, cachedNormalise) {
+function matchesRow(row, columns, query) {
+  const region = normalise(readValue(row, columns.region));
+  const province = normalise(readValue(row, columns.province));
+  const city = normalise(readValue(row, columns.city));
+  const street = normalise(readValue(row, columns.street));
+  const fullAddress = normalise(readValue(row, columns.fullAddress));
+  const number = normalise(readValue(row, columns.number));
+  const suffix = normalise(readValue(row, columns.suffix));
+
+  if (query.region && region && !region.startsWith(query.region)) return false;
+  if (query.province && !province.includes(query.province)) return false;
+  if (query.city && !city.includes(query.city)) return false;
+  if (query.street && !street.includes(query.street) && !fullAddress.includes(query.street)) return false;
+  if (query.number) {
+    const fullNumber = suffix ? normalise(number + " " + suffix) : number;
+    const numberMatches = number === query.number
+      || fullNumber === query.number
+      || (query.number === "SNC" && ["", "0"].includes(number))
+      || (!number && fullAddress.includes(query.number));
+    if (!numberMatches) return false;
+  }
+  return true;
+}
+
+function makeRecord(row, originalHeaders, headers, columns, datasetId, intern, cachedNormalise, options = {}, sourceFile = "", sourceRowNumber = 0) {
   const id = intern(readValue(row, columns.id));
   const fullAddress = intern(readValue(row, columns.fullAddress));
   const streetValue = readValue(row, columns.street) || fullAddress;
@@ -339,6 +363,14 @@ function makeRecord(row, originalHeaders, headers, columns, datasetId, intern, c
     }
   }
   record.extraFields = extraFields;
+  if (options.includeSourceFields) {
+    record.sourceFields = originalHeaders.map((name, index) => ({
+      name,
+      value: String(row[index] ?? "").trim()
+    }));
+    record.sourceFile = sourceFile;
+    record.sourceRowNumber = sourceRowNumber;
+  }
 
   record.normalisedRegion = cachedNormalise(record.region);
   record.normalisedProvince = cachedNormalise(record.province);
@@ -365,7 +397,7 @@ function makeRecord(row, originalHeaders, headers, columns, datasetId, intern, c
   return record;
 }
 
-export function parseDataset(text, name = "dataset", forcedType = "") {
+export function parseDataset(text, name = "dataset", forcedType = "", options = {}) {
   const cleanText = String(text ?? "").replace(/^\uFEFF/, "");
   const headerInfo = findHeader(cleanText);
   if (!headerInfo) return null;
@@ -399,7 +431,22 @@ export function parseDataset(text, name = "dataset", forcedType = "") {
     }
 
     const fields = alignRow(row, headers, columns.id);
-    const record = makeRecord(fields, originalHeaders, headers, columns, datasetId, intern, cachedNormalise);
+    if (options.query && !matchesRow(fields, columns, options.query)) {
+      rowIndex += 1;
+      return;
+    }
+    const record = makeRecord(
+      fields,
+      originalHeaders,
+      headers,
+      columns,
+      datasetId,
+      intern,
+      cachedNormalise,
+      options,
+      name,
+      rowIndex + 1
+    );
     if (record) records.push(record);
     rowIndex += 1;
   });
