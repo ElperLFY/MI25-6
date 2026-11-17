@@ -23,7 +23,9 @@ Gli archivi nazionali aggiuntivi devono chiamarsi `italia.zip` e contenere gli a
 
 Il riconoscimento utilizza intestazioni normalizzate: maiuscole/minuscole, spazi, accenti, underscore e altri separatori non cambiano il nome logico della colonna. Le colonne non conosciute vengono comunque conservate nel risultato come campi aggiuntivi.
 
-Per i civici di prossimità 2025 sono supportati i campi relativi alla copertura privata dichiarata nella mappatura 2024 e al campo `Coperto a giugno 2025`. Per FiberCop sono supportati `Ammissibile (SI/NO)` e `Cause esclusione`. Per la mappatura fissa 2021 sono supportati `colore_26`, `peak_vel_down_26` e `vel_max_down_26`.
+Per i civici di prossimità 2025 sono supportati i campi relativi alla copertura privata dichiarata nella mappatura 2024 e al campo `Coperto a giugno 2025`. Per FiberCop sono supportati `Ammissibile (SI/NO)` e `Cause esclusione`. Per la mappatura fissa 2021 sono supportati `colore_26`, `peak_vel_down_26` e `vel_max_down_26`. L'interfaccia interpreta i codici invece di mostrarli grezzi: `g` = Grigio, `n` = Nero, `b` o valore vuoto = Bianco. I valori di velocità sono classi/soglie, non Mbit/s da leggere letteralmente: con il campo colore presente, ad esempio `2` = almeno 300 Mbit/s e `1000` = almeno 1.000 Mbit/s. Se il campo colore è assente, si applica la diversa codifica prevista per le aree bianche.
+
+L'interpretazione delle classi 2026 riprende la legenda dell'interfaccia storica di riferimento: [Handymenny · InfoDisplay.tsx](https://github.com/handymenny/mappaturaInfratel/blob/main/components/layout/InfoDisplay.tsx).
 
 ## Esecuzione
 
