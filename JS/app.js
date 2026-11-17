@@ -124,6 +124,13 @@ function getPrimaryDatasetLabel(result) {
   return key ? DATASET_DEFINITIONS[key].label : "Indirizzo";
 }
 
+function getGeneralAbsenceMessage() {
+  if (state.general.length || state.manualGeneral) {
+    return "Nessuna corrispondenza nel sottoinsieme degli esiti pubblicati 2025; questo dato, da solo, non dimostra assenza di copertura.";
+  }
+  return "Dataset della mappatura generale 2025 non disponibile per questa ricerca.";
+}
+
 function allRecords() {
   return collectRecords(state.general, state.pi1g, state.extra);
 }
@@ -330,9 +337,9 @@ function getDatasetDisplayRows(key, record) {
   }
 
   if (key === "fixedSurvey2021") {
-    add("Colore civico al 2026", decodeFixedSurvey2021Color(record.networkColor2026, record.networkColor2026Present));
-    add("Velocità massima download al 2026", decodeFixedSurvey2021Speed(record.maxDownload2026, record.networkColor2026Present));
-    add("Velocità di download nelle ore di punta al 2026", decodeFixedSurvey2021Speed(record.peakDownload2026, record.networkColor2026Present));
+    add("Colore civico 2026", decodeFixedSurvey2021Color(record.networkColor2026, record.networkColor2026Present));
+    add("Velocità massima download 2026", decodeFixedSurvey2021Speed(record.maxDownload2026, record.networkColor2026Present));
+    add("Velocità di picco download 2026", decodeFixedSurvey2021Speed(record.peakDownload2026, record.networkColor2026Present));
     add("Operatore", record.operator);
     add("NGA", record.nga);
     add("Tecnologia", record.technology);
@@ -345,9 +352,6 @@ function getDatasetDisplayRows(key, record) {
 
   add("Codice Comune", record.procom || record.municipalityCode);
   add("Chilometrica", record.km);
-  add("Civico", record.number);
-  add("Barrato", record.suffix);
-  add("Indirizzo completo", record.fullAddress);
   add("Coordinate", record.latitude && record.longitude ? record.latitude + ", " + record.longitude : "");
   return rows;
 }
@@ -395,10 +399,10 @@ function modernReport(result, address) {
   }
   if (!result.general) {
     lines.push("");
-    lines.push("Mappatura reti fisse 2025: nessuna corrispondenza nel sottoinsieme degli esiti pubblicati. Questo dato, da solo, non dimostra assenza di copertura.");
+    lines.push("Mappatura reti fisse 2025: " + getGeneralAbsenceMessage());
   }
   lines.push("");
-  lines.push("Nota: i dati descrivono le fonti consultate e non certificano la vendibilità commerciale o la copertura attuale.");
+  lines.push("Nota: le velocità sono classi/soglie del dataset, non misurazioni istantanee né garanzie della velocità effettiva. I dati non certificano la vendibilità commerciale o la copertura attuale.");
   return lines.join("\n");
 }
 
@@ -623,7 +627,7 @@ function renderResults(results, query) {
     renderExtraDatasets(item, result, primaryExtraKey);
 
     if (!result.general) {
-      addLine(item, "Mappatura reti fisse 2025", "Nessuna corrispondenza nel sottoinsieme degli esiti pubblicati; questo non dimostra da solo assenza di copertura.");
+      addLine(item, "Mappatura reti fisse 2025", getGeneralAbsenceMessage());
     }
 
     attachResultActions(item, result, address);
