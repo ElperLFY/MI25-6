@@ -318,6 +318,21 @@ test("2021 regional data loads from the uploaded uppercase regional ZIP", async 
     assert.equal(reader.extra.fixedSurvey2021[0].sourceFields[0].name, "id_egon");
     assert.equal(reader.extra.fixedSurvey2021[0].sourceFields[7].name, "colore_26");
     assert.equal(reader.extra.fixedSurvey2021[0].sourceFields[7].value, "g");
+
+    const lightweightReader = await loadRegionalData("Sicilia", {
+      loadGeneral: false,
+      loadPi1g: false,
+      loadExtras: ["fixedSurvey2021"],
+      readerMode: true
+    });
+    const rawRow = lightweightReader.extra.fixedSurvey2021[0];
+    assert.equal(lightweightReader.extra.fixedSurvey2021.length, 2);
+    assert.equal(rawRow.sourceHeaders[7], "colore_26");
+    assert.equal(rawRow.sourceValues[7], "g");
+    assert.equal(rawRow.sourceValues[10], undefined);
+    assert.equal(rawRow.normalisedRegion, "SICILIA");
+    assert.equal(rawRow.key, undefined);
+    assert.equal(rawRow.sourceFile, "MAPPATURA.csv");
   } finally {
     if (oldWindow === undefined) delete globalThis.window;
     else globalThis.window = oldWindow;
