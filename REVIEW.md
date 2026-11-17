@@ -24,17 +24,27 @@ The parser has no maximum record count. Appending records uses iterative loops, 
 
 File and expanded-archive byte limits remain as protection against unexpectedly large uploads. They are not row/record limits.
 
+## Semantic interpretation and presentation
+
+The 2021 mapping's `colore_26`, `vel_max_down_26`, and `peak_vel_down_26` values are decoded using the reference legend from the original Handymenny frontend. Color codes are displayed as Bianco/Grigio/Nero. Speed numbers are decoded into their published threshold bands, with a separate mapping when the color column is absent. Unknown codes are identified as unknown rather than presented as physical speeds.
+
+Search results identify the primary dataset in the heading, place the address immediately below it, and show the EGON identifier once. A missing match in the 2025 published outcomes is described as absence from that published subset, not as proof of no coverage.
+
 ## Automated checks
 
-`npm test` passes five tests:
+`npm test` passes nine tests:
 
 1. Proximity 2025, including the long header and missing `barrato`.
 2. FiberCop proximity 2025, including an exported leading index column and an SNC suffix.
 3. Fixed-network mapping 2021 and its three supplied `_26` fields.
-4. Existing general 2025 and PI1G recognition and EGON-based search join.
-5. A 150,000-record CSV import with exact record-count verification.
+4. Semantic interpretation of all 2021 speed classes, color codes, and the missing-color-column fallback.
+5. Existing general 2025 and PI1G recognition and EGON-based search join.
+6. A 150,000-record CSV import with exact record-count verification.
+7. National ZIP containing uppercase regional ZIP files.
+8. FiberCop type inference from eligibility/exclusion fields inside a regional ZIP.
+9. Regional lookup selecting only the matching nested regional archive.
 
-All JavaScript modules pass `node --check`.
+All JavaScript modules and the test file pass `node --check`.
 
 ## Remaining runtime verification
 
