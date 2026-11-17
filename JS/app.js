@@ -1299,6 +1299,7 @@ function clearLegacySearch() {
 
 function setLegacyMode(enabled) {
   state.legacyMode = Boolean(enabled);
+  if (state.legacyMode && state.csvReaderMode) setCsvReaderMode(false);
   $("legacy-toggle").textContent = state.legacyMode ? "Legacy mode ON" : "Legacy mode OFF";
   $("legacy-toggle").setAttribute("aria-pressed", String(state.legacyMode));
   $("modern-search-card").hidden = state.legacyMode;
@@ -1308,7 +1309,9 @@ function setLegacyMode(enabled) {
 
   $("mode-help").textContent = state.legacyMode
     ? "Legacy mode ON: ricerca autonoma nell’archivio storico 2017-2021 di Handymenny. I campi dell’indirizzo vengono inviati al servizio API esterno."
-    : "Modalità standard: ricerca locale sui dataset Infratel 2025-26 caricati per Regione. Legacy mode consulta separatamente l’archivio storico 2017-2021 di Handymenny.";
+    : state.csvReaderMode
+      ? "CSV Reader ON: carica tutte le righe del dataset selezionato per la Regione scelta. La tabella conserva le intestazioni originali e l'ordine del CSV, mostrando 100 righe per pagina."
+      : "Ricerca indirizzo: carica i dataset principali per i suggerimenti e consulta gli archivi aggiuntivi soltanto dopo l'invio dell'indirizzo. CSV Reader apre volontariamente l'archivio completo.";
 
   if (state.legacyMode && !legacyLists.regions.length) legacyLoadRegions();
 }
@@ -1328,10 +1331,26 @@ function bindEvents() {
   $("clear-search").addEventListener("click", clearSearch);
   $("file-input").addEventListener("change", handleFileUpload);
   $("use-automatic-data").addEventListener("click", restoreAutomaticData);
+  $("csv-reader-toggle").addEventListener("click", () => setCsvReaderMode(!state.csvReaderMode));
+  $("csv-reader-dataset").addEventListener("change", loadCsvReaderDataset);
+  $("csv-reader-page-size").addEventListener("change", () => {
+    state.readerPageSize = Number($("csv-reader-page-size").value) || 100;
+    state.readerPage = 0;
+    renderCsvReaderPage();
+  });
+  $("csv-reader-prev").addEventListener("click", () => {
+    state.readerPage = Math.max(0, state.readerPage - 1);
+    renderCsvReaderPage();
+  });
+  $("csv-reader-next").addEventListener("click", () => {
+    state.readerPage += 1;
+    renderCsvReaderPage();
+  });
 
   for (const field of ["province", "city", "street", "number"]) {
     const inputId = field === "number" ? "street-number" : field;
     $(inputId).addEventListener("input", () => scheduleSuggestions(field));
+    $(inputId).addEventListener("keydown", (event) => handleAutocompleteEnter(field, event));
     if (field === "number") $(inputId).addEventListener("focus", () => scheduleSuggestions(field));
   }
 
