@@ -85,6 +85,13 @@ test("fixed survey 2021 decodes color and 2026 speed bands", () => {
   assert.equal(decodeFixedSurvey2021Speed("0", false), "< 300 Mbit/s");
   assert.equal(decodeFixedSurvey2021Speed("1", false), "≥ 300 Mbit/s");
   assert.equal(decodeFixedSurvey2021Speed("42", true), "Codice velocità non documentato (42)");
+
+  const withoutColorColumn = parseDataset(
+    "id_egon;regione;provincia;nome_com;strada;civico;vel_max_down_26;peak_vel_down_26\n380100150514555;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA DELLO SPORT;10;1;0",
+    "mappatura-reti-fisse-2021.csv"
+  );
+  assert.equal(withoutColorColumn.records[0].networkColor2026Present, false);
+  assert.equal(decodeFixedSurvey2021Speed(withoutColorColumn.records[0].maxDownload2026, withoutColorColumn.records[0].networkColor2026Present), "≥ 300 Mbit/s");
 });
 
 test("the original 2025 general and PI1G datasets remain recognised", () => {
