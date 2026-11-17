@@ -227,6 +227,58 @@ test("FiberCop is inferred from eligibility and exclusion headers inside a regio
 
 
 
+test("2021 regional data loads from the uploaded uppercase regional ZIP", async () => {
+  const encoder = new TextEncoder();
+  const toArrayBuffer = (value) => encoder.encode(value).buffer;
+  const csv = [
+    "id_egon;regione;provincia;nome_com;strada;civico;indirunito;colore_26;peak_vel_down_26;vel_max_down_26",
+    "380100150514555;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA DELLO SPORT;10;VIA DELLO SPORT, 10;g;1000;2"
+  ].join("\n");
+  const entry = {
+    name: "MAPPATURA.csv",
+    dir: false,
+    _data: { uncompressedSize: encoder.encode(csv).length },
+    async: async (type) => type === "string" ? csv : toArrayBuffer(csv)
+  };
+  const oldWindow = globalThis.window;
+  const oldFetch = globalThis.fetch;
+  const requested = [];
+  globalThis.window = {
+    JSZip: {
+      loadAsync: async (buffer) => {
+        assert.equal(new TextDecoder().decode(buffer), "REGION_2021_SICILIA");
+        return { files: { "MAPPATURA.csv": entry } };
+      }
+    }
+  };
+  globalThis.fetch = async (path) => {
+    requested.push(path);
+    if (path === "data/fixed-2021/SICILIA.zip") {
+      return { status: 200, ok: true, arrayBuffer: async () => toArrayBuffer("REGION_2021_SICILIA") };
+    }
+    return { status: 404, ok: false };
+  };
+
+  try {
+    const result = await loadRegionalData("Sicilia", {
+      loadGeneral: false,
+      loadPi1g: false,
+      loadExtras: ["fixedSurvey2021"]
+    });
+    assert.deepEqual(requested, ["data/fixed-2021/SICILIA.zip"]);
+    assert.equal(result.extraAvailable.fixedSurvey2021, true);
+    assert.equal(result.extra.fixedSurvey2021.length, 1);
+    assert.equal(result.extra.fixedSurvey2021[0].id, "380100150514555");
+    assert.equal(result.extra.fixedSurvey2021[0].networkColor2026, "g");
+    assert.equal(result.extra.fixedSurvey2021[0].maxDownload2026, "2");
+  } finally {
+    if (oldWindow === undefined) delete globalThis.window;
+    else globalThis.window = oldWindow;
+    if (oldFetch === undefined) delete globalThis.fetch;
+    else globalThis.fetch = oldFetch;
+  }
+});
+
 test("regional lookup opens only the matching uppercase ZIP from italia.zip", async () => {
   const encoder = new TextEncoder();
   const toArrayBuffer = (value) => encoder.encode(value).buffer;
@@ -263,7 +315,8 @@ test("regional lookup opens only the matching uppercase ZIP from italia.zip", as
   };
   globalThis.fetch = async (path) => {
     if (path.endsWith("/sicilia.zip")) return { status: 404, ok: false };
-    if (path.endsWith("/italia.zip")) return {
+    if (path.endsWith("/italia.zip")) return { status: 404, ok: false };
+    if (path.endsWith("/Italia.zip")) return {
       status: 200,
       ok: true,
       arrayBuffer: async () => toArrayBuffer("ROOT_REGION_FILTER")
