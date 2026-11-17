@@ -375,8 +375,6 @@ function modernReport(result, address) {
     const code = result.general.characteristic;
     lines.push("Caratteristica: " + (code || "ND") + (DOTS[code] ? " — " + DOTS[code][1] : " — non disponibile nel CSV"));
     lines.push("Fonte: Infratel 2025 · aggiornamento febbraio 2026.");
-  } else {
-    lines.push("Mappatura reti fisse 2025: nessuna corrispondenza nel sottoinsieme degli esiti pubblicati. Questo dato, da solo, non dimostra assenza di copertura.");
   }
 
   if (result.pi1g) {
@@ -394,6 +392,10 @@ function modernReport(result, address) {
         lines.push(row.label + ": " + row.value);
       }
     }
+  }
+  if (!result.general) {
+    lines.push("");
+    lines.push("Mappatura reti fisse 2025: nessuna corrispondenza nel sottoinsieme degli esiti pubblicati. Questo dato, da solo, non dimostra assenza di copertura.");
   }
   lines.push("");
   lines.push("Nota: i dati descrivono le fonti consultate e non certificano la vendibilità commerciale o la copertura attuale.");
@@ -618,11 +620,12 @@ function renderResults(results, query) {
       addLine(item, "Consultazione PI1G", "Pubblicazione Infratel · 16/02/2026");
     }
 
+    renderExtraDatasets(item, result, primaryExtraKey);
+
     if (!result.general) {
       addLine(item, "Mappatura reti fisse 2025", "Nessuna corrispondenza nel sottoinsieme degli esiti pubblicati; questo non dimostra da solo assenza di copertura.");
     }
 
-    renderExtraDatasets(item, result, primaryExtraKey);
     attachResultActions(item, result, address);
     fragment.appendChild(item);
   }
