@@ -435,6 +435,21 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
       rowIndex += 1;
       return;
     }
+    if (options.readerMode) {
+      // Keep the original row and shared header array; avoid building the
+      // normalized 50-field record model for millions of rows in CSV Reader.
+      records.push({
+        datasetId,
+        sourceHeaders: originalHeaders,
+        sourceValues: fields,
+        sourceFile: name,
+        sourceRowNumber: rowIndex + 1,
+        normalisedRegion: cachedNormalise(readValue(fields, columns.region))
+      });
+      rowIndex += 1;
+      return;
+    }
+
     const record = makeRecord(
       fields,
       originalHeaders,
@@ -672,7 +687,7 @@ export async function loadRegionalData(region, options = {}) {
   const loadPi1g = options.loadPi1g !== false;
   const requestedExtras = options.loadExtras || EXTRA_DATASET_KEYS;
 
-  const parseOptions = { query: options.query, includeSourceFields: options.includeSourceFields === true };
+  const parseOptions = { query: options.query, includeSourceFields: options.includeSourceFields === true, readerMode: options.readerMode === true };
   const generalPromise = loadGeneral ? readGeneralRegion(region, parseOptions) : Promise.resolve(null);
   const pi1gPromise = loadPi1g
     ? readPi1gRegion(region, parseOptions)
