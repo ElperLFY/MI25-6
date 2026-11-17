@@ -236,6 +236,10 @@ async function loadSelectedRegion() {
   const region = $("region").value;
   const token = ++state.loadToken;
   state.searchToken += 1;
+  state.readerLoadToken += 1;
+  state.readerRecords = [];
+  state.readerPage = 0;
+  renderCsvReaderPage();
   $("results-card").hidden = true;
   $("search-error").textContent = "";
   state.checkedExtras.clear();
@@ -875,6 +879,8 @@ function setCsvReaderMode(enabled) {
     state.readerRecords = [];
     state.readerPage = 0;
     $("csv-reader-status").textContent = "CSV Reader disattivato.";
+    $("csv-reader-dataset").disabled = false;
+    $("csv-reader-page-size").disabled = false;
     $("mode-help").textContent = "Ricerca indirizzo: carica i dataset principali per i suggerimenti e consulta gli archivi aggiuntivi soltanto dopo l'invio dell'indirizzo. CSV Reader apre volontariamente l'archivio completo.";
     renderCsvReaderPage();
   }
