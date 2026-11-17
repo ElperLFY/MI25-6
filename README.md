@@ -13,13 +13,13 @@ MI25-6 è un'applicazione statica per consultare le mappature delle infrastruttu
 - `data/fixed-2025/` contiene gli ZIP regionali della mappatura generale.
 - `data/pi1g-2025/` contiene gli ZIP regionali dell'Allegato A PI1G.
 - `data/fixed-2021/` contiene gli ZIP regionali disponibili della mappatura reti fisse 2021; viene scaricato soltanto l'archivio della Regione selezionata.
-- `data/proximity-2025/` contiene `italia.zip` per i civici di prossimità 2025.
-- `data/fibercop-proximity-2025/` contiene `italia.zip` per i civici di prossimità FiberCop 2025.
+- `data/proximity-2025/` contiene `Italia.zip` per i civici di prossimità 2025.
+- `data/fibercop-proximity-2025/` contiene `Italia.zip` per i civici di prossimità FiberCop 2025.
 - `vendor/jszip.min.js` contiene la libreria JSZip già utilizzata dal progetto.
 
 ## Dataset aggiuntivi
 
-Gli archivi nazionali aggiuntivi devono chiamarsi `italia.zip` e contenere gli archivi ZIP regionali, nominati con il nome della regione in maiuscolo (ad esempio `ABRUZZO.zip`, `SICILIA.zip`). Ogni ZIP regionale contiene uno o più CSV/TXT. Il loader apre entrambi i livelli e, quando si consulta una regione, legge solo gli ZIP regionali corrispondenti. I tre archivi aggiuntivi sono indipendenti e vanno collocati nella rispettiva cartella sotto `data/`. I CSV possono avere colonne riordinate e campi opzionali mancanti, inclusa la colonna `barrato`.
+Gli archivi di prossimità 2025 sono pubblicati come `Italia.zip` e contengono gli ZIP regionali in maiuscolo; il loader accetta questa capitalizzazione e legge solo la Regione selezionata. La mappatura fissa 2021 è invece pubblicata come ZIP regionali indipendenti direttamente in `data/fixed-2021/` (ad esempio `SICILIA.zip`, `ABRUZZO.zip`). I nomi originali non sempre coincidono con lo slug web della Regione: il loader usa una tabella esplicita per i file effettivamente presenti. Non viene creato un archivio nazionale unico: gli ZIP regionali disponibili occupano complessivamente circa 151 MiB, oltre il limite massimo di 100 MiB per un singolo file GitHub. I CSV possono avere colonne riordinate e campi opzionali mancanti, inclusa la colonna `barrato`.
 
 Il riconoscimento utilizza intestazioni normalizzate: maiuscole/minuscole, spazi, accenti, underscore e altri separatori non cambiano il nome logico della colonna. Le colonne non conosciute vengono comunque conservate nel risultato come campi aggiuntivi.
 
