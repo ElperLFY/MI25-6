@@ -822,6 +822,23 @@ async function loadCsvReaderDataset() {
   }
 
   const label = DATASET_DEFINITIONS[dataset]?.label || "Dataset";
+  const manualRecords = dataset === "general2025"
+    ? (state.manualGeneral ? state.general : [])
+    : dataset === "pi1g2025"
+      ? (state.manualPi1g ? state.pi1g : [])
+      : (state.manualExtras.has(dataset) ? state.extra[dataset] : []);
+  if (manualRecords.length) {
+    if (manualRecords.every((record) => Array.isArray(record.sourceFields))) {
+      state.readerRecords = manualRecords;
+      $("csv-reader-status").textContent = label + " · file manuale · "
+        + manualRecords.length.toLocaleString("it-IT") + " righe complete.";
+      renderCsvReaderPage();
+    } else {
+      $("csv-reader-status").textContent = "Il file manuale era stato caricato prima del CSV Reader. Ricaricalo dopo aver attivato la modalità per conservare tutte le intestazioni originali.";
+    }
+    return;
+  }
+
   $("csv-reader-status").textContent = "Lettura completa di " + label + " per " + region + "…";
   $("csv-reader-dataset").disabled = true;
   $("csv-reader-page-size").disabled = true;
