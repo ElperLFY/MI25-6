@@ -1,4 +1,5 @@
-Inserire qui l'archivio ZIP dei civici di prossimità 2025.
-Nome atteso: italia.zip
-Il CSV può includere la dichiarazione di copertura privata 2024 e il campo Coperto a giugno 2025.
-I campi non presenti sono considerati facoltativi.\nL'archivio italia.zip contiene gli ZIP regionali con nome della regione in maiuscolo (es. SICILIA.zip), ciascuno con i CSV della regione.\n
+Archivio nazionale civici di prossimità 2025: Italia.zip (I maiuscola).
+
+Contiene gli ZIP regionali con i CSV/TXT. Il loader cerca l'archivio regionale corrispondente e poi ripiega sull'archivio nazionale, selezionando al suo interno la Regione richiesta.
+
+I campi relativi alla copertura privata dichiarata nel 2024 e a Coperto a giugno 2025 sono facoltativi.
