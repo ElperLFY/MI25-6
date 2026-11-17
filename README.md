@@ -12,7 +12,7 @@ MI25-6 è un'applicazione statica per consultare le mappature delle infrastruttu
 - `JS/legacy.js` gestisce l'API storica Handymenny.
 - `data/fixed-2025/` contiene gli ZIP regionali della mappatura generale.
 - `data/pi1g-2025/` contiene gli ZIP regionali dell'Allegato A PI1G.
-- `data/fixed-2021/` contiene `italia.zip` per la mappatura reti fisse 2021.
+- `data/fixed-2021/` contiene gli ZIP regionali disponibili della mappatura reti fisse 2021; viene scaricato soltanto l'archivio della Regione selezionata.
 - `data/proximity-2025/` contiene `italia.zip` per i civici di prossimità 2025.
 - `data/fibercop-proximity-2025/` contiene `italia.zip` per i civici di prossimità FiberCop 2025.
 - `vendor/jszip.min.js` contiene la libreria JSZip già utilizzata dal progetto.
