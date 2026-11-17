@@ -1,3 +1,5 @@
-Inserire qui l'archivio ZIP dei civici di prossimità FiberCop 2025.
-Nome atteso: italia.zip
-L'archivio deve contenere uno o più CSV. I campi Ammissibile e Cause esclusione sono facoltativi.\nL'archivio italia.zip contiene gli ZIP regionali con nome della regione in maiuscolo (es. SICILIA.zip), ciascuno con i CSV della regione. I campi Ammissibile e Cause esclusione, se presenti, identificano il dataset FiberCop.\n
+Archivio nazionale civici di prossimità FiberCop 2025: Italia.zip (I maiuscola).
+
+Contiene gli ZIP regionali con i CSV/TXT. Il loader cerca l'archivio regionale corrispondente e poi ripiega sull'archivio nazionale, selezionando al suo interno la Regione richiesta.
+
+I campi Ammissibile (SI/NO) e Cause esclusione sono facoltativi; quando entrambi sono presenti identificano il dataset FiberCop.
