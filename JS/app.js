@@ -733,9 +733,9 @@ const READER_DATASET_KEYS = new Set([
   ...EXTRA_DATASET_KEYS
 ]);
 
-function getReaderHeaders(records) {
-  const headers = [];
-  const seenHeaders = new Set();
+function getReaderColumns(records) {
+  const columns = [];
+  const seenColumns = new Set();
   const seenFiles = new Set();
 
   for (const record of records) {
@@ -746,15 +746,19 @@ function getReaderHeaders(records) {
     const names = Array.isArray(record.sourceHeaders)
       ? record.sourceHeaders
       : (record.sourceFields || []).map((field) => field.name);
+    const occurrences = new Map();
 
     for (const rawName of names) {
-      const key = String(rawName ?? "").trim() || "Colonna senza nome";
-      if (seenHeaders.has(key)) continue;
-      seenHeaders.add(key);
-      headers.push(key);
+      const label = String(rawName ?? "").trim() || "Colonna senza nome";
+      const occurrence = occurrences.get(label) || 0;
+      occurrences.set(label, occurrence + 1);
+      const key = label + "\u0000" + occurrence;
+      if (seenColumns.has(key)) continue;
+      seenColumns.add(key);
+      columns.push({ key, label });
     }
   }
-  return headers;
+  return columns;
 }
 
 function renderCsvReaderPage() {
@@ -777,15 +781,15 @@ function renderCsvReaderPage() {
     return;
   }
 
-  const headers = getReaderHeaders(records);
-  if (!headers.length) {
+  const columns = getReaderColumns(records);
+  if (!columns.length) {
     $("csv-reader-page-info").textContent = "Il file non contiene intestazioni leggibili.";
     return;
   }
 
   const headerRow = createElement("tr");
-  for (const name of headers) {
-    const cell = createElement("th", "", name);
+  for (const column of columns) {
+    const cell = createElement("th", "", column.label);
     cell.scope = "col";
     headerRow.appendChild(cell);
   }
@@ -797,24 +801,25 @@ function renderCsvReaderPage() {
     const record = records[index];
     const row = createElement("tr");
 
-    if (Array.isArray(record.sourceValues) && Array.isArray(record.sourceHeaders)) {
-      const columnIndexes = new Map();
-      for (let column = 0; column < record.sourceHeaders.length; column += 1) {
-        const name = String(record.sourceHeaders[column] ?? "").trim() || "Colonna senza nome";
-        if (!columnIndexes.has(name)) columnIndexes.set(name, column);
-      }
-      for (const name of headers) {
-        const column = columnIndexes.get(name);
-        row.appendChild(createElement("td", "", column === undefined ? "" : record.sourceValues[column] ?? ""));
-      }
-    } else {
-      const values = new Map((record.sourceFields || []).map((field) => [
-        String(field.name ?? "").trim() || "Colonna senza nome",
-        field.value
-      ]));
-      for (const name of headers) {
-        row.appendChild(createElement("td", "", values.get(name) ?? ""));
-      }
+    const values = new Map();
+    const sourceNames = Array.isArray(record.sourceHeaders)
+      ? record.sourceHeaders
+      : (record.sourceFields || []).map((field) => field.name);
+    const occurrences = new Map();
+
+    for (let column = 0; column < sourceNames.length; column += 1) {
+      const label = String(sourceNames[column] ?? "").trim() || "Colonna senza nome";
+      const occurrence = occurrences.get(label) || 0;
+      occurrences.set(label, occurrence + 1);
+      const key = label + "\u0000" + occurrence;
+      const value = Array.isArray(record.sourceValues)
+        ? record.sourceValues[column]
+        : record.sourceFields?.[column]?.value;
+      values.set(key, value ?? "");
+    }
+
+    for (const column of columns) {
+      row.appendChild(createElement("td", "", values.get(column.key) ?? ""));
     }
 
     row.appendChild(createElement("td", "", record.sourceFile || ""));
