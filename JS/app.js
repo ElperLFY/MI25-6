@@ -306,6 +306,34 @@ async function loadSelectedRegion() {
   }
 }
 
+function updateFieldHint(field, inputValue, values) {
+  const hint = $(field + "-hint");
+  if (!hint) return;
+  const typed = String(inputValue || "").trim();
+
+  if (!typed && field !== "number") {
+    hint.textContent = "";
+    return;
+  }
+  if (!typed && field === "number") {
+    if (!$("street").value.trim()) {
+      hint.textContent = "";
+      return;
+    }
+    hint.textContent = values.length
+      ? "Civico facoltativo · " + values.length.toLocaleString("it-IT") + " opzioni disponibili."
+      : "Inserisci il civico oppure lascia il campo vuoto.";
+    return;
+  }
+
+  if (values.length) {
+    const count = values.length > 40 ? "40+" : values.length.toLocaleString("it-IT");
+    hint.textContent = count + " suggerimenti · premi Invio per selezionare il primo.";
+  } else {
+    hint.textContent = "Nessun suggerimento corrispondente · puoi comunque inserire il valore manualmente.";
+  }
+}
+
 function updateSuggestions(field) {
   const mapping = {
     province: ["province", "province-options"],
@@ -317,29 +345,48 @@ function updateSuggestions(field) {
   const input = $(inputId);
   const records = allRecords();
   const values = getSuggestions(field, input.value, currentSearchState(), records);
-  renderOptions(listId, values.slice(0, 40));
-
-  if (field === "street") updateNumberHint();
-}
-
-function updateNumberHint() {
-  const hint = $("number-hint");
-  hint.textContent = "";
-  if (!$("street").value.trim() || !hasRecords()) return;
-
-  const values = getSuggestions("number", "", currentSearchState(), allRecords());
-  if (!values.length) {
-    hint.textContent = "Nessun civico negli elenchi per questa via.";
-  } else if (values.length === 1 && values[0] === "SNC") {
-    hint.textContent = "Questa via contiene soltanto civici senza numero (SNC).";
-  } else {
-    hint.textContent = "Civico facoltativo: " + values.length + " opzioni nei file caricati" + (values.includes("SNC") ? " (compreso SNC)." : ".");
-  }
+  suggestionValues[field] = values.slice(0, 40);
+  renderOptions(listId, suggestionValues[field]);
+  updateFieldHint(field, input.value, values);
 }
 
 function scheduleSuggestions(field) {
   window.clearTimeout(suggestionTimers[field]);
   suggestionTimers[field] = window.setTimeout(() => updateSuggestions(field), 120);
+}
+
+function handleAutocompleteEnter(field, event) {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+
+  const inputId = field === "number" ? "street-number" : field;
+  const input = $(inputId);
+  const typed = input.value.trim();
+  if (!typed && field !== "number") return;
+
+  const values = suggestionValues[field] || [];
+  const normalised = normalise(typed);
+  const selected = values.find((value) => normalise(value) === normalised)
+    || values.find((value) => normalise(value).startsWith(normalised))
+    || (values.length === 1 ? values[0] : null);
+  if (selected) input.value = selected;
+
+  if (field === "city") {
+    const city = normalise(input.value);
+    const record = allRecords().find((item) => item.normalisedCity === city);
+    if (record && !$("province").value) $("province").value = record.province;
+  }
+
+  if (field === "number") {
+    $("search-form").requestSubmit();
+    return;
+  }
+
+  const next = ({ province: "city", city: "street", street: "number" })[field];
+  if (!next) return;
+  const nextInput = next === "number" ? $("street-number") : $(next);
+  updateSuggestions(next);
+  nextInput.focus();
 }
 
 function makeDot(code) {
