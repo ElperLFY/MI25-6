@@ -144,7 +144,7 @@ test("italia.zip opens uppercase regional ZIPs and imports their CSV files", asy
   const csv = [
     proximityHeaders.join(";"),
     ["380600457590056", "SICILIA", "PALERMO", "PALERMO", "", "64001", "VIA TEST", "12", "", "38.1157", "13.3615", "SI", "SI"].join(";")
-  ].join("\\n");
+  ].join("\n");
   const entry = (name, payload) => ({
     name, dir: false,
     _data: { uncompressedSize: encoder.encode(payload).length },
@@ -193,7 +193,7 @@ test("FiberCop is inferred from eligibility and exclusion headers inside a regio
   const csv = [
     ["cod_egon_civ", "regione", "provincia", "comune", "strada", "civico", "Ammissibile (SI/NO)", "Cause esclusione"].join(";"),
     ["820530000000001", "SICILIA", "PALERMO", "PALERMO", "VIA TEST", "1", "SI", ""].join(";")
-  ].join("\\n");
+  ].join("\n");
   const entry = (name, payload) => ({
     name, dir: false,
     _data: { uncompressedSize: encoder.encode(payload).length },
@@ -285,7 +285,7 @@ test("regional lookup opens only the matching uppercase ZIP from italia.zip", as
   const csv = [
     proximityHeaders.join(";"),
     ["380600457590056", "SICILIA", "PALERMO", "PALERMO", "", "64001", "VIA TEST", "12", "", "38.1157", "13.3615", "SI", "SI"].join(";")
-  ].join("\\n");
+  ].join("\n");
   const entry = (name, payload) => ({
     name, dir: false,
     _data: { uncompressedSize: encoder.encode(payload).length },
