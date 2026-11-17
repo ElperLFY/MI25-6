@@ -718,7 +718,167 @@ function renderResults(results, query) {
   $("results-card").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-function runSearch(event) {
+const READER_DATASET_KEYS = new Set([
+  "general2025",
+  "pi1g2025",
+  ...EXTRA_DATASET_KEYS
+]);
+
+function getReaderHeaders(records) {
+  const headers = [];
+  const seenHeaders = new Set();
+  const seenFiles = new Set();
+
+  for (const record of records) {
+    const sourceFile = record.sourceFile || "CSV";
+    if (seenFiles.has(sourceFile)) continue;
+    seenFiles.add(sourceFile);
+    for (const field of record.sourceFields || []) {
+      const name = String(field.name ?? "").trim();
+      const key = name || "Colonna senza nome";
+      if (seenHeaders.has(key)) continue;
+      seenHeaders.add(key);
+      headers.push(key);
+    }
+  }
+  return headers;
+}
+
+function renderCsvReaderPage() {
+  const records = state.readerRecords;
+  const pageSize = state.readerPageSize;
+  const totalPages = Math.max(1, Math.ceil(records.length / pageSize));
+  state.readerPage = Math.min(state.readerPage, totalPages - 1);
+  const start = state.readerPage * pageSize;
+  const end = Math.min(start + pageSize, records.length);
+  const head = $("csv-reader-head");
+  const body = $("csv-reader-body");
+  head.textContent = "";
+  body.textContent = "";
+
+  $("csv-reader-prev").disabled = !records.length || state.readerPage === 0;
+  $("csv-reader-next").disabled = !records.length || state.readerPage >= totalPages - 1;
+
+  if (!records.length) {
+    $("csv-reader-page-info").textContent = "Nessuna riga da visualizzare";
+    return;
+  }
+
+  const headers = getReaderHeaders(records);
+  if (!headers.length) {
+    $("csv-reader-page-info").textContent = "Il file non contiene intestazioni leggibili.";
+    return;
+  }
+
+  const headerRow = createElement("tr");
+  for (const name of headers) {
+    const cell = createElement("th", "", name);
+    cell.scope = "col";
+    headerRow.appendChild(cell);
+  }
+  headerRow.appendChild(createElement("th", "", "File sorgente"));
+  head.appendChild(headerRow);
+
+  const fragment = document.createDocumentFragment();
+  for (let index = start; index < end; index += 1) {
+    const record = records[index];
+    const values = new Map((record.sourceFields || []).map((field) => [
+      String(field.name ?? "").trim() || "Colonna senza nome",
+      field.value
+    ]));
+    const row = createElement("tr");
+    for (const name of headers) {
+      row.appendChild(createElement("td", "", values.get(name) ?? ""));
+    }
+    row.appendChild(createElement("td", "", record.sourceFile || ""));
+    fragment.appendChild(row);
+  }
+  body.appendChild(fragment);
+  $("csv-reader-page-info").textContent =
+    "Righe " + (start + 1).toLocaleString("it-IT") + "–" + end.toLocaleString("it-IT")
+    + " di " + records.length.toLocaleString("it-IT")
+    + " · ordine originale dei CSV";
+}
+
+async function loadCsvReaderDataset() {
+  const region = $("region").value;
+  const dataset = $("csv-reader-dataset").value;
+  const token = ++state.readerLoadToken;
+  state.readerRecords = [];
+  state.readerPage = 0;
+  renderCsvReaderPage();
+
+  if (!region) {
+    $("csv-reader-status").textContent = "Seleziona una Regione prima di aprire il CSV Reader.";
+    return;
+  }
+  if (!READER_DATASET_KEYS.has(dataset)) {
+    $("csv-reader-status").textContent = "Dataset non riconosciuto.";
+    return;
+  }
+
+  const label = DATASET_DEFINITIONS[dataset]?.label || "Dataset";
+  $("csv-reader-status").textContent = "Lettura completa di " + label + " per " + region + "…";
+  $("csv-reader-dataset").disabled = true;
+  $("csv-reader-page-size").disabled = true;
+
+  try {
+    const loaded = await loadRegionalData(region, {
+      loadGeneral: dataset === "general2025",
+      loadPi1g: dataset === "pi1g2025",
+      loadExtras: EXTRA_DATASET_KEYS.includes(dataset) ? [dataset] : [],
+      includeSourceFields: true
+    });
+    if (token !== state.readerLoadToken || !state.csvReaderMode) return;
+
+    if (dataset === "general2025") state.readerRecords = loaded.general || [];
+    else if (dataset === "pi1g2025") state.readerRecords = loaded.pi1g || [];
+    else state.readerRecords = loaded.extra[dataset] || [];
+
+    if (!state.readerRecords.length) {
+      const available = dataset === "pi1g2025"
+        ? loaded.hasPi1gArchive
+        : (loaded.extraAvailable[dataset] ?? (dataset === "general2025"));
+      $("csv-reader-status").textContent = available
+        ? label + " · nessun record per " + region + "."
+        : label + " · archivio regionale non disponibile per " + region + ".";
+    } else {
+      $("csv-reader-status").textContent = label + " · " + region + " · "
+        + state.readerRecords.length.toLocaleString("it-IT") + " righe complete. Usa la paginazione per scorrerle.";
+    }
+    renderCsvReaderPage();
+  } catch (error) {
+    if (token !== state.readerLoadToken) return;
+    state.readerRecords = [];
+    renderCsvReaderPage();
+    $("csv-reader-status").textContent = error.message || "Impossibile leggere il CSV selezionato.";
+  } finally {
+    if (token === state.readerLoadToken) {
+      $("csv-reader-dataset").disabled = false;
+      $("csv-reader-page-size").disabled = false;
+    }
+  }
+}
+
+function setCsvReaderMode(enabled) {
+  state.csvReaderMode = Boolean(enabled);
+  $("csv-reader-toggle").textContent = state.csvReaderMode ? "CSV Reader ON" : "CSV Reader OFF";
+  $("csv-reader-toggle").setAttribute("aria-pressed", String(state.csvReaderMode));
+  $("csv-reader-card").hidden = !state.csvReaderMode;
+  $("results-card").hidden = true;
+
+  if (state.csvReaderMode) {
+    loadCsvReaderDataset();
+  } else {
+    state.readerLoadToken += 1;
+    state.readerRecords = [];
+    state.readerPage = 0;
+    $("csv-reader-status").textContent = "CSV Reader disattivato.";
+    renderCsvReaderPage();
+  }
+}
+
+async function runSearch(event) {
   event.preventDefault();
   const query = {
     region: normalise($("region").value),
@@ -727,25 +887,74 @@ function runSearch(event) {
     street: normalise($("street").value),
     number: normalise($("street-number").value)
   };
+  const token = ++state.searchToken;
 
   $("results-list").textContent = "";
   $("search-error").textContent = "";
 
+  if (!$("region").value && !state.manualGeneral && !state.manualPi1g) {
+    $("search-error").textContent = "Seleziona una Regione.";
+    return;
+  }
   if (!hasRecords()) {
     $("search-error").textContent = "Seleziona una Regione oppure carica un file manualmente.";
     return;
   }
-  if (!query.city) {
-    $("search-error").textContent = "Inserisci almeno il Comune.";
+  if (!query.city || !query.street) {
+    $("search-error").textContent = "Inserisci almeno Comune e Via. Il civico resta facoltativo.";
     return;
   }
 
-  renderResults(searchRecords(state.general, state.pi1g, state.extra, query), {
-    city: $("city").value,
-    province: $("province").value,
-    street: $("street").value,
-    number: $("street-number").value
-  });
+  const region = $("region").value;
+  const requestedExtras = region
+    ? EXTRA_DATASET_KEYS.filter((key) => !state.manualExtras.has(key))
+    : [];
+
+  $("search-button").disabled = true;
+  if (requestedExtras.length) {
+    $("data-status").textContent = "Ricerca mirata di " + $("street").value
+      + ($("street-number").value.trim() ? " " + $("street-number").value.trim() : "")
+      + " nei dataset aggiuntivi…";
+  }
+
+  try {
+    if (requestedExtras.length) {
+      const loaded = await loadRegionalData(region, {
+        loadGeneral: false,
+        loadPi1g: false,
+        loadExtras: requestedExtras,
+        query
+      });
+      if (token !== state.searchToken) return;
+
+      for (const key of requestedExtras) {
+        state.extra[key] = loaded.extra[key] || [];
+        state.extraAvailability[key] = loaded.extraAvailable[key] === true;
+        state.checkedExtras.add(key);
+      }
+    }
+
+    const results = searchRecords(state.general, state.pi1g, state.extra, query);
+    renderResults(results, {
+      city: $("city").value,
+      province: $("province").value,
+      street: $("street").value,
+      number: $("street-number").value
+    });
+
+    if (region) setAutomaticStatus(region, state.pi1gAvailable, state.extraAvailability);
+    const checkedCounts = requestedExtras.map((key) =>
+      DATASET_DEFINITIONS[key].label + ": " + state.extra[key].length.toLocaleString("it-IT") + " record"
+    );
+    if (checkedCounts.length) {
+      $("data-status").textContent += " · Ricerca mirata · " + checkedCounts.join(" · ");
+    }
+  } catch (error) {
+    if (token !== state.searchToken) return;
+    $("search-error").textContent = error.message || "Errore durante la ricerca dei dataset.";
+  } finally {
+    if (token === state.searchToken) $("search-button").disabled = false;
+  }
 }
 
 function clearSearch() {
