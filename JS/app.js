@@ -373,9 +373,11 @@ function handleAutocompleteEnter(field, event) {
     : (suggestionValues[field] || []);
   suggestionValues[field] = values;
   const normalised = normalise(typed);
-  const selected = values.find((value) => normalise(value) === normalised)
-    || values.find((value) => normalise(value).startsWith(normalised))
-    || (values.length === 1 ? values[0] : null);
+  const selected = normalised
+    ? values.find((value) => normalise(value) === normalised)
+      || values.find((value) => normalise(value).startsWith(normalised))
+      || (values.length === 1 ? values[0] : null)
+    : null;
   if (selected) input.value = selected;
 
   if (field === "city") {
