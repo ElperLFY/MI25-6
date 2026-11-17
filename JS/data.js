@@ -415,7 +415,7 @@ function recordsForRegion(records, region) {
 async function readArchiveEntries(archive, name, forcedType, region, budget, depth = 0) {
   const allEntries = Object.values(archive.files).filter((entry) => !entry.dir);
   let archiveType = forcedType;
-  const metadataEntry = allEntries.find((entry) => /(^|\\/)dataset\\.json$/i.test(entry.name));
+  const metadataEntry = allEntries.find((entry) => /(^|\/)dataset\.json$/i.test(entry.name));
   if (metadataEntry) {
     try {
       const metadata = JSON.parse(await metadataEntry.async("string"));
@@ -426,10 +426,10 @@ async function readArchiveEntries(archive, name, forcedType, region, budget, dep
   }
 
   let nestedArchives = allEntries
-    .filter((entry) => /\\.zip$/i.test(entry.name))
+    .filter((entry) => /\.zip$/i.test(entry.name))
     .sort((first, second) => first.name.localeCompare(second.name));
   let dataEntries = allEntries
-    .filter((entry) => /\\.(csv|txt)$/i.test(entry.name))
+    .filter((entry) => /\.(csv|txt)$/i.test(entry.name))
     .sort((first, second) => first.name.localeCompare(second.name));
 
   // Nationwide Infratel packages contain one ZIP per region (for example SICILIA.zip).
