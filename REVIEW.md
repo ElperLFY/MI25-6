@@ -14,9 +14,9 @@ The parser now recognises the supplied examples by normalized column names rathe
 - Proximity civics 2025: `cod_egon_civ`, the long 2024 private-coverage header, and `Coperto a giugno 2025`.
 - FiberCop proximity civics 2025: the shared address fields plus `Ammissibile (SI/NO)` and `Cause esclusione`.
 
-The optional `barrato` column may be absent or empty. Columns may be reordered. Unknown non-empty columns remain available in the result details. The national ZIP archives for the three new dataset types are expected at `data/fixed-2021/italia.zip`, `data/proximity-2025/italia.zip`, and `data/fibercop-proximity-2025/italia.zip`.
+The optional `barrato` column may be absent or empty. Columns may be reordered. Unknown non-empty columns remain available in the result details. The 2021 fixed-survey data is published as 16 separate regional ZIP files directly under `data/fixed-2021/`; the loader has an explicit map for their actual uppercase filenames, including non-standard spellings for Friuli-Venezia Giulia, Trentino-Alto Adige, and Valle d'Aosta. The currently published folder does not contain files for Lombardia, Piemonte, Umbria, or Veneto. The proximity and FiberCop national ZIPs are published as `Italia.zip` with a capital I, and the loader now supports that exact case as a fallback after trying an individual region file.
 
-The original regional archives are retained as ZIP blobs and moved under `data/fixed-2025/` and `data/pi1g-2025/` in the repository tree. No user-supplied CSV archives are fabricated; the three new dataset folders contain instructions and are ready for the owner to add `italia.zip`.
+Keeping the 2021 regional ZIPs separate is intentional: their combined existing compressed bytes total about 151.17 MiB, so a single `Italia.zip` would exceed GitHub's hard 100 MiB per-file limit in a normal Git repository. Each regional file is below the 25 MiB browser-upload cap, and the application only fetches the selected region.
 
 ## Record handling
 
@@ -32,7 +32,7 @@ Search results identify the primary dataset in the heading, place the address im
 
 ## Automated checks
 
-`npm test` passes nine tests:
+The suite now contains ten tests:
 
 1. Proximity 2025, including the long header and missing `barrato`.
 2. FiberCop proximity 2025, including an exported leading index column and an SNC suffix.
@@ -42,9 +42,10 @@ Search results identify the primary dataset in the heading, place the address im
 6. A 150,000-record CSV import with exact record-count verification.
 7. National ZIP containing uppercase regional ZIP files.
 8. FiberCop type inference from eligibility/exclusion fields inside a regional ZIP.
-9. Regional lookup selecting only the matching nested regional archive.
+9. Direct loading of a 2021 regional ZIP with its uploaded uppercase filename.
+10. Regional lookup selecting only the matching nested regional archive, including the capitalized `Italia.zip` path.
 
-All JavaScript modules and the test file pass `node --check`.
+JavaScript syntax checks and synthetic runtime smoke tests for the 2021 regional path, the unavailable-region flag, and capitalized `Italia.zip` fallback pass. A full `npm test` run in Node and a browser end-to-end run against GitHub Pages have not been performed in this environment.
 
 ## Remaining runtime verification
 
