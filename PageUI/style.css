@@ -207,8 +207,15 @@ input[type="file"]::file-selector-button:hover {
 .field-note {
   min-height: 1.2em;
   margin: 5px 0 0;
-  color: var(--muted);
+  color: #b3123d;
   font-size: 0.78rem;
+  font-weight: 650;
+}
+
+@media (prefers-color-scheme: dark) {
+  .field-note {
+    color: #ff829e;
+  }
 }
 
 .button-row,
@@ -292,6 +299,13 @@ input[type="file"]::file-selector-button:hover {
 
 .mode-heading h2 {
   margin: 0;
+}
+
+.mode-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .mode-help {
@@ -389,6 +403,90 @@ input[type="file"]::file-selector-button:hover {
   color: var(--primary);
   font-weight: 750;
   white-space: nowrap;
+}
+
+
+.csv-reader-card {
+  min-width: 0;
+}
+
+.reader-heading h2 {
+  margin-bottom: 6px;
+}
+
+.reader-heading .hint {
+  margin-bottom: 14px;
+}
+
+.reader-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.reader-table-wrap {
+  max-width: 100%;
+  max-height: min(68vh, 760px);
+  margin-top: 14px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--background);
+}
+
+#csv-reader-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#csv-reader-table th,
+#csv-reader-table td {
+  max-width: 340px;
+  padding: 7px 10px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+#csv-reader-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--soft);
+  color: var(--primary);
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+#csv-reader-table td {
+  background: var(--surface);
+  color: var(--text);
+}
+
+#csv-reader-table tr:nth-child(even) td {
+  background: var(--background);
+}
+
+.reader-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+#csv-reader-page-info {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  text-align: center;
 }
 
 .compare-panel {
@@ -632,6 +730,19 @@ input[type="file"]::file-selector-button:hover {
 
   .button-row .button {
     flex: 1 1 100%;
+  }
+
+  .mode-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .mode-actions .button {
+    flex: 1 1 150px;
+  }
+
+  .reader-pagination {
+    justify-content: center;
   }
 
   .dialog-content {
