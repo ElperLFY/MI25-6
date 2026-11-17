@@ -1,21 +1,48 @@
 # MI25-6
 
-*Link : __https://elperlfy.github.io/MI25-6/__*
+MI25-6 è un'applicazione statica per consultare le mappature delle infrastrutture di rete fissa pubblicate da Infratel e confrontare i civici con gli esiti PI1G e con dataset territoriali aggiuntivi.
 
-**Esiti mappatura infrastrutture di rete fissa 2025-26**, basato su Mappatura Infratel, ArcGIS 2025-2026 (da qui il nome abbreviato, MI25-6).
+## Struttura
 
-## Architettura del sito
+- `index.html` contiene la pagina e i controlli.
+- `PageUI/style.css` contiene lo stile dell'interfaccia.
+- `JS/app.js` gestisce interfaccia, ricerca, risultati e caricamenti.
+- `JS/data.js` riconosce le intestazioni, legge CSV e ZIP e gestisce la ricerca locale.
+- `JS/datasets.js` contiene definizioni dei dataset, alias delle colonne e legenda.
+- `JS/legacy.js` gestisce l'API storica Handymenny.
+- `data/fixed-2025/` contiene gli ZIP regionali della mappatura generale.
+- `data/pi1g-2025/` contiene gli ZIP regionali dell'Allegato A PI1G.
+- `data/fixed-2021/` contiene `italia.zip` per la mappatura reti fisse 2021.
+- `data/proximity-2025/` contiene `italia.zip` per i civici di prossimità 2025.
+- `data/fibercop-proximity-2025/` contiene `italia.zip` per i civici di prossimità FiberCop 2025.
+- `vendor/jszip.min.js` contiene la libreria JSZip già utilizzata dal progetto.
 
-Sito statico, estremamente semplice: `index.html` e la cartella `data/`, senza server.
+## Dataset aggiuntivi
 
-- **Database locale**: i dati ufficiali di Infratel (Allegato A, aggiornamento di febbraio 2026) sono in `data/`, uno ZIP per regione. In totale circa 277 MB di CSV diventano circa 27 MB di ZIP.
-- **Caricamento per regione**: quando si compila il campo Regione, il browser scarica solo lo ZIP di quella regione ed estrae il CSV che serve, invece di leggere tutto insieme. È più leggero e veloce, anche su dispositivi datati.
-- **Caricamento manuale**: l'utente può caricare i propri file (CSV o ZIP). Hanno la precedenza sul database locale, così anche se questo non è aggiornato, i dati dell'utente lo sono sempre. I file caricati restano nel browser.
+Gli archivi nazionali aggiuntivi devono chiamarsi `italia.zip` e contenere uno o più CSV. I tre archivi aggiuntivi sono indipendenti e vanno collocati nella rispettiva cartella sotto `data/`. I CSV possono avere colonne riordinate e campi opzionali mancanti, inclusa la colonna `barrato`.
 
-## Fonte dati
+Il riconoscimento utilizza intestazioni normalizzate: maiuscole/minuscole, spazi, accenti, underscore e altri separatori non cambiano il nome logico della colonna. Le colonne non conosciute vengono comunque conservate nel risultato come campi aggiuntivi.
 
-Infratel Italia, Esiti della Mappatura 2025 delle reti fisse (aggiornamento febbraio 2026).
+Per i civici di prossimità 2025 sono supportati i campi relativi alla copertura privata dichiarata nella mappatura 2024 e al campo `Coperto a giugno 2025`. Per FiberCop sono supportati `Ammissibile (SI/NO)` e `Cause esclusione`. Per la mappatura fissa 2021 sono supportati `colore_26`, `peak_vel_down_26` e `vel_max_down_26`.
 
-# *DISCLAIMER :*
-# ***SE LEGGI QUESTO TESTO AL POSTO DEL SITO FUNZIONANTE, SIGNIFICA CHE È STATO BUTTATO GIÙ MOMENTANEAMENTE ED È IN MANUTENZIONE.***
+## Esecuzione
 
+Servire la cartella radice con un server HTTP statico e aprire l'indirizzo locale. Ad esempio:
+
+```bash
+python -m http.server 8000
+```
+
+Aprire quindi `http://localhost:8000/`. Non aprire direttamente il file HTML dal filesystem: il caricamento ZIP utilizza `fetch`.
+
+## Test
+
+Con Node.js 22 o successivo:
+
+```bash
+npm test
+```
+
+I test verificano i formati CSV forniti, le intestazioni facoltative e riordinate, i dataset esistenti e un caricamento da 150.000 record. Il parser non applica un limite al numero di righe; restano solo limiti di dimensione dei file e degli archivi per evitare caricamenti binari eccessivi.
+
+MI25-6 non è un verificatore commerciale in tempo reale e non certifica che un servizio sia attivabile presso un indirizzo.

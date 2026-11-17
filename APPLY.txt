@@ -1,0 +1,11 @@
+1. Extract this archive into the root of a clean MI25-6 checkout, replacing the application files.
+2. Apply the data archive path moves with: git apply DATA-LAYOUT.patch
+3. Run: npm test
+4. Add the three national ZIP archives when ready:
+   data/fixed-2021/italia.zip
+   data/proximity-2025/italia.zip
+   data/fibercop-proximity-2025/italia.zip
+   Each ZIP must contain its CSV file or files.
+5. Keep the existing vendor/jszip.min.js, icons, site.webmanifest, and all existing data ZIPs.
+
+The new dataset folders already contain short README files describing their expected archive. No placeholder ZIP files are created because the CSV data has not yet been supplied.
