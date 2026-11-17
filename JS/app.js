@@ -742,9 +742,13 @@ function getReaderHeaders(records) {
     const sourceFile = record.sourceFile || "CSV";
     if (seenFiles.has(sourceFile)) continue;
     seenFiles.add(sourceFile);
-    for (const field of record.sourceFields || []) {
-      const name = String(field.name ?? "").trim();
-      const key = name || "Colonna senza nome";
+
+    const names = Array.isArray(record.sourceHeaders)
+      ? record.sourceHeaders
+      : (record.sourceFields || []).map((field) => field.name);
+
+    for (const rawName of names) {
+      const key = String(rawName ?? "").trim() || "Colonna senza nome";
       if (seenHeaders.has(key)) continue;
       seenHeaders.add(key);
       headers.push(key);
@@ -791,14 +795,28 @@ function renderCsvReaderPage() {
   const fragment = document.createDocumentFragment();
   for (let index = start; index < end; index += 1) {
     const record = records[index];
-    const values = new Map((record.sourceFields || []).map((field) => [
-      String(field.name ?? "").trim() || "Colonna senza nome",
-      field.value
-    ]));
     const row = createElement("tr");
-    for (const name of headers) {
-      row.appendChild(createElement("td", "", values.get(name) ?? ""));
+
+    if (Array.isArray(record.sourceValues) && Array.isArray(record.sourceHeaders)) {
+      const columnIndexes = new Map();
+      for (let column = 0; column < record.sourceHeaders.length; column += 1) {
+        const name = String(record.sourceHeaders[column] ?? "").trim() || "Colonna senza nome";
+        if (!columnIndexes.has(name)) columnIndexes.set(name, column);
+      }
+      for (const name of headers) {
+        const column = columnIndexes.get(name);
+        row.appendChild(createElement("td", "", column === undefined ? "" : record.sourceValues[column] ?? ""));
+      }
+    } else {
+      const values = new Map((record.sourceFields || []).map((field) => [
+        String(field.name ?? "").trim() || "Colonna senza nome",
+        field.value
+      ]));
+      for (const name of headers) {
+        row.appendChild(createElement("td", "", values.get(name) ?? ""));
+      }
     }
+
     row.appendChild(createElement("td", "", record.sourceFile || ""));
     fragment.appendChild(row);
   }
@@ -853,7 +871,7 @@ async function loadCsvReaderDataset() {
       loadGeneral: dataset === "general2025",
       loadPi1g: dataset === "pi1g2025",
       loadExtras: EXTRA_DATASET_KEYS.includes(dataset) ? [dataset] : [],
-      includeSourceFields: true
+      readerMode: true
     });
     if (token !== state.readerLoadToken || !state.csvReaderMode) return;
 
