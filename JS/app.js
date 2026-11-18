@@ -63,41 +63,6 @@ function copyText(text, button, successLabel) {
   } catch { button.textContent = "Copia non riuscita"; }
 }
 
-const resultsRenderer = createResultsRenderer({
-  $, createElement, state, legacyClient,
-  getGeneralAbsenceMessage: () => (state.generalCount || state.manualGeneral)
-    ? "Nessuna corrispondenza nel sottoinsieme degli esiti pubblicati 2025; questo dato, da solo, non dimostra assenza di copertura."
-    : "Dataset della mappatura generale 2025 non disponibile per questa ricerca.",
-  copyText
-});
-const renderResults = resultsRenderer.renderResults;
-
-const csvReader = createCsvReaderController({
-  $, state, createElement, getCsvReaderPage,
-  loadCsvReaderDataset: requestCsvReaderDataset, releaseCsvReader
-});
-const renderCsvReaderPage = csvReader.renderCsvReaderPage;
-const loadCsvReaderDataset = csvReader.loadCsvReaderDataset;
-const setCsvReaderMode = csvReader.setCsvReaderMode;
-
-const regionData = createRegionDataController({
-  $, state, loadRegionalData, clearArchiveCache,
-  scheduleSuggestions, renderCsvReaderPage, loadCsvReaderDataset
-});
-const setAutomaticStatus = regionData.setAutomaticStatus;
-const loadSelectedRegion = regionData.loadSelectedRegion;
-const refreshAutomaticArchives = regionData.refreshAutomaticArchives;
-const searchController = createSearchController({
-  $, state, searchRecords, cityIsKnown, parseUploadedFiles, clearManualDatasets,
-  renderResults, setAutomaticStatus, setFileMessages, scheduleSuggestions, loadSelectedRegion
-});
-const runSearch = searchController.runSearch;
-const clearSearch = searchController.clearSearch;
-const handleFileUpload = searchController.handleFileUpload;
-const restoreAutomaticData = searchController.restoreAutomaticData;
-
-
-
 
 
 function createElement(tag, className, text) {
@@ -244,6 +209,48 @@ const bindLegacyLevel = legacy.bindLegacyLevel;
 const runLegacySearch = legacy.runLegacySearch;
 const clearLegacySearch = legacy.clearLegacySearch;
 const setLegacyMode = legacy.setLegacyMode;
+
+const autocomplete = createAutocompleteController({
+  $, getSuggestions, findCityRecord, normalise, currentSearchState, renderOptions, suggestionValues
+});
+const scheduleSuggestions = autocomplete.scheduleSuggestions;
+const handleAutocompleteEnter = autocomplete.handleAutocompleteEnter;
+
+const resultsRenderer = createResultsRenderer({
+  $, createElement, state, legacyClient,
+  getGeneralAbsenceMessage: () => (state.generalCount || state.manualGeneral)
+    ? "Nessuna corrispondenza nel sottoinsieme degli esiti pubblicati 2025; questo dato, da solo, non dimostra assenza di copertura."
+    : "Dataset della mappatura generale 2025 non disponibile per questa ricerca.",
+  copyText
+});
+const renderResults = resultsRenderer.renderResults;
+
+const csvReader = createCsvReaderController({
+  $, state, createElement, getCsvReaderPage,
+  loadCsvReaderDataset: requestCsvReaderDataset, releaseCsvReader
+});
+const renderCsvReaderPage = csvReader.renderCsvReaderPage;
+const loadCsvReaderDataset = csvReader.loadCsvReaderDataset;
+const setCsvReaderMode = csvReader.setCsvReaderMode;
+
+const regionData = createRegionDataController({
+  $, state, loadRegionalData, clearArchiveCache,
+  scheduleSuggestions, renderCsvReaderPage, loadCsvReaderDataset
+});
+const setAutomaticStatus = regionData.setAutomaticStatus;
+const loadSelectedRegion = regionData.loadSelectedRegion;
+const refreshAutomaticArchives = regionData.refreshAutomaticArchives;
+const searchController = createSearchController({
+  $, state, searchRecords, cityIsKnown, parseUploadedFiles, clearManualDatasets,
+  renderResults, setAutomaticStatus, setFileMessages, scheduleSuggestions, loadSelectedRegion, loadCsvReaderDataset
+});
+const runSearch = searchController.runSearch;
+const clearSearch = searchController.clearSearch;
+const handleFileUpload = searchController.handleFileUpload;
+const restoreAutomaticData = searchController.restoreAutomaticData;
+
+
+
 
 function bindEvents() {
   $("region").addEventListener("input", updateRegionHint);
