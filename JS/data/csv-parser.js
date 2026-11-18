@@ -282,6 +282,9 @@ function makeRecord(row, originalHeaders, headers, columns, recordFieldColumns, 
 
   record.street = record.street || fullAddress;
   record.fullAddress = fullAddress;
+  for (const field of ["characteristic", "region", "province", "city", "district", "procom", "number", "suffix"]) {
+    if (record[field] === undefined) record[field] = "";
+  }
   record.openFiberDeclared2024 = readValue(row, columns.openFiberDeclared2024);
   record.networkColor2026Present = columns.networkColor2026 >= 0;
 
