@@ -61,7 +61,7 @@ export const findCityRecord = (city) => request("FIND_CITY", { city });
 export const cityIsKnown = (city, region = "") => request("CITY_IS_KNOWN", { city, region });
 export const parseUploadedFiles = (files, options = {}) => request("PARSE_UPLOAD", { files, options });
 export const clearManualDatasets = () => request("CLEAR_MANUAL");
-export const loadCsvReaderDataset = (region, dataset) => request("LOAD_READER", { region, dataset });
+export const loadCsvReaderDataset = (region, dataset) => request("LOAD_READER", { region, dataset, baseUrl: document.baseURI });
 export const getCsvReaderPage = (options = {}) => request("GET_READER_PAGE", options);
 export const releaseCsvReader = () => request("RELEASE_READER");
 export const clearArchiveCache = () => request("CLEAR_ARCHIVE_CACHE");
