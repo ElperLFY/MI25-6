@@ -301,6 +301,8 @@ async function loadSelectedRegion() {
     $("search-button").disabled = false;
     if (state.csvReaderMode) {
       state.readerRecords = [];
+      $("csv-reader-dataset").disabled = false;
+      $("csv-reader-page-size").disabled = false;
       $("csv-reader-status").textContent = "Seleziona una Regione per leggere il CSV.";
       renderCsvReaderPage();
     }
