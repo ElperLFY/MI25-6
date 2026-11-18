@@ -638,7 +638,8 @@ test("streaming parser matches the full parser when chunks split quoted fields a
   for (let index = 0; index < 9000; index += 1) {
     rows.push(`${380100000000000 + index};SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA TEST ${index};${index + 1}`);
   }
-  rows.push('380100000009001;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;"VIA " + "TEST ""SPECIALE""" + "\nSECONDA RIGA";9002');
+  rows.push(`380100000009001;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;"VIA ""SPECIALE""
+SECONDA RIGA";9002`);
   const csv = rows.join("\r\n");
   const bytes = new TextEncoder().encode(csv);
   const quoteIndex = csv.indexOf('"');

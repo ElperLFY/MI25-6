@@ -344,7 +344,7 @@ function makeRecord(row, originalHeaders, headers, columns, recordFieldColumns, 
 }
 
 export function parseDataset(text, name = "dataset", forcedType = "", options = {}) {
-  const cleanText = String(text ?? "").replace(/^\\uFEFF/, "");
+  const cleanText = String(text ?? "").replace(/^\uFEFF/, "");
   const headerInfo = findHeader(cleanText);
   if (!headerInfo) return null;
   const collector = createDatasetRowCollector(name, forcedType, options, headerInfo);
@@ -374,7 +374,7 @@ function createDatasetRowCollector(name, forcedType, options, headerInfo) {
     }
 
     if (!headerFound) {
-      originalHeaders = row.map((value) => String(value ?? "").replace(/^\\uFEFF/, "").trim());
+      originalHeaders = row.map((value) => String(value ?? "").replace(/^\uFEFF/, "").trim());
       headers = originalHeaders.map(headerKey);
       columns = getColumns(headers);
       if (!columns) return;
