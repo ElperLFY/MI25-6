@@ -23,7 +23,43 @@ function decodeBuffer(buffer) {
   }
 }
 
+function parsePlainDelimitedRows(text, delimiter, onRow) {
+  let start = 0;
+
+  while (start < text.length) {
+    let lineEnd = text.indexOf("\n", start);
+    const carriageEnd = text.indexOf("\r", start);
+    if (lineEnd < 0 || (carriageEnd >= 0 && carriageEnd < lineEnd)) lineEnd = carriageEnd;
+    if (lineEnd < 0) lineEnd = text.length;
+
+    const line = text.slice(start, lineEnd);
+    if (line) {
+      const row = line.split(delimiter);
+      let hasContent = false;
+      for (let index = 0; index < row.length; index += 1) {
+        if (row[index].trim() !== "") {
+          hasContent = true;
+          break;
+        }
+      }
+      if (hasContent && onRow(row) === false) return;
+    }
+
+    if (lineEnd === text.length) break;
+    const lineEnding = text[lineEnd];
+    start = lineEnd + 1;
+    if (lineEnding === "\r" && text[start] === "\n") start += 1;
+  }
+}
+
 function parseDelimitedRows(text, delimiter, onRow) {
+  // Most source files contain no quoted fields. Let the native string splitter
+  // handle those rows instead of scanning and concatenating every character.
+  if (!text.includes('"')) {
+    parsePlainDelimitedRows(text, delimiter, onRow);
+    return;
+  }
+
   let row = [];
   let value = "";
   let quoted = false;
@@ -164,6 +200,8 @@ function createStringInterner() {
   };
 }
 
+const EMPTY_EXTRA_FIELDS = Object.freeze([]);
+
 function createNormaliseCache() {
   const values = new Map();
   return (value) => {
@@ -217,9 +255,11 @@ function matchesRow(row, columns, query) {
   return true;
 }
 
-function makeRecord(row, originalHeaders, headers, columns, datasetId, intern, cachedNormalise, options = {}, sourceFile = "", sourceRowNumber = 0) {
-  const id = intern(readValue(row, columns.id));
-  const fullAddress = intern(readValue(row, columns.fullAddress));
+function makeRecord(row, originalHeaders, headers, columns, extraFieldIndexes, datasetId, intern, cachedNormalise, options = {}, sourceFile = "", sourceRowNumber = 0) {
+  // IDs and complete addresses are high-cardinality values. Interning them
+  // keeps a large Map alive for millions of mostly unique strings.
+  const id = readValue(row, columns.id);
+  const fullAddress = readValue(row, columns.fullAddress);
   const streetValue = readValue(row, columns.street) || fullAddress;
   const record = {
     id,
@@ -229,7 +269,7 @@ function makeRecord(row, originalHeaders, headers, columns, datasetId, intern, c
     city: intern(readValue(row, columns.city)),
     district: intern(readValue(row, columns.district)),
     procom: intern(readValue(row, columns.procom)),
-    street: intern(streetValue),
+    street: streetValue,
     fullAddress,
     number: intern(readValue(row, columns.number)),
     suffix: intern(readValue(row, columns.suffix)),
@@ -275,14 +315,11 @@ function makeRecord(row, originalHeaders, headers, columns, datasetId, intern, c
   if (!record.id && !record.street && !record.city && !record.fullAddress) return null;
 
   const extraFields = [];
-  for (let index = 0; index < headers.length; index += 1) {
+  for (const index of extraFieldIndexes) {
     const value = String(row[index] ?? "").trim();
-    if (!value) continue;
-    if (!FIELD_HEADER_KEYS.has(headers[index]) && index !== columns.openFiberDeclared2024) {
-      extraFields.push({ name: originalHeaders[index] || headers[index], value });
-    }
+    if (value) extraFields.push({ name: originalHeaders[index] || headers[index], value });
   }
-  record.extraFields = extraFields;
+  record.extraFields = extraFields.length ? extraFields : EMPTY_EXTRA_FIELDS;
   if (options.includeSourceFields) {
     record.sourceFields = originalHeaders.map((name, index) => ({
       name,
@@ -295,8 +332,10 @@ function makeRecord(row, originalHeaders, headers, columns, datasetId, intern, c
   record.normalisedRegion = cachedNormalise(record.region);
   record.normalisedProvince = cachedNormalise(record.province);
   record.normalisedCity = cachedNormalise(record.city);
-  record.normalisedStreet = cachedNormalise(record.street);
-  record.normalisedFullAddress = cachedNormalise(record.fullAddress);
+  // These fields are often unique per civic. Avoid retaining a second,
+  // application-wide Map entry for every distinct street/address.
+  record.normalisedStreet = normalise(record.street);
+  record.normalisedFullAddress = normalise(record.fullAddress);
   record.normalisedNumber = cachedNormalise(record.number);
   record.normalisedSuffix = cachedNormalise(record.suffix);
   record.normalisedFullNumber = record.normalisedSuffix
@@ -330,6 +369,7 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
   let headerFound = false;
   let readerHeaders = null;
   let readerOffset = 0;
+  let extraFieldIndexes = [];
   const records = [];
   const intern = createStringInterner();
   const cachedNormalise = createNormaliseCache();
@@ -347,6 +387,12 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
       if (!columns) return;
       datasetId = inferDatasetType(headers, name, forcedType);
       if (!datasetId) return;
+      extraFieldIndexes = [];
+      for (let index = 0; index < headers.length; index += 1) {
+        if (!FIELD_HEADER_KEYS.has(headers[index]) && index !== columns.openFiberDeclared2024) {
+          extraFieldIndexes.push(index);
+        }
+      }
       headerFound = true;
       rowIndex += 1;
       return;
@@ -394,6 +440,7 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
       originalHeaders,
       headers,
       columns,
+      extraFieldIndexes,
       datasetId,
       intern,
       cachedNormalise,

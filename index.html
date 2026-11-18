@@ -44,7 +44,7 @@
           <button type="button" class="button button-secondary mode-toggle" id="refresh-data-cache" title="Svuota la cache locale e scarica nuovamente gli archivi automatici">Aggiorna archivi</button>
         </div>
       </div>
-      <p class="mode-help" id="mode-help">Ricerca indirizzo: carica tutti i dataset regionali disponibili per suggerimenti e ricerca. Gli archivi ZIP vengono conservati in IndexedDB per 30 giorni; usa Aggiorna archivi per scaricare le versioni più recenti. CSV Reader apre volontariamente tutte le righe del dataset selezionato. Legacy mode consulta separatamente l’archivio storico 2017-2021 di Handymenny.</p>
+      <p class="mode-help" id="mode-help">Ricerca indirizzo: carica tutti i dataset regionali disponibili per suggerimenti e ricerca. Gli archivi ZIP vengono conservati in IndexedDB per 30 giorni; usa Aggiorna archivi per scaricare le versioni più recenti. Il browser deve comunque decomprimere e rielaborare i CSV a ogni nuova sessione: nelle Regioni con milioni di record il caricamento può richiedere 20–30 secondi. L’elaborazione avviene in un Web Worker per mantenere reattiva l’interfaccia. CSV Reader apre volontariamente tutte le righe del dataset selezionato. Legacy mode consulta separatamente l’archivio storico 2017-2021 di Handymenny.</p>
     </section>
 
     <section class="card" id="modern-search-card" aria-labelledby="address-title">

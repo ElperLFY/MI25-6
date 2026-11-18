@@ -38,6 +38,35 @@ test("proximity 2025 recognises long headers and does not require barrato", () =
   assert.equal(parsed.records[0].longitude, "14.8182354");
 });
 
+test("plain CSV fast path handles CRLF, blank lines, and empty trailing fields", () => {
+  const csv = [
+    "caratteristica;id_egon;regione;provincia;comune;strada;civico;campo_extra",
+    "",
+    "B;380130072676106;SICILIA;AGRIGENTO;CANICATTI';VIA ALDO MORO;10;",
+    "C;380130072676107;SICILIA;AGRIGENTO;CANICATTI';VIA ROMA;2;valore"
+  ].join("\r\n");
+
+  const parsed = parseDataset(csv, "plain-regional.csv");
+  assert.equal(parsed.records.length, 2);
+  assert.equal(parsed.records[0].street, "VIA ALDO MORO");
+  assert.deepEqual(parsed.records[0].extraFields, []);
+  assert.deepEqual(parsed.records[1].extraFields, [{ name: "campo_extra", value: "valore" }]);
+});
+
+test("quoted CSV fields retain delimiters and embedded newlines", () => {
+  const csv = [
+    "caratteristica;id_egon;regione;provincia;comune;strada;civico",
+    'B;380130072676106;SICILIA;AGRIGENTO;CANICATTI\\';"VIA ROMA; INTERNA";10',
+    'B;380130072676107;SICILIA;AGRIGENTO;CANICATTI\\';"VIA ROMA',
+    'INTERNA";11'
+  ].join("\n");
+
+  const parsed = parseDataset(csv, "quoted-regional.csv");
+  assert.equal(parsed.records.length, 2);
+  assert.equal(parsed.records[0].street, "VIA ROMA; INTERNA");
+  assert.equal(parsed.records[1].street, "VIA ROMA\\nINTERNA");
+});
+
 test("CSV buffer decoder is exported and supports UTF-8 and Windows-1252", () => {
   const utf8 = new TextEncoder().encode("Città").buffer;
   const windows1252 = Uint8Array.from([0x43, 0x69, 0x74, 0x74, 0xe0]).buffer;

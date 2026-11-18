@@ -84,6 +84,7 @@ async function loadSelectedRegion() {
     for (const key of automaticExtras) state.checkedExtras.add(key);
     state.loadedRegion = region;
     setAutomaticStatus(region, state.pi1gAvailable, state.extraAvailability);
+    $("region-hint").textContent = region + " · dataset caricati; suggerimenti e ricerca sono pronti.";
     const errors = Object.entries(loaded.extraErrors || {});
     if (errors.length) {
       $("data-status").textContent += " · " + errors.map(([key, message]) => DATASET_DEFINITIONS[key].label + ": " + message).join(" · ");
@@ -92,6 +93,7 @@ async function loadSelectedRegion() {
   } catch (error) {
     if (token !== state.loadToken) return;
     state.loadedRegion = "";
+    $("region-hint").textContent = "Caricamento non riuscito per " + region + ". Verifica lo stato dei dataset.";
     $("data-status").textContent = "Impossibile caricare tutti i dataset di " + region + ". " + (error.message || "Verifica i file o carica i dataset manualmente.");
   } finally {
     if (token === state.loadToken) {
