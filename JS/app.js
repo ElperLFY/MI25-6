@@ -1,6 +1,5 @@
 import {
-  DATASET_DEFINITIONS, DOTS, EXTRA_DATASET_KEYS,
-  decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, REGIONS, normalise
+  DOTS, EXTRA_DATASET_KEYS, REGIONS, normalise
 } from "./data/index.js";
 import {
   cityIsKnown, clearArchiveCache, clearManualDatasets, findCityRecord,
