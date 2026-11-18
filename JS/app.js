@@ -178,6 +178,10 @@ function handleRegionEnter(event) {
   event.preventDefault();
 
   const typed = normalise($("region").value);
+  if (!typed) {
+    updateRegionHint();
+    return;
+  }
   const selected = REGIONS.find((region) => normalise(region) === typed)
     || REGIONS.find((region) => normalise(region).startsWith(typed));
   if (!selected) {
@@ -1473,9 +1477,10 @@ function bindEvents() {
     if (!record) return;
     if (!$("province").value) $("province").value = record.province;
     if (!$("region").value) {
-      const option = [...$("region").options].find((item) => normalise(item.value) === record.normalisedRegion);
+      const option = REGIONS.find((item) => normalise(item) === record.normalisedRegion);
       if (option) {
-        $("region").value = option.value;
+        $("region").value = option;
+        updateRegionHint();
         loadSelectedRegion();
       }
     }
