@@ -1267,3 +1267,46 @@ body {
     transition: none;
   }
 }
+
+
+/* Compact load diagnostics, visible only after a measured regional load. */
+.load-diagnostics {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.load-diagnostics > summary {
+  width: fit-content;
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.load-diagnostics-total {
+  margin: 9px 0;
+  color: var(--primary);
+  font-weight: 750;
+}
+
+.load-diagnostics-group {
+  margin: 8px 0;
+  padding-left: 9px;
+  border-left: 2px solid var(--accent);
+}
+
+.load-diagnostics-group > strong {
+  color: var(--text);
+}
+
+.load-diagnostics-group ul {
+  margin: 4px 0 0;
+  padding-left: 17px;
+}
+
+.load-diagnostics-group li {
+  margin: 2px 0;
+  overflow-wrap: anywhere;
+}

@@ -186,7 +186,8 @@ async function dispatch(type, payload = {}) {
       return {
         counts,
         extraErrors: loaded.extraErrors || {},
-        hasPi1gArchive: counts.pi1gAvailable
+        hasPi1gArchive: counts.pi1gAvailable,
+        timings: loaded.timings || null
       };
     }
     case "GET_COUNTS":

@@ -4,6 +4,20 @@ const ARCHIVE_CACHE_DB_VERSION = 1;
 const ARCHIVE_CACHE_STORE = "archives";
 const ARCHIVE_CACHE_FORMAT_VERSION = 1;
 const ARCHIVE_CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+function nowMs() {
+  return globalThis.performance?.now?.() ?? Date.now();
+}
+
+function recordCacheTiming(options, stage, startedAt, details = {}) {
+  if (!Array.isArray(options?.timings)) return;
+  options.timings.push({
+    dataset: options.datasetKey || "unknown",
+    stage,
+    durationMs: Math.max(0, nowMs() - startedAt),
+    ...details
+  });
+}
 let archiveCacheDatabasePromise = null;
 let archiveCacheGeneration = 0;
 
@@ -75,12 +89,20 @@ const DEFAULT_ARCHIVE_IDLE_TIMEOUT_MS = 30_000;
 
 export async function getArchiveBytes(path, baseUrl = "", options = {}) {
   const requestUrl = baseUrl ? new URL(path, baseUrl).href : path;
+  if (archiveBytesCache.has(requestUrl)) {
+    recordCacheTiming(options, "Fonte ZIP", nowMs(), { source: "memoria Worker" });
+  }
   if (!archiveBytesCache.has(requestUrl)) {
     const generation = archiveCacheGeneration;
     const idleTimeoutMs = Math.max(1_000, Number(options.idleTimeoutMs) || DEFAULT_ARCHIVE_IDLE_TIMEOUT_MS);
     const task = (async () => {
+      const cacheReadStartedAt = nowMs();
       const cached = await readPersistentArchive(requestUrl);
-      if (cached) return cached;
+      recordCacheTiming(options, "Lettura IndexedDB", cacheReadStartedAt, { hit: Boolean(cached) });
+      if (cached) {
+        recordCacheTiming(options, "Fonte ZIP", nowMs(), { source: "IndexedDB" });
+        return cached;
+      }
 
       const controller = new AbortController();
       let timeoutId;
@@ -91,15 +113,18 @@ export async function getArchiveBytes(path, baseUrl = "", options = {}) {
 
       try {
         armIdleTimeout();
+        const responseStartedAt = nowMs();
         const response = await fetch(requestUrl, {
           cache: "no-cache",
           signal: controller.signal
         });
+        recordCacheTiming(options, "Risposta HTTP", responseStartedAt, { status: response.status });
         if (response.status === 404) return null;
         if (!response.ok) {
           throw new Error("HTTP " + response.status + " durante il caricamento di " + requestUrl);
         }
 
+        const bodyStartedAt = nowMs();
         let buffer;
         if (response.body?.getReader) {
           const reader = response.body.getReader();
@@ -129,8 +154,12 @@ export async function getArchiveBytes(path, baseUrl = "", options = {}) {
         } else {
           buffer = await response.arrayBuffer();
         }
+        recordCacheTiming(options, "Download e assemblaggio ZIP", bodyStartedAt, { bytes: buffer.byteLength });
+        recordCacheTiming(options, "Fonte ZIP", nowMs(), { source: "rete" });
 
+        const cacheWriteStartedAt = nowMs();
         await writePersistentArchive(requestUrl, buffer, generation);
+        recordCacheTiming(options, "Scrittura IndexedDB", cacheWriteStartedAt);
         return buffer;
       } catch (error) {
         if (controller.signal.aborted) {

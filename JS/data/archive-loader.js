@@ -2,6 +2,7 @@ import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS } from "../datasets.js";
 import { normalise } from "./normalization.js";
 import { decodeBuffer, headerKey, parseDataset } from "./csv-parser.js";
 import { getArchiveBytes } from "./archive-cache.js";
+import { measureAsync, measureSync, nowMs } from "./diagnostics.js";
 
 const PI1G_FILES = {
   Campania: "campania.zip",
@@ -109,8 +110,8 @@ async function readArchiveEntries(archive, name, forcedType, region, budget, dep
     if (budget.expandedBytes > MAX_ARCHIVE_SIZE) {
       throw new Error("L’archivio supera il limite di dimensione espansa consentito.");
     }
-    const nestedBuffer = await entry.async("arraybuffer");
-    const nestedArchive = await globalThis.JSZip.loadAsync(nestedBuffer);
+    const nestedBuffer = await measureAsync(options, "Decompressione ZIP regionale", () => entry.async("arraybuffer"), { entry: entry.name });
+    const nestedArchive = await measureAsync(options, "Apertura ZIP regionale", () => globalThis.JSZip.loadAsync(nestedBuffer), { entry: entry.name });
     const nestedParsed = await readArchiveEntries(
       nestedArchive,
       entry.name || name,
@@ -128,8 +129,9 @@ async function readArchiveEntries(archive, name, forcedType, region, budget, dep
     if (budget.expandedBytes > MAX_ARCHIVE_SIZE) {
       throw new Error("L’archivio supera il limite di dimensione espansa consentito.");
     }
-    const content = decodeBuffer(await entry.async("arraybuffer"));
-    const dataset = parseDataset(content, entry.name || name, archiveType, options);
+    const csvBuffer = await measureAsync(options, "Decompressione CSV", () => entry.async("arraybuffer"), { entry: entry.name });
+    const content = measureSync(options, "Decodifica CSV", () => decodeBuffer(csvBuffer), { entry: entry.name });
+    const dataset = measureSync(options, "Parsing CSV", () => parseDataset(content, entry.name || name, archiveType, options), { entry: entry.name });
     if (dataset) parsed.push(dataset);
   }
 
@@ -138,7 +140,7 @@ async function readArchiveEntries(archive, name, forcedType, region, budget, dep
 
 async function readArchiveBuffer(buffer, name, forcedType = "", region = "", options = {}) {
   if (!globalThis.JSZip) throw new Error("La libreria JSZip non è disponibile.");
-  const archive = await globalThis.JSZip.loadAsync(buffer);
+  const archive = await measureAsync(options, "Apertura archivio ZIP", () => globalThis.JSZip.loadAsync(buffer), { archive: name });
   const parsed = await readArchiveEntries(archive, name, forcedType, region, { expandedBytes: 0 }, 0, options);
 
   if (!parsed.length) {
@@ -150,7 +152,7 @@ async function fetchArchive(paths, forcedType = "", region = "", options = {}) {
   let lastError = null;
   for (const path of paths) {
     try {
-      const buffer = await getArchiveBytes(path, options.baseUrl);
+      const buffer = await measureAsync(options, "Lettura archivio (cache/rete)", () => getArchiveBytes(path, options.baseUrl, options), { path });
       if (!buffer) {
 
         continue;
@@ -240,14 +242,25 @@ export async function loadRegionalData(region, options = {}) {
   const loadPi1g = options.loadPi1g !== false;
   const requestedExtras = options.loadExtras || EXTRA_DATASET_KEYS;
 
-  const parseOptions = { baseUrl: options.baseUrl, query: options.query, includeSourceFields: options.includeSourceFields === true, readerMode: options.readerMode === true };
-  const generalPromise = loadGeneral ? readGeneralRegion(region, parseOptions) : Promise.resolve(null);
+  const totalStartedAt = nowMs();
+  const timings = options.collectTimings === true ? [] : null;
+  const parseOptions = {
+    baseUrl: options.baseUrl,
+    query: options.query,
+    includeSourceFields: options.includeSourceFields === true,
+    readerMode: options.readerMode === true,
+    timings
+  };
+  const generalPromise = loadGeneral
+    ? measureAsync({ timings, datasetKey: "general2025" }, "Tempo dataset", () => readGeneralRegion(region, { ...parseOptions, datasetKey: "general2025" }))
+    : Promise.resolve(null);
   const pi1gPromise = loadPi1g
-    ? readPi1gRegion(region, parseOptions)
+    ? measureAsync({ timings, datasetKey: "pi1g2025" }, "Tempo dataset", () => readPi1gRegion(region, { ...parseOptions, datasetKey: "pi1g2025" }))
     : Promise.resolve({ records: null, available: false });
   const extrasPromise = Promise.all(requestedExtras.map(async (key) => {
+    const datasetOptions = { ...parseOptions, datasetKey: key };
     try {
-      return [key, await readOptionalRegionalDataset(key, region, parseOptions)];
+      return [key, await measureAsync(datasetOptions, "Tempo dataset", () => readOptionalRegionalDataset(key, region, datasetOptions))];
     } catch (error) {
       return [key, { error: error.message || String(error), records: [] }];
     }
@@ -274,7 +287,11 @@ export async function loadRegionalData(region, options = {}) {
     hasPi1gArchive: pi1gResult.available,
     extra,
     extraAvailable,
-    extraErrors
+    extraErrors,
+    timings: timings ? {
+      totalMs: nowMs() - totalStartedAt,
+      stages: timings
+    } : null
   };
 }
 

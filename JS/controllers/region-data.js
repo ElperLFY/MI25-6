@@ -4,6 +4,72 @@ export function createRegionDataController({
   $, state, loadRegionalData, clearArchiveCache,
   scheduleSuggestions, renderCsvReaderPage, loadCsvReaderDataset
 }) {
+function renderLoadDiagnostics(diagnostics) {
+  const details = $("load-diagnostics");
+  const content = $("load-diagnostics-content");
+  if (!details || !content) return;
+
+  content.textContent = "";
+  if (!diagnostics || !Array.isArray(diagnostics.stages) || !diagnostics.stages.length) {
+    details.hidden = true;
+    return;
+  }
+
+  const labels = {
+    general2025: "Mappatura generale 2025",
+    pi1g2025: "Allegato A PI1G 2025",
+    fixedSurvey2021: "Mappatura reti fisse 2021",
+    proximity2025: "Civici di prossimità 2025",
+    fiberCopProximity2025: "Civici di prossimità FiberCop 2025"
+  };
+  const formatTime = (milliseconds) => (Math.max(0, milliseconds) / 1000).toLocaleString("it-IT", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) + " s";
+  const grouped = new Map();
+  for (const stage of diagnostics.stages) {
+    if (!grouped.has(stage.dataset)) grouped.set(stage.dataset, []);
+    grouped.get(stage.dataset).push(stage);
+  }
+
+  const total = document.createElement("p");
+  total.className = "load-diagnostics-total";
+  total.textContent = "Tempo totale Worker: " + formatTime(diagnostics.totalMs);
+  content.appendChild(total);
+
+  for (const [dataset, stages] of grouped) {
+    const section = document.createElement("section");
+    section.className = "load-diagnostics-group";
+    const heading = document.createElement("strong");
+    heading.textContent = labels[dataset] || dataset;
+    section.appendChild(heading);
+
+    const list = document.createElement("ul");
+    for (const stage of stages) {
+      const item = document.createElement("li");
+      const time = stage.durationMs > 0 ? " · " + formatTime(stage.durationMs) : "";
+      const detail = stage.source
+        ? " · fonte: " + stage.source
+        : stage.hit !== undefined
+          ? (stage.hit ? " · cache hit" : " · cache miss")
+          : stage.path
+            ? " · " + stage.path
+            : stage.entry
+              ? " · " + stage.entry
+              : stage.bytes !== undefined
+                ? " · " + stage.bytes.toLocaleString("it-IT") + " byte"
+                : stage.status !== undefined
+                  ? " · HTTP " + stage.status
+                  : "";
+      item.textContent = stage.stage + time + detail;
+      list.appendChild(item);
+    }
+    section.appendChild(list);
+    content.appendChild(section);
+  }
+  details.hidden = false;
+}
+
 function setAutomaticStatus(region, pi1gAvailable, extraAvailable = state.extraAvailability) {
   const messages = [
     "Mappatura generale: " + state.generalCount.toLocaleString("it-IT") + " record",
@@ -32,6 +98,7 @@ async function loadSelectedRegion() {
   state.readerLoaded = false;
   state.readerPage = 0;
   state.checkedExtras.clear();
+  renderLoadDiagnostics(null);
   void renderCsvReaderPage();
   $("results-card").hidden = true;
   $("search-error").textContent = "";
@@ -73,7 +140,8 @@ async function loadSelectedRegion() {
     const loaded = await loadRegionalData(region, {
       loadGeneral: !state.manualGeneral,
       loadPi1g: !state.manualPi1g,
-      loadExtras: automaticExtras
+      loadExtras: automaticExtras,
+      collectTimings: true
     });
     if (token !== state.loadToken) return;
     state.generalCount = loaded.counts.general;
@@ -84,6 +152,7 @@ async function loadSelectedRegion() {
     for (const key of automaticExtras) state.checkedExtras.add(key);
     state.loadedRegion = region;
     setAutomaticStatus(region, state.pi1gAvailable, state.extraAvailability);
+    renderLoadDiagnostics(loaded.timings);
     const errors = Object.entries(loaded.extraErrors || {});
     if (errors.length) {
       $("region-hint").textContent = region + " · caricamento parziale: alcuni archivi non hanno risposto. Usa «Cache Cleaner» per riprovare.";
