@@ -140,7 +140,6 @@ export function decodeFixedSurvey2021Speed(value, hasColorColumn = true) {
 }
 
 // Only characteristic values assigned to individual civics in the CSV are recognised here.
-// B1, B2, B3 and BW are aggregate components of B in the Infratel report, not CSV characteristic codes.
 export const DOTS = {
   PA: ["#ff7fd0", "sede Pubblica Amministrazione in piani pubblici (scuole/sanità)"],
   A: ["#8a8a8a", "civico con scarsa qualità della coordinata"],
