@@ -9,7 +9,8 @@ const PARSED_DATASET_CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const PARSED_DATASET_CACHE_MAX_RECORDS = 150_000;
 const PARSED_DATASET_CACHE_ESTIMATED_RECORD_BYTES = 640;
 const PARSED_DATASET_CACHE_MAX_BYTES = 96 * 1024 * 1024;
-const parsedDatasetMemoryCache = new Map();
+const PARSED_DATASET_CACHE_TOTAL_LIMIT_BYTES = 192 * 1024 * 1024;
+let parsedDatasetCacheGeneration = 0;
 const ARCHIVE_CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 function nowMs() {
@@ -101,12 +102,6 @@ function parsedDatasetCacheKey(path, region, dataset, entryName) {
 export async function getParsedDatasetCache(path, region, dataset, entryName, options = {}) {
   if (options.readerMode || options.includeSourceFields || options.query) return null;
   const key = parsedDatasetCacheKey(path, region, dataset, entryName);
-  const memoryHit = parsedDatasetMemoryCache.get(key);
-  if (memoryHit) {
-    recordCacheTiming(options, "Cache dati parsati", nowMs(), { source: "memoria Worker", hit: true });
-    return memoryHit;
-  }
-
   const startedAt = nowMs();
   const database = await openArchiveCacheDatabase();
   if (!database) {
@@ -132,8 +127,7 @@ export async function getParsedDatasetCache(path, region, dataset, entryName, op
     && Number.isFinite(entry.cachedAt)
     && Date.now() - entry.cachedAt <= PARSED_DATASET_CACHE_MAX_AGE_MS;
 
-  if (valid) parsedDatasetMemoryCache.set(key, entry.dataset);
-  else if (entry) {
+  if (!valid && entry) {
     try {
       database.transaction(PARSED_DATASET_CACHE_STORE, "readwrite")
         .objectStore(PARSED_DATASET_CACHE_STORE).delete(key);
@@ -163,19 +157,44 @@ export async function putParsedDatasetCache(path, region, dataset, entryName, pa
   }
 
   const key = parsedDatasetCacheKey(path, region, dataset, entryName);
-  parsedDatasetMemoryCache.set(key, parsed);
+  const generation = parsedDatasetCacheGeneration;
   const database = await openArchiveCacheDatabase();
-  if (!database) return false;
+  if (!database || generation !== parsedDatasetCacheGeneration) return false;
 
   return new Promise((resolve) => {
     try {
       const transaction = database.transaction(PARSED_DATASET_CACHE_STORE, "readwrite");
-      transaction.objectStore(PARSED_DATASET_CACHE_STORE).put({
-        key,
-        cachedAt: Date.now(),
-        estimatedBytes,
-        dataset: parsed
-      });
+      const store = transaction.objectStore(PARSED_DATASET_CACHE_STORE);
+      const request = store.getAll();
+      request.onsuccess = () => {
+        if (generation !== parsedDatasetCacheGeneration) {
+          try { transaction.abort(); } catch {}
+          resolve(false);
+          return;
+        }
+
+        const entries = (request.result || []).sort((first, second) =>
+          (first.cachedAt || 0) - (second.cachedAt || 0)
+        );
+        let totalBytes = entries.reduce((total, entry) => total + (Number(entry.estimatedBytes) || 0), estimatedBytes);
+        for (const entry of entries) {
+          if (totalBytes <= PARSED_DATASET_CACHE_TOTAL_LIMIT_BYTES) break;
+          if (entry.key === key) continue;
+          store.delete(entry.key);
+          totalBytes -= Number(entry.estimatedBytes) || 0;
+        }
+
+        store.put({
+          key,
+          cachedAt: Date.now(),
+          estimatedBytes,
+          dataset: parsed
+        });
+      };
+      request.onerror = () => {
+        try { transaction.abort(); } catch {}
+        resolve(false);
+      };
       transaction.oncomplete = () => resolve(true);
       transaction.onerror = () => resolve(false);
       transaction.onabort = () => resolve(false);
@@ -283,8 +302,8 @@ export async function getArchiveBytes(path, baseUrl = "", options = {}) {
 
 export async function clearArchiveCache() {
   archiveCacheGeneration += 1;
+  parsedDatasetCacheGeneration += 1;
   archiveBytesCache.clear();
-  parsedDatasetMemoryCache.clear();
   const database = await openArchiveCacheDatabase();
   if (!database) return false;
   return new Promise((resolve) => {
