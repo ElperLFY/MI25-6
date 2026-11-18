@@ -10,9 +10,9 @@ import { createResultsRenderer } from "./ui/results.js";
 import { createCsvReaderController } from "./controllers/csv-reader.js";
 
 import { LegacyClient } from "./legacy.js";
-import { createLegacyController } from "./controllers/legacy-controller.js?v=1.2.004";
+import { createLegacyController } from "./controllers/legacy-controller.js?v=1.2.005";
 import { createAutocompleteController } from "./controllers/autocomplete.js";
-import { createRegionDataController } from "./controllers/region-data.js?v=1.2.004";
+import { createRegionDataController } from "./controllers/region-data.js?v=1.2.005";
 import { createSearchController } from "./controllers/search.js";
 
 const $ = (id) => document.getElementById(id);
@@ -155,28 +155,6 @@ function renderLegend() {
   }
 }
 
-function renderOptions(listId, values, showEgon = false) {
-  const list = $(listId);
-  list.textContent = "";
-
-  for (const value of values) {
-    const option = createElement("option");
-    option.value = showEgon ? String(value.number) : String(value);
-    if (showEgon) option.label = "ID EGON: " + value.egon;
-    list.appendChild(option);
-  }
-}
-
-function currentSearchState() {
-  return {
-    region: $("region").value,
-    province: $("province").value,
-    city: $("city").value,
-    street: $("street").value,
-    number: $("street-number").value
-  };
-}
-
 function setFileMessages(messages) {
   const list = $("file-list");
   list.textContent = "";
@@ -270,12 +248,9 @@ const loadCsvReaderDataset = csvReader.loadCsvReaderDataset;
 const setCsvReaderMode = csvReader.setCsvReaderMode;
 
 const legacy = createLegacyController({
-  $, state, normalise, createElement, renderOptions, copyText,
+  $, state, normalise, createElement, copyText,
   setCsvReaderMode, legacyClient
 });
-const legacyInput = legacy.legacyInput;
-const legacySetNumberSelection = legacy.legacySetNumberSelection;
-const legacyHandleNumberInput = legacy.legacyHandleNumberInput;
 const bindLegacyLevel = legacy.bindLegacyLevel;
 const runLegacySearch = legacy.runLegacySearch;
 const clearLegacySearch = legacy.clearLegacySearch;
@@ -401,9 +376,7 @@ function bindEvents() {
   });
 
   $("legacy-toggle").addEventListener("click", () => setLegacyMode(!state.legacyMode));
-  for (const key of ["region", "province", "city", "street"]) bindLegacyLevel(key);
-  legacyInput("number").addEventListener("change", () => legacySetNumberSelection(legacyInput("number").value));
-  legacyInput("number").addEventListener("input", legacyHandleNumberInput);
+  for (const key of ["region", "province", "city", "street", "number"]) bindLegacyLevel(key);
   $("legacy-search").addEventListener("click", runLegacySearch);
   $("legacy-clear").addEventListener("click", clearLegacySearch);
 
