@@ -234,6 +234,22 @@ function bindLegacyLevel(key) {
   });
 }
 
+function renderLegacySections(container, data) {
+  for (const section of legacySections(data)) {
+    const sectionElement = createElement("section", "legacy-section");
+    sectionElement.appendChild(createElement("h4", "", section.title));
+
+    for (const row of section.rows) {
+      const rowElement = createElement("div", "legacy-row");
+      rowElement.appendChild(createElement("span", "result-label", row.label + ":"));
+      rowElement.appendChild(document.createTextNode(" " + row.value));
+      sectionElement.appendChild(rowElement);
+    }
+
+    container.appendChild(sectionElement);
+  }
+}
+
 function renderLegacyRecord(data) {
   const container = $("legacy-results");
   container.textContent = "";
@@ -332,11 +348,14 @@ function setLegacyMode(enabled) {
   $("results-card").hidden = true;
   legacyResetResult();
 
-  $("mode-help").textContent = state.legacyMode
-    ? "Legacy mode ON: ricerca autonoma nell’archivio storico 2017-2021 di Handymenny. I campi dell’indirizzo vengono inviati al servizio API esterno."
-    : state.csvReaderMode
-      ? "CSV Reader ON: carica tutte le righe del dataset selezionato per la Regione scelta. La tabella conserva le intestazioni originali e l'ordine del CSV, mostrando 100 righe per pagina."
-      : "Ricerca indirizzo: carica tutti i dataset regionali disponibili per suggerimenti e ricerca. Gli archivi ZIP restano nella cache IndexedDB del browser per 30 giorni; usa Aggiorna archivi per scaricare le versioni più recenti. CSV Reader apre volontariamente il CSV completo.";
+  const modeHelp = $("mode-help");
+  if (modeHelp) {
+    modeHelp.textContent = state.legacyMode
+      ? "Legacy mode ON: ricerca autonoma nell’archivio storico 2017-2021 di Handymenny. I campi dell’indirizzo vengono inviati al servizio API esterno."
+      : state.csvReaderMode
+        ? "CSV Reader ON: carica tutte le righe del dataset selezionato per la Regione scelta. La tabella conserva le intestazioni originali e l'ordine del CSV, mostrando 100 righe per pagina."
+        : "Ricerca indirizzo: carica tutti i dataset regionali disponibili per suggerimenti e ricerca. Gli archivi ZIP restano nella cache IndexedDB del browser per 30 giorni; usa Aggiorna archivi per scaricare le versioni più recenti. CSV Reader apre volontariamente il CSV completo.";
+  }
 
   if (state.legacyMode && !legacyLists.regions.length) legacyLoadRegions();
 }
