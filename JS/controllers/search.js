@@ -3,7 +3,7 @@ import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS, normalise } from "../data/inde
 export function createSearchController({
   $, state, searchRecords, cityIsKnown, parseUploadedFiles, clearManualDatasets,
   renderResults, setAutomaticStatus, setFileMessages, scheduleSuggestions,
-  suggestionValues, loadSelectedRegion, loadCsvReaderDataset
+  suggestionValues, closeSuggestions = () => {}, loadSelectedRegion, loadCsvReaderDataset
 }) {
 function hasRecords() {
   if (state.generalCount || state.pi1gCount) return true;
@@ -63,7 +63,10 @@ function clearSearch() {
     const hint = $(field + "-hint");
     if (hint) hint.textContent = "";
   }
-  for (const field of Object.keys(suggestionValues)) suggestionValues[field] = [];
+  for (const field of Object.keys(suggestionValues)) {
+    suggestionValues[field] = [];
+    closeSuggestions(field);
+  }
   $("search-error").textContent = "";
   $("results-card").hidden = true;
   loadSelectedRegion();

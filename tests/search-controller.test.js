@@ -20,6 +20,7 @@ test("clearSearch resets autocomplete suggestion state through an injected depen
     return element;
   };
   const suggestionValues = {
+    region: ["old region"],
     province: ["old province"],
     city: ["old city"],
     street: ["old street"],
@@ -31,6 +32,7 @@ test("clearSearch resets autocomplete suggestion state through an injected depen
     $,
     state: {},
     suggestionValues,
+    closeSuggestions: () => {},
     loadSelectedRegion: () => { regionReloads += 1; }
   });
 
@@ -46,6 +48,7 @@ test("clearSearch resets autocomplete suggestion state through an injected depen
     assert.equal($(id).textContent, "", `${id} should be cleared`);
   }
   assert.deepEqual(suggestionValues, {
+    region: [],
     province: [],
     city: [],
     street: [],

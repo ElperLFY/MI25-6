@@ -43,7 +43,7 @@ const state = {
 
 
 let readerSearchTimer = null;
-const suggestionValues = { province: [], city: [], street: [], number: [] };
+const suggestionValues = { region: [], province: [], city: [], street: [], number: [] };
 
 function copyText(text, button, successLabel) {
   const originalLabel = button.textContent;
@@ -119,11 +119,13 @@ function handleRegionEnter(event) {
   event.preventDefault();
 
   const typed = normalise($("region").value);
-  if (!typed) {
+  const activeSuggestion = autocomplete.getActiveSuggestion("region");
+  if (!typed && !activeSuggestion) {
     updateRegionHint();
     return;
   }
-  const selected = REGIONS.find((region) => normalise(region) === typed)
+  const selected = activeSuggestion
+    || REGIONS.find((region) => normalise(region) === typed)
     || REGIONS.find((region) => normalise(region).startsWith(typed));
   if (!selected) {
     updateRegionHint();
@@ -133,6 +135,7 @@ function handleRegionEnter(event) {
   const changed = $("region").value !== selected;
   $("region").value = selected;
   $("region-hint").textContent = selected + " · Regione selezionata.";
+  autocomplete.closeSuggestions("region");
   if (changed || state.loadedRegion !== selected) loadSelectedRegion();
   $("province").focus();
 }
@@ -243,7 +246,8 @@ function activateDescriptionTab(selectedTab) {
 
 
 const autocomplete = createAutocompleteController({
-  $, getSuggestions, findCityRecord, normalise, currentSearchState, renderOptions, suggestionValues
+  $, getSuggestions, findCityRecord, normalise, currentSearchState,
+  suggestionValues, staticOptions: { region: REGIONS }
 });
 const scheduleSuggestions = autocomplete.scheduleSuggestions;
 const handleAutocompleteEnter = autocomplete.handleAutocompleteEnter;
@@ -287,7 +291,8 @@ const refreshAutomaticArchives = regionData.refreshAutomaticArchives;
 const searchController = createSearchController({
   $, state, searchRecords, cityIsKnown, parseUploadedFiles, clearManualDatasets,
   renderResults, setAutomaticStatus, setFileMessages, scheduleSuggestions,
-  suggestionValues, loadSelectedRegion, loadCsvReaderDataset
+  suggestionValues, closeSuggestions: autocomplete.closeSuggestions,
+  loadSelectedRegion, loadCsvReaderDataset
 });
 const runSearch = searchController.runSearch;
 const clearSearch = searchController.clearSearch;
@@ -298,8 +303,14 @@ const restoreAutomaticData = searchController.restoreAutomaticData;
 
 
 function bindEvents() {
-  $("region").addEventListener("input", updateRegionHint);
-  $("region").addEventListener("keydown", handleRegionEnter);
+  $("region").addEventListener("input", () => {
+    updateRegionHint();
+    scheduleSuggestions("region");
+  });
+  $("region").addEventListener("keydown", (event) => {
+    if (autocomplete.handleSuggestionKeydown("region", event)) return;
+    handleRegionEnter(event);
+  });
   $("region").addEventListener("change", loadSelectedRegion);
   $("search-form").addEventListener("submit", runSearch);
   $("clear-search").addEventListener("click", clearSearch);
@@ -354,7 +365,10 @@ function bindEvents() {
   for (const field of ["province", "city", "street", "number"]) {
     const inputId = field === "number" ? "street-number" : field;
     $(inputId).addEventListener("input", () => scheduleSuggestions(field));
-    $(inputId).addEventListener("keydown", (event) => { void handleAutocompleteEnter(field, event); });
+    $(inputId).addEventListener("keydown", (event) => {
+      if (autocomplete.handleSuggestionKeydown(field, event)) return;
+      void handleAutocompleteEnter(field, event);
+    });
     if (field === "number") $(inputId).addEventListener("focus", () => scheduleSuggestions(field));
   }
 
