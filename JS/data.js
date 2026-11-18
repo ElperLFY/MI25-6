@@ -408,6 +408,8 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
   let datasetId = "";
   let rowIndex = 0;
   let headerFound = false;
+  let readerHeaders = null;
+  let readerOffset = 0;
   const records = [];
   const intern = createStringInterner();
   const cachedNormalise = createNormaliseCache();
@@ -430,21 +432,38 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
       return;
     }
 
-    const fields = alignRow(row, headers, columns.id);
+    const fields = options.readerMode ? row : alignRow(row, headers, columns.id);
     if (options.query && !matchesRow(fields, columns, options.query)) {
       rowIndex += 1;
       return;
     }
     if (options.readerMode) {
-      // Keep the original row and shared header array; avoid building the
+      // Keep the original row and one shared header array; avoid building the
       // normalized 50-field record model for millions of rows in CSV Reader.
+      if (!readerHeaders) {
+        const egonIndex = fields.findIndex(isEgonValue);
+        readerOffset = egonIndex >= 0 ? Math.max(0, egonIndex - columns.id) : 0;
+        readerHeaders = originalHeaders.slice();
+        if (readerOffset) {
+          readerHeaders.unshift(...Array.from({ length: readerOffset }, (_, index) =>
+            index === 0 ? "Indice sorgente" : "Colonna iniziale " + (index + 1)
+          ));
+        }
+        while (readerHeaders.length < fields.length) {
+          readerHeaders.push("Colonna aggiuntiva " + (readerHeaders.length + 1));
+        }
+      } else {
+        while (readerHeaders.length < fields.length) {
+          readerHeaders.push("Colonna aggiuntiva " + (readerHeaders.length + 1));
+        }
+      }
       records.push({
         datasetId,
-        sourceHeaders: originalHeaders,
+        sourceHeaders: readerHeaders,
         sourceValues: fields,
         sourceFile: name,
         sourceRowNumber: rowIndex + 1,
-        normalisedRegion: cachedNormalise(readValue(fields, columns.region))
+        normalisedRegion: cachedNormalise(readValue(fields, columns.region + readerOffset))
       });
       rowIndex += 1;
       return;
