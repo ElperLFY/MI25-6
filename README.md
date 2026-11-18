@@ -55,6 +55,6 @@ Con Node.js 22 o successivo:
 npm test
 ```
 
-I 12 test coprono i formati CSV forniti, le intestazioni facoltative e riordinate, gli archivi nazionali con ZIP regionali annidati in maiuscolo, i dataset esistenti, il filtraggio per Comune/Via/Civico, la conservazione delle colonne CSV originali e un caricamento da 150.000 record. Il parser non applica un limite al numero di righe; restano solo limiti di dimensione dei file e degli archivi per evitare caricamenti binari eccessivi.
+I 13 test coprono i formati CSV forniti, le intestazioni facoltative e riordinate, gli archivi nazionali con ZIP regionali annidati in maiuscolo, i dataset esistenti, il filtraggio per Comune/Via/Civico, la conservazione delle colonne CSV originali e un caricamento da 150.000 record. Il parser non applica un limite al numero di righe; restano solo limiti di dimensione dei file e degli archivi per evitare caricamenti binari eccessivi.
 
 MI25-6 non è un verificatore commerciale in tempo reale e non certifica che un servizio sia attivabile presso un indirizzo.
