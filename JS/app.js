@@ -319,8 +319,7 @@ async function loadSelectedRegion() {
     if (!state.manualExtras.has(key)) state.extra[key] = [];
   }
 
-  if (state.loadedRegion === region && !loadGeneral && !loadPi1g
-      && EXTRA_DATASET_KEYS.every((key) => state.manualExtras.has(key) || state.extraAvailability[key] === true)) {
+  if (state.loadedRegion === region && !loadGeneral && !loadPi1g) {
     setAutomaticStatus(region, state.pi1gAvailable, state.extraAvailability);
     if (state.csvReaderMode) await loadCsvReaderDataset();
     return;
@@ -818,23 +817,39 @@ function getReaderColumns(records) {
   return columns;
 }
 
+function getFilteredReaderRecords() {
+  const query = normalise(state.readerQuery);
+  if (!query) return state.readerRecords;
+  return state.readerRecords.filter((record) => {
+    const values = Array.isArray(record.sourceValues)
+      ? record.sourceValues
+      : (record.sourceFields || []).map((field) => field.value);
+    return values.some((value) => normalise(value).includes(query));
+  });
+}
+
 function renderCsvReaderPage() {
   const records = state.readerRecords;
+  const filteredRecords = getFilteredReaderRecords();
   const pageSize = state.readerPageSize;
-  const totalPages = Math.max(1, Math.ceil(records.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
   state.readerPage = Math.min(state.readerPage, totalPages - 1);
   const start = state.readerPage * pageSize;
-  const end = Math.min(start + pageSize, records.length);
+  const end = Math.min(start + pageSize, filteredRecords.length);
   const head = $("csv-reader-head");
   const body = $("csv-reader-body");
   head.textContent = "";
   body.textContent = "";
 
-  $("csv-reader-prev").disabled = !records.length || state.readerPage === 0;
-  $("csv-reader-next").disabled = !records.length || state.readerPage >= totalPages - 1;
+  $("csv-reader-prev").disabled = !filteredRecords.length || state.readerPage === 0;
+  $("csv-reader-next").disabled = !filteredRecords.length || state.readerPage >= totalPages - 1;
 
   if (!records.length) {
     $("csv-reader-page-info").textContent = "Nessuna riga da visualizzare";
+    return;
+  }
+  if (!filteredRecords.length) {
+    $("csv-reader-page-info").textContent = "Nessuna riga corrisponde alla ricerca.";
     return;
   }
 
@@ -855,7 +870,7 @@ function renderCsvReaderPage() {
 
   const fragment = document.createDocumentFragment();
   for (let index = start; index < end; index += 1) {
-    const record = records[index];
+    const record = filteredRecords[index];
     const row = createElement("tr");
 
     const values = new Map();
@@ -885,7 +900,8 @@ function renderCsvReaderPage() {
   body.appendChild(fragment);
   $("csv-reader-page-info").textContent =
     "Righe " + (start + 1).toLocaleString("it-IT") + "–" + end.toLocaleString("it-IT")
-    + " di " + records.length.toLocaleString("it-IT")
+    + " di " + filteredRecords.length.toLocaleString("it-IT")
+    + (state.readerQuery ? " filtrate (totale archivio: " + records.length.toLocaleString("it-IT") + ")" : "")
     + " · ordine originale dei CSV";
 }
 
@@ -894,6 +910,7 @@ async function loadCsvReaderDataset() {
   const dataset = $("csv-reader-dataset").value;
   const token = ++state.readerLoadToken;
   state.readerRecords = [];
+  state.readerQuery = $("csv-reader-search").value.trim();
   state.readerPage = 0;
   renderCsvReaderPage();
 
@@ -1465,6 +1482,11 @@ function bindEvents() {
   $("csv-reader-dataset").addEventListener("change", loadCsvReaderDataset);
   $("csv-reader-page-size").addEventListener("change", () => {
     state.readerPageSize = Number($("csv-reader-page-size").value) || 100;
+    state.readerPage = 0;
+    renderCsvReaderPage();
+  });
+  $("csv-reader-search").addEventListener("input", () => {
+    state.readerQuery = $("csv-reader-search").value;
     state.readerPage = 0;
     renderCsvReaderPage();
   });
