@@ -294,25 +294,39 @@ async function refreshAutomaticArchives() {
   const region = $("region").value.trim();
   button.disabled = true;
   button.textContent = "Aggiornamento…";
-  $("data-status").textContent = "Svuotamento della cache locale e aggiornamento degli archivi automatici…";
+  $("data-status").textContent = "Svuotamento delle cache MI25-6 e aggiornamento dei dataset automatici…";
+
   try {
-    await clearArchiveCache();
+    const cacheResult = await clearArchiveCache();
+    if (cacheResult?.persistentAvailable && !cacheResult.persistentCleared) {
+      throw new Error("La cache in IndexedDB non è stata cancellata. L'aggiornamento è stato interrotto per evitare di riutilizzare archivi precedenti; i dataset già caricati restano disponibili.");
+    }
+
     state.loadedRegion = "";
     state.checkedExtras.clear();
     state.extraAvailability = {};
+    const cacheMessage = cacheResult?.persistentCleared
+      ? "Cache ZIP e dataset parsati di MI25-6 svuotati."
+      : "Cache in memoria svuotata; IndexedDB non disponibile, quindi non è presente una cache persistente da cancellare.";
+
     if (region) {
       await loadSelectedRegion();
-      $("data-status").textContent += " · Cache locale svuotata; archivi aggiornati.";
+      if (state.loadedRegion === region) {
+        $("data-status").textContent += " · " + cacheMessage + " Dataset automatici ricaricati.";
+      } else {
+        $("data-status").textContent += " · " + cacheMessage + " Il ricaricamento dei dataset non è riuscito.";
+      }
     } else {
-      $("data-status").textContent = "Cache locale svuotata. Seleziona una Regione per scaricare nuovamente gli archivi.";
+      $("data-status").textContent = cacheMessage + " Seleziona una Regione per scaricare nuovamente i dataset automatici.";
     }
   } catch (error) {
-    $("data-status").textContent = error.message || "Impossibile aggiornare la cache degli archivi.";
+    $("data-status").textContent = error.message || "Impossibile aggiornare gli archivi MI25-6.";
   } finally {
     button.disabled = false;
     button.textContent = originalLabel;
   }
 }
+
 
 
   return {
