@@ -1,12 +1,12 @@
 import {
   DOTS, EXTRA_DATASET_KEYS, REGIONS, normalise
-} from "./data/index.js?v=1.2.005";
+} from "./data/index.js?v=1.2.007";
 import {
   cityIsKnown, clearArchiveCache, clearManualDatasets, findCityRecord,
   getCsvReaderPage, getSuggestions, loadCsvReaderDataset as requestCsvReaderDataset,
   loadRegionalData, parseUploadedFiles, releaseCsvReader, searchRecords
 } from "./services/data-client.js?v=1.2.005";
-import { createResultsRenderer } from "./ui/results.js";
+import { createResultsRenderer } from "./ui/results.js?v=1.2.007";
 import { createCsvReaderController } from "./controllers/csv-reader.js";
 
 import { LegacyClient } from "./legacy.js";
