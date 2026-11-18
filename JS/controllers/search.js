@@ -109,7 +109,7 @@ async function restoreAutomaticData() {
     state.pi1gCount = counts.pi1g;
     state.extraCounts = counts.extra;
     state.loadedRegion = "";
-    setFileMessages(["Nessun file manuale attivo."]);
+    setFileMessages([]);
     await loadSelectedRegion();
   } catch (error) {
     $("data-status").textContent = error.message || "Impossibile ripristinare i dataset automatici.";

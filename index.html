@@ -15,36 +15,71 @@
 </head>
 <body>
   <header class="site-header">
-    <div class="header-content">
-      <h1>Esiti mappatura infrastrutture di rete fissa 2025-26</h1>
-      <p>Consulta la mappatura Infratel 2025-26: caratteristiche del civico, soglie di velocità, consultazioni e riscontro nell’elenco PI1G.</p>
+    <div class="header-layout">
+      <div class="header-content">
+        <h1>Esiti mappatura infrastrutture di rete fissa 2025-26</h1>
+        <p>Esplora i dataset Infratel 2025-26 per Regione e indirizzo: consulta le caratteristiche dei civici, le soglie di velocità e gli esiti PI1G, con strumenti dedicati ai dati CSV e agli archivi storici.</p>
+      </div>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Attiva Blu mode" aria-pressed="false" title="Attiva Blu mode">
+        <svg class="theme-icon-moon" data-theme-icon="moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.463.402.807a6.5 6.5 0 0 0 8.268 8.268c.344-.215.829-.003.803.397z"></path>
+        </svg>
+        <svg class="theme-icon-sun" data-theme-icon="sun" viewBox="0 0 24 24" aria-hidden="true" hidden>
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"></path>
+        </svg>
+      </button>
     </div>
   </header>
 
   <main class="page-content">
-    <section class="card upload-card" aria-labelledby="upload-title">
-      <h2 id="upload-title">Carica dataset aggiornati</h2>
-      <p class="hint">
-        Puoi caricare uno o più file CSV oppure ZIP contenenti i dataset Infratel supportati.
-        I file manuali sostituiscono i dati automatici della rispettiva categoria e restano nel browser per la sessione.
-        <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener noreferrer">Mappa ufficiale Infratel</a>.
-      </p>
-      <label for="file-input">File CSV o ZIP</label>
-      <input id="file-input" type="file" accept=".csv,.txt,.zip" multiple>
-      <div id="file-list" class="file-list" aria-live="polite">Nessun file caricato.</div>
-      <button type="button" class="button button-secondary" id="use-automatic-data">Torna ai dati automatici</button>
+    <section class="card disclosure-card upload-card" aria-labelledby="upload-title">
+      <details class="card-disclosure">
+        <summary id="upload-title"><span>Carica dataset aggiornati</span></summary>
+        <div class="accordion-content">
+          <p class="hint">
+            Carica uno o più file CSV oppure ZIP con i dataset Infratel supportati. I file manuali sostituiscono i dati automatici della rispettiva categoria e restano disponibili nel browser per la sessione.
+            <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener noreferrer">Apri la mappa ufficiale Infratel</a>.
+          </p>
+          <label for="file-input">File CSV o ZIP</label>
+          <input id="file-input" type="file" accept=".csv,.txt,.zip" multiple>
+          <div id="file-list" class="file-list" aria-live="polite" hidden></div>
+          <button type="button" class="button button-secondary" id="use-automatic-data">Torna ai dati automatici</button>
+        </div>
+      </details>
     </section>
 
-    <section class="card mode-card" aria-labelledby="mode-title">
-      <div class="mode-heading">
-        <h2 id="mode-title">Modalità di consultazione</h2>
-        <div class="mode-actions">
-          <button type="button" class="button button-secondary mode-toggle" id="csv-reader-toggle" aria-pressed="false">CSV Reader OFF</button>
-          <button type="button" class="button button-secondary mode-toggle" id="legacy-toggle" aria-pressed="false">Legacy mode OFF</button>
-          <button type="button" class="button button-secondary mode-toggle" id="refresh-data-cache" title="Svuota la cache locale e scarica nuovamente gli archivi automatici">Aggiorna archivi</button>
+    <section class="card disclosure-card mode-card" aria-labelledby="mode-title">
+      <details class="card-disclosure">
+        <summary id="mode-title"><span>Opzioni Avanzate Dati</span></summary>
+        <div class="accordion-content advanced-options-content">
+          <div class="mode-actions" aria-label="Comandi avanzati">
+            <button type="button" class="button button-secondary mode-toggle" id="csv-reader-toggle" aria-pressed="false">CSV Reader OFF</button>
+            <button type="button" class="button button-secondary mode-toggle" id="legacy-toggle" aria-pressed="false">Legacy mode OFF</button>
+            <button type="button" class="button button-secondary mode-toggle" id="refresh-data-cache" title="Svuota la cache ZIP locale e ricarica gli archivi della Regione selezionata">Cache Cleaner</button>
+          </div>
+
+          <details class="description-disclosure">
+            <summary>DESCRIZIONE</summary>
+            <div class="description-content">
+              <div class="description-tabs" role="tablist" aria-label="Descrizione delle opzioni avanzate">
+                <button type="button" class="description-tab" id="description-tab-csv" role="tab" aria-selected="true" aria-controls="description-panel-csv" data-description-tab="csv-reader">CSV Reader</button>
+                <button type="button" class="description-tab" id="description-tab-legacy" role="tab" aria-selected="false" aria-controls="description-panel-legacy" data-description-tab="legacy" tabindex="-1">Legacy Mode</button>
+                <button type="button" class="description-tab" id="description-tab-cache" role="tab" aria-selected="false" aria-controls="description-panel-cache" data-description-tab="cache" tabindex="-1">Cache Cleaner</button>
+              </div>
+              <div class="description-panel" id="description-panel-csv" role="tabpanel" aria-labelledby="description-tab-csv" data-description-panel="csv-reader">
+                <p><strong>CSV Reader</strong> apre il contenuto completo del CSV originale per la Regione e il dataset selezionati, mantenendo intestazioni, colonne e ordine delle righe. La tabella è paginata; il dataset completo viene caricato soltanto quando attivi questa modalità e può richiedere più memoria e tempo.</p>
+              </div>
+              <div class="description-panel" id="description-panel-legacy" role="tabpanel" aria-labelledby="description-tab-legacy" data-description-panel="legacy" hidden>
+                <p><strong>Legacy Mode</strong> consulta separatamente l’archivio storico 2017-2021 tramite il servizio API di Handymenny. I dati sono indipendenti dalla mappatura 2025-26 e descrivono una situazione storica, non la copertura attuale. Le informazioni dell’indirizzo e gli ID EGON necessari alla consultazione vengono inviati al servizio esterno.</p>
+              </div>
+              <div class="description-panel" id="description-panel-cache" role="tabpanel" aria-labelledby="description-tab-cache" data-description-panel="cache" hidden>
+                <p><strong>Cache Cleaner</strong> elimina gli archivi ZIP salvati localmente in IndexedDB e, se hai già selezionato una Regione, li scarica nuovamente. È utile per recuperare file aggiornati o correggere una cache locale non valida. Senza una Regione selezionata, svuota la cache e attende la successiva selezione per scaricare i dataset.</p>
+              </div>
+            </div>
+          </details>
         </div>
-      </div>
-      <p class="mode-help" id="mode-help">Ricerca indirizzo: carica tutti i dataset regionali disponibili per suggerimenti e ricerca. Gli archivi ZIP vengono conservati in IndexedDB per 30 giorni; usa Aggiorna archivi per scaricare le versioni più recenti. Il browser deve comunque decomprimere e rielaborare i CSV a ogni nuova sessione: nelle Regioni con milioni di record il caricamento può richiedere 20–30 secondi. L’elaborazione avviene in un Web Worker per mantenere reattiva l’interfaccia. CSV Reader apre volontariamente tutte le righe del dataset selezionato. Legacy mode consulta separatamente l’archivio storico 2017-2021 di Handymenny.</p>
+      </details>
     </section>
 
     <section class="card" id="modern-search-card" aria-labelledby="address-title">
@@ -203,7 +238,7 @@
       <span aria-hidden="true">·</span>
       <a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a>
     </nav>
-    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Build 26</button>
+    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Build 27</button>
   </footer>
 
   <dialog class="info-dialog" id="info-dialog" aria-labelledby="dialog-title">
@@ -269,8 +304,10 @@
         </details>
       </div>
       <div id="changelog-content" hidden>
-        <p class="hint">Build 26 · cache persistente e ricerca regionale completa</p>
+        <p class="hint">Build 27 · interfaccia aggiornata, opzioni avanzate e Blu mode</p>
         <ul>
+          <li>Pannelli richiudibili per il caricamento manuale e le opzioni avanzate; descrizioni a schede per CSV Reader, Legacy Mode e Cache Cleaner.</li>
+          <li>Nuovo Blu mode con palette cromatica alternativa e preferenza salvata nel browser.</li>
           <li>Gli archivi ZIP automatici vengono salvati in IndexedDB per 30 giorni e riutilizzati tra visite e ricaricamenti della pagina.</li>
           <li>Il comando “Aggiorna archivi” svuota la cache locale e recupera nuovamente le versioni pubblicate.</li>
           <li>La selezione della Regione carica tutti i dataset regionali disponibili per suggerimenti e ricerca.</li>

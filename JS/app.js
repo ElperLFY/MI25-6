@@ -177,10 +177,8 @@ function currentSearchState() {
 function setFileMessages(messages) {
   const list = $("file-list");
   list.textContent = "";
-  if (!messages.length) {
-    list.textContent = "Nessun file caricato.";
-    return;
-  }
+  list.hidden = messages.length === 0;
+  if (!messages.length) return;
   for (const message of messages) list.appendChild(createElement("div", "file-entry", message));
 }
 
@@ -195,6 +193,51 @@ function openDialog(view) {
   $("changelog-content").hidden = isFaq;
   const dialog = $("info-dialog");
   if (!dialog.open) dialog.showModal();
+}
+
+function updateTheme(isBlue, persist = false) {
+  if (isBlue) document.documentElement.dataset.theme = "blue";
+  else delete document.documentElement.dataset.theme;
+
+  const button = $("theme-toggle");
+  button.setAttribute("aria-pressed", String(isBlue));
+  button.setAttribute("aria-label", isBlue ? "Disattiva Blu mode" : "Attiva Blu mode");
+  button.title = isBlue ? "Disattiva Blu mode" : "Attiva Blu mode";
+  button.querySelector('[data-theme-icon="moon"]').hidden = isBlue;
+  button.querySelector('[data-theme-icon="sun"]').hidden = !isBlue;
+
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) themeColor.content = isBlue ? "#174b83" : "#8c1230";
+
+  if (persist) {
+    try {
+      window.localStorage.setItem("mi25-6-theme", isBlue ? "blue" : "default");
+    } catch {
+      // Il tema resta attivo per la sessione anche se lo storage non è disponibile.
+    }
+  }
+}
+
+function initialiseTheme() {
+  let useBlue = false;
+  try {
+    useBlue = window.localStorage.getItem("mi25-6-theme") === "blue";
+  } catch {
+    // In modalità privata o con storage disabilitato si usa il tema predefinito.
+  }
+  updateTheme(useBlue);
+}
+
+function activateDescriptionTab(selectedTab) {
+  const selectedKey = selectedTab.dataset.descriptionTab;
+  for (const tab of document.querySelectorAll("[data-description-tab]")) {
+    const selected = tab === selectedTab;
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  }
+  for (const panel of document.querySelectorAll("[data-description-panel]")) {
+    panel.hidden = panel.dataset.descriptionPanel !== selectedKey;
+  }
 }
 
 
@@ -262,6 +305,29 @@ function bindEvents() {
   $("file-input").addEventListener("change", handleFileUpload);
   $("use-automatic-data").addEventListener("click", restoreAutomaticData);
   $("refresh-data-cache").addEventListener("click", refreshAutomaticArchives);
+  $("theme-toggle").addEventListener("click", () => {
+    updateTheme(document.documentElement.dataset.theme !== "blue", true);
+  });
+
+  const descriptionTabs = Array.from(document.querySelectorAll("[data-description-tab]"));
+  if (descriptionTabs.length) {
+    activateDescriptionTab(descriptionTabs[0]);
+    descriptionTabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => activateDescriptionTab(tab));
+      tab.addEventListener("keydown", (event) => {
+        let nextIndex = index;
+        if (event.key === "ArrowRight") nextIndex = (index + 1) % descriptionTabs.length;
+        else if (event.key === "ArrowLeft") nextIndex = (index - 1 + descriptionTabs.length) % descriptionTabs.length;
+        else if (event.key === "Home") nextIndex = 0;
+        else if (event.key === "End") nextIndex = descriptionTabs.length - 1;
+        else return;
+        event.preventDefault();
+        descriptionTabs[nextIndex].focus();
+        activateDescriptionTab(descriptionTabs[nextIndex]);
+      });
+    });
+  }
+
   $("csv-reader-toggle").addEventListener("click", () => setCsvReaderMode(!state.csvReaderMode));
   $("csv-reader-dataset").addEventListener("change", loadCsvReaderDataset);
   $("csv-reader-page-size").addEventListener("change", () => {
@@ -332,6 +398,7 @@ function initialise() {
   state.readerPageSize = Number($("csv-reader-page-size").value) || 100;
   $("data-status").textContent = "Seleziona una Regione per caricare i dataset nel Web Worker.";
   setFileMessages([]);
+  initialiseTheme();
   bindEvents();
 }
 
