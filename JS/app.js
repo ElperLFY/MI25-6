@@ -417,8 +417,7 @@ async function handleAutocompleteEnter(field, event) {
     scheduleSuggestions(next);
     nextInput.focus();
   } catch (error) {
-    $("data-status").textConta l'archivio storico Handymenny.";
-    void renderCsvReaderPage();
+    $("data-status").textContent = error.message || "Impossibile recuperare i suggerimenti.";
   }
 }
 
@@ -546,6 +545,7 @@ const legacy = createLegacyController({
 });
 const legacyInput = legacy.legacyInput;
 const legacySetNumberSelection = legacy.legacySetNumberSelection;
+const legacyHandleNumberInput = legacy.legacyHandleNumberInput;
 const bindLegacyLevel = legacy.bindLegacyLevel;
 const runLegacySearch = legacy.runLegacySearch;
 const clearLegacySearch = legacy.clearLegacySearch;
@@ -610,14 +610,7 @@ function bindEvents() {
   $("legacy-toggle").addEventListener("click", () => setLegacyMode(!state.legacyMode));
   for (const key of ["region", "province", "city", "street"]) bindLegacyLevel(key);
   legacyInput("number").addEventListener("change", () => legacySetNumberSelection(legacyInput("number").value));
-  legacyInput("number").addEventListener("input", () => {
-    if (normalise(legacyInput("number").value) !== normalise(legacyState.number)) {
-      legacyState.number = "";
-      legacyState.egon = "";
-      $("legacy-search").disabled = true;
-      legacyResetResult();
-    }
-  });
+  legacyInput("number").addEventListener("input", legacyHandleNumberInput);
   $("legacy-search").addEventListener("click", runLegacySearch);
   $("legacy-clear").addEventListener("click", clearLegacySearch);
 
