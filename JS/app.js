@@ -7,6 +7,7 @@ import {
   REGIONS,
   collectRecords,
   cityIsKnown,
+  clearArchiveCache,
   getSuggestions,
   loadRegionalData,
   normalise,
@@ -367,6 +368,38 @@ async function loadSelectedRegion() {
       $("search-button").disabled = false;
       if (state.csvReaderMode) await loadCsvReaderDataset();
     }
+  }
+}
+
+async function refreshAutomaticArchives() {
+  const button = $("refresh-data-cache");
+  const originalLabel = button.textContent;
+  const region = $("region").value.trim();
+  button.disabled = true;
+  button.textContent = "Aggiornamento…";
+  $("data-status").textContent = "Svuotamento della cache locale e aggiornamento degli archivi automatici…";
+
+  try {
+    const persistentCacheCleared = await clearArchiveCache();
+    state.loadedRegion = "";
+    state.checkedExtras.clear();
+    state.extraAvailability = {};
+
+    if (region) {
+      await loadSelectedRegion();
+      $("data-status").textContent += persistentCacheCleared
+        ? " · Cache IndexedDB aggiornata."
+        : " · Cache di sessione svuotata; IndexedDB non disponibile, dati ricaricati dalla rete.";
+    } else {
+      $("data-status").textContent = persistentCacheCleared
+        ? "Cache IndexedDB svuotata. Seleziona una Regione per scaricare nuovamente gli archivi."
+        : "Cache di sessione svuotata. Seleziona una Regione per caricare i dataset.";
+    }
+  } catch (error) {
+    $("data-status").textContent = error.message || "Impossibile aggiornare la cache degli archivi.";
+  } finally {
+    button.disabled = false;
+    button.textContent = originalLabel;
   }
 }
 
@@ -1004,7 +1037,7 @@ function setCsvReaderMode(enabled) {
     $("csv-reader-status").textContent = "CSV Reader disattivato.";
     $("csv-reader-dataset").disabled = false;
     $("csv-reader-page-size").disabled = false;
-    $("mode-help").textContent = "Ricerca indirizzo: carica i dataset principali per i suggerimenti e consulta gli archivi aggiuntivi soltanto dopo l'invio dell'indirizzo. CSV Reader apre volontariamente l'archivio completo.";
+    $("mode-help").textContent = "Ricerca indirizzo: carica tutti i dataset regionali disponibili per suggerimenti e ricerca. Gli archivi ZIP restano nella cache IndexedDB del browser per 30 giorni; usa Aggiorna archivi per scaricare le versioni più recenti. CSV Reader apre volontariamente il CSV completo.";
     renderCsvReaderPage();
   }
 }
@@ -1460,7 +1493,7 @@ function setLegacyMode(enabled) {
     ? "Legacy mode ON: ricerca autonoma nell’archivio storico 2017-2021 di Handymenny. I campi dell’indirizzo vengono inviati al servizio API esterno."
     : state.csvReaderMode
       ? "CSV Reader ON: carica tutte le righe del dataset selezionato per la Regione scelta. La tabella conserva le intestazioni originali e l'ordine del CSV, mostrando 100 righe per pagina."
-      : "Ricerca indirizzo: carica i dataset principali per i suggerimenti e consulta gli archivi aggiuntivi soltanto dopo l'invio dell'indirizzo. CSV Reader apre volontariamente l'archivio completo.";
+      : "Ricerca indirizzo: carica tutti i dataset regionali disponibili per suggerimenti e ricerca. Gli archivi ZIP restano nella cache IndexedDB del browser per 30 giorni; usa Aggiorna archivi per scaricare le versioni più recenti. CSV Reader apre volontariamente il CSV completo.";
 
   if (state.legacyMode && !legacyLists.regions.length) legacyLoadRegions();
 }
@@ -1482,6 +1515,7 @@ function bindEvents() {
   $("clear-search").addEventListener("click", clearSearch);
   $("file-input").addEventListener("change", handleFileUpload);
   $("use-automatic-data").addEventListener("click", restoreAutomaticData);
+  $("refresh-data-cache").addEventListener("click", refreshAutomaticArchives);
   $("csv-reader-toggle").addEventListener("click", () => setCsvReaderMode(!state.csvReaderMode));
   $("csv-reader-dataset").addEventListener("change", loadCsvReaderDataset);
   $("csv-reader-page-size").addEventListener("change", () => {
