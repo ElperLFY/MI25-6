@@ -155,6 +155,16 @@ function renderLegend() {
   }
 }
 
+function currentSearchState() {
+  return {
+    region: $("region").value,
+    province: $("province").value,
+    city: $("city").value,
+    street: $("street").value,
+    number: $("street-number").value
+  };
+}
+
 function setFileMessages(messages) {
   const list = $("file-list");
   list.textContent = "";
