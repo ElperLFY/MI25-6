@@ -10,7 +10,7 @@ import { createResultsRenderer } from "./ui/results.js";
 import { createCsvReaderController } from "./controllers/csv-reader.js";
 
 import { LegacyClient } from "./legacy.js";
-import { createLegacyController } from "./controllers/legacy-controller.js?v=1.2.003";
+import { createLegacyController } from "./controllers/legacy-controller.js?v=1.2.004";
 import { createAutocompleteController } from "./controllers/autocomplete.js";
 import { createRegionDataController } from "./controllers/region-data.js?v=1.2.003";
 import { createSearchController } from "./controllers/search.js";
