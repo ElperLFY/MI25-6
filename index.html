@@ -52,9 +52,8 @@
         <div class="field-grid">
           <div class="field">
             <label for="region">Regione</label>
-            <select id="region">
-              <option value="">Seleziona una Regione</option>
-            </select>
+            <input id="region" list="region-options" autocomplete="off" placeholder="es. Sicilia">
+            <datalist id="region-options"></datalist>
             <p class="field-note" id="region-hint">Seleziona una Regione per attivare i suggerimenti.</p>
           </div>
           <div class="field">
