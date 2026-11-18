@@ -98,19 +98,26 @@ function syncDeferredDatasetControl() {
     button.disabled = true;
     button.textContent = "Mappatura 2021 caricata";
     status.textContent = "La mappatura 2021 è inclusa nelle ricerche di questa Regione.";
-  } else if (!region || state.loadedRegion !== region) {
+  } else if (!region) {
     button.disabled = true;
     button.textContent = "Carica mappatura 2021";
-    status.textContent = "Dataset storico più pesante: viene escluso dal caricamento iniziale e aggiunto solo quando richiesto.";
+    button.title = "Seleziona prima una Regione";
+    status.textContent = "Seleziona una Regione per abilitare il caricamento della mappatura 2021.";
+  } else if (state.loadedRegion !== region) {
+    button.disabled = true;
+    button.textContent = "Carica mappatura 2021";
+    button.title = "Attendi il caricamento dei dataset principali";
+    status.textContent = "Caricamento della Regione in corso: la mappatura 2021 sarà disponibile al termine.";
   } else {
     button.disabled = false;
+    button.title = "Carica la mappatura storica 2021 per la Regione selezionata";
     button.textContent = "Carica mappatura 2021";
     status.textContent = "Dataset storico non ancora caricato. Le ricerche ordinarie restano più leggere.";
   }
 }
 
-async function loadAdditionalDataset(key = "fixedSurvey2021") {
-  if (key !== "fixedSurvey2021") throw new Error("Dataset differito non supportato.");
+async function loadAdditionalDataset() {
+  const key = "fixedSurvey2021";
   const region = $("region").value.trim();
   if (!region || state.loadedRegion !== region) {
     $("load-2021-dataset-status").textContent = "Seleziona prima una Regione e attendi il caricamento dei dataset principali.";

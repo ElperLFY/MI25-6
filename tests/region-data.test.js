@@ -87,7 +87,9 @@ test("initial regional load defers the 2021 survey and loads it only on explicit
   assert.equal($("load-2021-dataset").disabled, false);
   assert.equal($("load-2021-dataset").textContent, "Carica mappatura 2021");
 
-  await controller.loadAdditionalDataset();
+  // Native addEventListener callbacks receive a MouseEvent as their first argument.
+  // Simulate that exact call shape so the controller cannot mistake it for a dataset key.
+  await controller.loadAdditionalDataset({ type: "click", target: $("load-2021-dataset") });
 
   assert.equal(calls.length, 2);
   assert.equal(calls[1].options.loadGeneral, false);
@@ -97,4 +99,40 @@ test("initial regional load defers the 2021 survey and loads it only on explicit
   assert.equal(state.checkedExtras.has("fixedSurvey2021"), true);
   assert.equal($("load-2021-dataset").disabled, true);
   assert.equal($("load-2021-dataset").textContent, "Mappatura 2021 caricata");
+});
+
+
+test("deferred 2021 button remains disabled until a region has completed loading", () => {
+  const button = { value: "", textContent: "", disabled: false, title: "" };
+  const status = { textContent: "" };
+  const state = {
+    loadedRegion: "",
+    manualExtras: new Set(),
+    checkedExtras: new Set(),
+    extraAvailability: {}
+  };
+  const $ = (id) => {
+    if (id === "load-2021-dataset") return button;
+    if (id === "load-2021-dataset-status") return status;
+    if (id === "region") return { value: "" };
+    throw new Error("Unexpected element: " + id);
+  };
+  const { syncDeferredDatasetControl } = createRegionDataController({
+    $,
+    state,
+    loadRegionalData: async () => { throw new Error("Should not load without a region"); },
+    clearArchiveCache: async () => true,
+    scheduleSuggestions: () => {},
+    renderCsvReaderPage: async () => {},
+    loadCsvReaderDataset: async () => {}
+  });
+
+  syncDeferredDatasetControl();
+  assert.equal(button.disabled, true);
+  assert.equal(status.textContent, "Seleziona una Regione per abilitare il caricamento della mappatura 2021.");
+
+  $("region").value = "Sicilia";
+  syncDeferredDatasetControl();
+  assert.equal(button.disabled, true);
+  assert.equal(status.textContent, "Caricamento della Regione in corso: la mappatura 2021 sarà disponibile al termine.");
 });

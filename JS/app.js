@@ -324,7 +324,9 @@ function bindEvents() {
     await restoreAutomaticData();
     syncDeferredDatasetControl();
   });
-  $("load-2021-dataset").addEventListener("click", loadAdditionalDataset);
+  $("load-2021-dataset").addEventListener("click", () => {
+    void loadAdditionalDataset();
+  });
   $("refresh-data-cache").addEventListener("click", refreshAutomaticArchives);
   $("theme-toggle").addEventListener("click", () => {
     updateTheme(document.documentElement.dataset.theme !== "blue", true);
