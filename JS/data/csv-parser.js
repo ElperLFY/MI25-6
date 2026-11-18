@@ -201,6 +201,17 @@ function createStringInterner() {
 }
 
 const EMPTY_EXTRA_FIELDS = Object.freeze([]);
+const INTERNED_FIELDS = new Set([
+  "characteristic",
+  "region",
+  "province",
+  "city",
+  "district",
+  "procom",
+  "number",
+  "suffix",
+  "municipalityCode"
+]);
 
 function createNormaliseCache() {
   const values = new Map();
@@ -255,62 +266,24 @@ function matchesRow(row, columns, query) {
   return true;
 }
 
-function makeRecord(row, originalHeaders, headers, columns, extraFieldIndexes, datasetId, intern, cachedNormalise, options = {}, sourceFile = "", sourceRowNumber = 0) {
-  // IDs and complete addresses are high-cardinality values. Interning them
-  // keeps a large Map alive for millions of mostly unique strings.
+function makeRecord(row, originalHeaders, headers, columns, recordFieldColumns, extraFieldIndexes, datasetId, intern, cachedNormalise, options = {}, sourceFile = "", sourceRowNumber = 0) {
   const id = readValue(row, columns.id);
   const fullAddress = readValue(row, columns.fullAddress);
-  const streetValue = readValue(row, columns.street) || fullAddress;
-  const record = {
-    id,
-    characteristic: intern(readValue(row, columns.characteristic).toUpperCase()),
-    region: intern(readValue(row, columns.region)),
-    province: intern(readValue(row, columns.province)),
-    city: intern(readValue(row, columns.city)),
-    district: intern(readValue(row, columns.district)),
-    procom: intern(readValue(row, columns.procom)),
-    street: streetValue,
-    fullAddress,
-    number: intern(readValue(row, columns.number)),
-    suffix: intern(readValue(row, columns.suffix)),
-    km: readValue(row, columns.km),
-    latitude: readValue(row, columns.latitude),
-    longitude: readValue(row, columns.longitude),
-    operator: readValue(row, columns.operator),
-    nga: readValue(row, columns.nga),
-    technology: readValue(row, columns.technology),
-    maxDownload: readValue(row, columns.maxDownload),
-    maxUpload: readValue(row, columns.maxUpload),
-    peakDownload: readValue(row, columns.peakDownload),
-    peakUpload: readValue(row, columns.peakUpload),
-    vhcnClass: readValue(row, columns.vhcnClass),
-    coverageYear: readValue(row, columns.coverageYear),
-    publicIntervention: readValue(row, columns.publicIntervention),
-    numUiPassed: readValue(row, columns.numUiPassed),
-    gridId: readValue(row, columns.gridId),
-    gridCivQuality: readValue(row, columns.gridCivQuality),
-    publicPlan: readValue(row, columns.publicPlan),
-    proximityCiv: readValue(row, columns.proximityCiv),
-    openFiberDeclared2024: readValue(row, columns.openFiberDeclared2024),
-    coveredJune2025: readValue(row, columns.coveredJune2025),
-    technologyJune2025: readValue(row, columns.technologyJune2025),
-    eligibility: readValue(row, columns.eligibility),
-    exclusionReason: readValue(row, columns.exclusionReason),
-    networkColor2026: readValue(row, columns.networkColor2026),
-    networkColor2026Present: columns.networkColor2026 >= 0,
-    peakDownload2026: readValue(row, columns.peakDownload2026),
-    maxDownload2026: readValue(row, columns.maxDownload2026),
-    sourceRow: readValue(row, columns.sourceRow),
-    municipalityCode: readValue(row, columns.municipalityCode),
-    sectionCode: readValue(row, columns.sectionCode),
-    isPro: readValue(row, columns.isPro),
-    technologyTime: readValue(row, columns.technologyTime),
-    declaredPrivateCoverage: readValue(row, columns.declaredPrivateCoverage),
-    coverageStatusJune2025: readValue(row, columns.coverageStatusJune2025),
-    technologyStatusJune2025: readValue(row, columns.technologyStatusJune2025),
-    exclusionCause: readValue(row, columns.exclusionCause),
-    datasetId
-  };
+  const record = { id, datasetId };
+
+  // Store only columns actually present in this CSV. A fixed 50-field object
+  // wastes substantial memory when repeated across millions of records.
+  for (const [field, columnIndex] of recordFieldColumns) {
+    let value = readValue(row, columnIndex);
+    if (field === "characteristic") value = intern(value.toUpperCase());
+    else if (INTERNED_FIELDS.has(field)) value = intern(value);
+    record[field] = value;
+  }
+
+  record.street = record.street || fullAddress;
+  record.fullAddress = fullAddress;
+  record.openFiberDeclared2024 = readValue(row, columns.openFiberDeclared2024);
+  record.networkColor2026Present = columns.networkColor2026 >= 0;
 
   if (!record.id && !record.street && !record.city && !record.fullAddress) return null;
 
@@ -370,6 +343,7 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
   let readerHeaders = null;
   let readerOffset = 0;
   let extraFieldIndexes = [];
+  let recordFieldColumns = [];
   const records = [];
   const intern = createStringInterner();
   const cachedNormalise = createNormaliseCache();
@@ -387,6 +361,9 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
       if (!columns) return;
       datasetId = inferDatasetType(headers, name, forcedType);
       if (!datasetId) return;
+      recordFieldColumns = Object.entries(columns).filter(([field, columnIndex]) =>
+        columnIndex >= 0 && field !== "id" && field !== "openFiberDeclared2024"
+      );
       extraFieldIndexes = [];
       for (let index = 0; index < headers.length; index += 1) {
         if (!FIELD_HEADER_KEYS.has(headers[index]) && index !== columns.openFiberDeclared2024) {
@@ -440,6 +417,7 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
       originalHeaders,
       headers,
       columns,
+      recordFieldColumns,
       extraFieldIndexes,
       datasetId,
       intern,
