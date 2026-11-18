@@ -72,6 +72,7 @@ const legacyTokens = {
 
 const legacyNumberItems = [];
 const suggestionTimers = {};
+let readerSearchTimer = null;
 const suggestionValues = { province: [], city: [], street: [], number: [] };
 
 function createElement(tag, className, text) {
@@ -1490,7 +1491,8 @@ function bindEvents() {
   $("csv-reader-search").addEventListener("input", () => {
     state.readerQuery = $("csv-reader-search").value;
     state.readerPage = 0;
-    renderCsvReaderPage();
+    window.clearTimeout(readerSearchTimer);
+    readerSearchTimer = window.setTimeout(renderCsvReaderPage, 160);
   });
   $("csv-reader-prev").addEventListener("click", () => {
     state.readerPage = Math.max(0, state.readerPage - 1);
