@@ -56,15 +56,15 @@ test("plain CSV fast path handles CRLF, blank lines, and empty trailing fields",
 test("quoted CSV fields retain delimiters and embedded newlines", () => {
   const csv = [
     "caratteristica;id_egon;regione;provincia;comune;strada;civico",
-    'B;380130072676106;SICILIA;AGRIGENTO;CANICATTI\\';"VIA ROMA; INTERNA";10',
-    'B;380130072676107;SICILIA;AGRIGENTO;CANICATTI\\';"VIA ROMA',
-    'INTERNA";11'
+    "B;380130072676106;SICILIA;AGRIGENTO;CANICATTI';\"VIA ROMA; INTERNA\";10",
+    "B;380130072676107;SICILIA;AGRIGENTO;CANICATTI';\"VIA ROMA",
+    "INTERNA\";11"
   ].join("\n");
 
   const parsed = parseDataset(csv, "quoted-regional.csv");
   assert.equal(parsed.records.length, 2);
   assert.equal(parsed.records[0].street, "VIA ROMA; INTERNA");
-  assert.equal(parsed.records[1].street, "VIA ROMA\\nINTERNA");
+  assert.equal(parsed.records[1].street, "VIA ROMA\nINTERNA");
 });
 
 test("CSV buffer decoder is exported and supports UTF-8 and Windows-1252", () => {
