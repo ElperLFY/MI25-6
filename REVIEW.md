@@ -42,7 +42,7 @@ Autocomplete uses the main mapping and PI1G records. Pressing Enter resolves the
 
 ## Automated checks
 
-The suite now contains twelve tests:
+The suite now contains thirteen tests:
 
 1. Proximity 2025, including the long header and missing `barrato`.
 2. FiberCop proximity 2025, including an exported leading index column and an SNC suffix.
@@ -56,6 +56,7 @@ The suite now contains twelve tests:
 10. Direct loading of a 2021 regional ZIP with its uploaded uppercase filename, both filtered address lookup and full source-field read.
 11. CSV Reader preserves an extra leading index column and still resolves the source region.
 12. Regional lookup selecting only the matching nested regional archive, including the capitalized `Italia.zip` path.
+13. Explicit cache clearing causes the next regional load to fetch the ZIP again.
 
 All changed JavaScript modules and the test file pass syntax checks. A synthetic runtime smoke test confirms that the target address returns a single record while preserving its exact raw columns. A full `npm test` run in Node and a browser end-to-end run against GitHub Pages have not been performed in this environment.
 
