@@ -304,8 +304,24 @@ async function dispatch(type, payload = {}) {
       store.readerRecords = [];
       return true;
 
-    case "CLEAR_ARCHIVE_CACHE":
-      return clearArchiveCache();
+    case "CLEAR_ARCHIVE_CACHE": {
+      const result = await clearArchiveCache();
+      if (result.persistentAvailable && !result.persistentCleared) return result;
+
+      store.region = "";
+      store.automatic = {
+        general: [],
+        pi1g: [],
+        extra: emptyExtra(),
+        pi1gAvailable: false,
+        extraAvailable: {}
+      };
+      store.readerDataset = "";
+      store.readerRecords = [];
+      store.suggestionCache.clear();
+      rebuildCityIndex();
+      return result;
+    }
 
     default:
       throw new Error("Comando worker sconosciuto: " + type);
