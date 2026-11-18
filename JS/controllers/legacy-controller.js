@@ -175,6 +175,15 @@ function legacySetNumberSelection(value) {
   legacySetStatus("Civico selezionato · ID EGON " + legacyState.egon);
 }
 
+function legacyHandleNumberInput() {
+  if (normalise(legacyInput("number").value) !== normalise(legacyState.number)) {
+    legacyState.number = "";
+    legacyState.egon = "";
+    $("legacy-search").disabled = true;
+    legacyResetResult();
+  }
+}
+
 function bindLegacyLevel(key) {
   const input = legacyInput(key);
   const listKey = ({ region: "regions", province: "provinces", city: "cities", street: "streets" })[key];
@@ -318,7 +327,7 @@ function setLegacyMode(enabled) {
 
 
   return {
-    legacyInput, legacySetNumberSelection, bindLegacyLevel,
+    legacyInput, legacySetNumberSelection, legacyHandleNumberInput, bindLegacyLevel,
     runLegacySearch, clearLegacySearch, setLegacyMode, legacyLoadRegions
   };
 }
