@@ -259,7 +259,7 @@ function setAutomaticStatus(region, pi1gAvailable, extraAvailable = state.extraA
     if (state.manualExtras.has(key)) {
       messages.push(DATASET_DEFINITIONS[key].label + ": file manuale · " + count.toLocaleString("it-IT") + " record");
     } else if (state.checkedExtras.has(key)) {
-      messages.push(DATASET_DEFINITIONS[key].label + ": " + count.toLocaleString("it-IT") + " corrispondenze per l'indirizzo");
+      messages.push(DATASET_DEFINITIONS[key].label + ": " + count.toLocaleString("it-IT") + " record disponibili per la Regione");
     } else if (extraAvailable[key] === false) {
       messages.push(DATASET_DEFINITIONS[key].label + ": archivio regionale non disponibile");
     } else {
@@ -346,6 +346,7 @@ async function loadSelectedRegion() {
     for (const key of automaticExtras) {
       state.extra[key] = loaded.extra[key] || [];
       state.extraAvailability[key] = loaded.extraAvailable[key] === true;
+      state.checkedExtras.add(key);
     }
     state.loadedRegion = region;
     setAutomaticStatus(region, loaded.hasPi1gArchive, state.extraAvailability);
