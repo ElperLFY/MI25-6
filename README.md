@@ -33,7 +33,7 @@ La modalità standard mantiene in memoria la mappatura generale 2025 e l'Allegat
 
 CSV Reader è una modalità separata e volontaria. Permette di scegliere una sola fonte per volta e leggere tutte le righe del relativo CSV, mantenendo intestazioni, valori e ordine originale. Le righe sono mostrate in pagine da 50, 100 o 250 per evitare di creare una tabella DOM enorme. La lettura completa può richiedere tempo e memoria, soprattutto per la mappatura 2021. Per uscire, disattivare CSV Reader o tornare alla Ricerca indirizzo.
 
-Nei campi Provincia, Città, Via e Civico, Invio seleziona il primo suggerimento corrispondente e porta al campo successivo; dopo il Civico avvia la ricerca. Comune e Via sono richiesti, il Civico è facoltativo. Gli hint cremisi mostrano il numero di suggerimenti o consentono di continuare con un valore digitato manualmente.
+Nel campo Regione e nei campi Provincia, Città, Via e Civico, Invio seleziona il primo suggerimento corrispondente e porta al campo successivo; dopo il Civico avvia la ricerca. Comune e Via sono richiesti, il Civico è facoltativo. Gli hint cremisi mostrano le Regioni corrispondenti o il numero di suggerimenti e consentono di continuare con un valore digitato manualmente.
 
 ## Esecuzione
 
@@ -53,6 +53,6 @@ Con Node.js 22 o successivo:
 npm test
 ```
 
-Gli 11 test coprono i formati CSV forniti, le intestazioni facoltative e riordinate, gli archivi nazionali con ZIP regionali annidati in maiuscolo, i dataset esistenti, il filtraggio per Comune/Via/Civico, la conservazione delle colonne CSV originali e un caricamento da 150.000 record. Il parser non applica un limite al numero di righe; restano solo limiti di dimensione dei file e degli archivi per evitare caricamenti binari eccessivi.
+I 12 test coprono i formati CSV forniti, le intestazioni facoltative e riordinate, gli archivi nazionali con ZIP regionali annidati in maiuscolo, i dataset esistenti, il filtraggio per Comune/Via/Civico, la conservazione delle colonne CSV originali e un caricamento da 150.000 record. Il parser non applica un limite al numero di righe; restano solo limiti di dimensione dei file e degli archivi per evitare caricamenti binari eccessivi.
 
 MI25-6 non è un verificatore commerciale in tempo reale e non certifica che un servizio sia attivabile presso un indirizzo.
