@@ -25,13 +25,12 @@ function mergedDatasets() {
   const extra = {};
   for (const key of EXTRA_DATASET_KEYS) {
     extra[key] = [
-      ...(store.automatic.extra[key] || []),
-      ...(store.manual.extra[key] || [])
+      ...(store.manual.extra[key].length ? store.manual.extra[key] : store.automatic.extra[key] || [])
     ];
   }
   return {
-    general: [...store.automatic.general, ...store.manual.general],
-    pi1g: [...store.automatic.pi1g, ...store.manual.pi1g],
+    general: store.manual.general.length ? store.manual.general : store.automatic.general,
+    pi1g: store.manual.pi1g.length ? store.manual.pi1g : store.automatic.pi1g,
     extra
   };
 }
@@ -89,7 +88,7 @@ function getReaderColumns(records) {
   return columns;
 }
 
-async function loadReaderDataset({ region, dataset }) {
+async function loadReaderDataset({ region, dataset, baseUrl }) {
   if (!region) return { count: 0, available: false, error: "Seleziona una Regione prima di aprire il CSV Reader." };
   if (!DATASET_DEFINITIONS[dataset]) return { count: 0, available: false, error: "Dataset non riconosciuto." };
 
@@ -118,7 +117,7 @@ async function loadReaderDataset({ region, dataset }) {
     loadPi1g: dataset === "pi1g2025",
     loadExtras: EXTRA_DATASET_KEYS.includes(dataset) ? [dataset] : [],
     readerMode: true,
-    baseUrl: self.__MI25_BASE_URL || self.location.href
+    baseUrl: baseUrl || self.location.href
   });
 
   if (dataset === "general2025") store.readerRecords = loaded.general || [];
@@ -183,10 +182,11 @@ async function dispatch(type, payload = {}) {
         store.automatic.extra[key] = loaded.extra[key] || [];
         store.automatic.extraAvailable[key] = loaded.extraAvailable[key] === true;
       }
+      const counts = getCounts();
       return {
-        counts: getCounts(),
+        counts,
         extraErrors: loaded.extraErrors || {},
-        hasPi1gArchive: store.automatic.pi1gAvailable
+        hasPi1gArchive: counts.pi1gAvailable
       };
     }
     case "GET_COUNTS":
