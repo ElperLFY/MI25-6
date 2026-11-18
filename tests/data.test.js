@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, searchRecords } from "../JS/data.js";
+import { clearArchiveCache, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, searchRecords } from "../JS/data.js";
 
 const proximityHeaders = [
   "cod_egon_civ",
@@ -416,6 +416,70 @@ test("regional lookup opens only the matching uppercase ZIP from italia.zip", as
     assert.equal(result.extra.proximity2025[0].region, "SICILIA");
     assert.deepEqual(loaded, ["REGION_SICILIA_FILTER"]);
   } finally {
+    if (oldWindow === undefined) delete globalThis.window;
+    else globalThis.window = oldWindow;
+    if (oldFetch === undefined) delete globalThis.fetch;
+    else globalThis.fetch = oldFetch;
+  }
+});
+
+
+test("clearing the archive cache causes a fresh regional ZIP fetch", async () => {
+  const encoder = new TextEncoder();
+  const toArrayBuffer = (value) => encoder.encode(value).buffer;
+  const csv = [
+    "id_egon;regione;provincia;nome_com;strada;civico",
+    "380100150514555;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA DELLO SPORT;10"
+  ].join("\n");
+  const entry = {
+    name: "CIVICI.csv",
+    dir: false,
+    _data: { uncompressedSize: encoder.encode(csv).length },
+    async: async (type) => type === "string" ? csv : toArrayBuffer(csv)
+  };
+  const oldWindow = globalThis.window;
+  const oldFetch = globalThis.fetch;
+  let fetchCount = 0;
+
+  globalThis.window = {
+    JSZip: {
+      loadAsync: async (buffer) => {
+        assert.equal(new TextDecoder().decode(buffer), "CACHE_FIXTURE");
+        return { files: { "CIVICI.csv": entry } };
+      }
+    }
+  };
+  globalThis.fetch = async (path) => {
+    if (path === "data/fixed-2021/SICILIA.zip") {
+      fetchCount += 1;
+      return {
+        status: 200,
+        ok: true,
+        arrayBuffer: async () => toArrayBuffer("CACHE_FIXTURE")
+      };
+    }
+    return { status: 404, ok: false };
+  };
+
+  try {
+    await clearArchiveCache();
+    const options = {
+      loadGeneral: false,
+      loadPi1g: false,
+      loadExtras: ["fixedSurvey2021"]
+    };
+    const first = await loadRegionalData("Sicilia", options);
+    const second = await loadRegionalData("Sicilia", options);
+    assert.equal(first.extra.fixedSurvey2021.length, 1);
+    assert.equal(second.extra.fixedSurvey2021.length, 1);
+    assert.equal(fetchCount, 1, "the second load should reuse the in-memory ZIP cache");
+
+    await clearArchiveCache();
+    const refreshed = await loadRegionalData("Sicilia", options);
+    assert.equal(refreshed.extra.fixedSurvey2021.length, 1);
+    assert.equal(fetchCount, 2, "clearing the cache should fetch the ZIP again");
+  } finally {
+    await clearArchiveCache();
     if (oldWindow === undefined) delete globalThis.window;
     else globalThis.window = oldWindow;
     if (oldFetch === undefined) delete globalThis.fetch;
