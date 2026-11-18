@@ -267,7 +267,7 @@ async function loadSelectedRegion() {
     renderLoadDiagnostics(loaded.timings);
     const errors = Object.entries(loaded.extraErrors || {});
     if (errors.length) {
-      $("region-hint").textContent = region + " · caricamento parziale: alcuni archivi non hanno risposto. Usa «Cache Cleaner» per riprovare.";
+      $("region-hint").textContent = region + " · caricamento parziale: alcuni archivi non hanno risposto. Usa «Aggiorna archivi» per riprovare.";
       $("data-status").textContent += " · " + errors.map(([key, message]) => DATASET_DEFINITIONS[key].label + ": " + message).join(" · ");
     } else {
       $("region-hint").textContent = region + " · dataset caricati; suggerimenti e ricerca sono pronti.";
