@@ -1,4 +1,4 @@
-:root {
+ :root {
   color-scheme: light dark;
   --background: #fbeff1;
   --surface: #ffffff;
@@ -978,7 +978,7 @@ input[type="file"]::file-selector-button:hover {
   justify-content: space-between;
   gap: 14px;
   padding: 3px 0;
-  color: var(--text);
+  color: var(--accent);
   font: inherit;
   font-size: 0.88rem;
   font-weight: 700;
@@ -996,128 +996,4 @@ input[type="file"]::file-selector-button:hover {
   gap: 5px;
   margin: 0 0 12px;
   border-bottom: 1px solid var(--line);
-}
-
-.description-tab {
-  min-height: 38px;
-  padding: 7px 12px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 7px 7px 0 0;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.84rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.description-tab:hover {
-  background: var(--background);
-  color: var(--primary);
-}
-
-.description-tab[aria-selected="true"] {
-  border-bottom-color: var(--accent);
-  background: var(--soft);
-  color: var(--primary);
-}
-
-.description-tab:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: -2px;
-}
-
-.description-panel {
-  color: var(--muted);
-  font-size: 0.88rem;
-}
-
-.description-panel p {
-  margin: 0;
-}
-
-.description-panel strong {
-  color: var(--text);
-}
-
-.field-note {
-  color: var(--field-note);
-}
-
-.info-dialog::backdrop {
-  background: var(--dialog-backdrop);
-}
-
-.dialog-header {
-  background: linear-gradient(135deg, var(--gradient-start), var(--primary));
-}
-
-@media (max-width: 560px) {
-  .header-layout {
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .site-header {
-    padding: 22px 0;
-  }
-
-  .theme-toggle {
-    flex-basis: 40px;
-    width: 40px;
-    height: 40px;
-  }
-
-  .card-disclosure > summary {
-    min-height: 56px;
-    padding: 16px;
-  }
-
-  .accordion-content {
-    padding: 0 16px 16px;
-  }
-
-  .mode-actions .button {
-    flex: 1 1 145px;
-  }
-
-  .description-tab {
-    flex: 1 1 auto;
-    padding-inline: 8px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .theme-toggle,
-  .card-disclosure > summary::after,
-  .description-disclosure > summary::after {
-    transition: none;
-  }
-}
-
-
-/* Soft radial vignette: a gently illuminated centre with darker outer edges. */
-body {
-  background:
-    radial-gradient(
-      ellipse 88% 72% at 50% 0%,
-      var(--background-glow) 0%,
-      var(--background) 62%,
-      var(--background-edge) 100%
-    );
-  background-attachment: fixed;
-}
-
-/* Keep dialog controls inside the active colour theme, including while idle. */
-.button-dialog {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #ffffff;
-}
-
-.button-dialog:hover:not(:disabled) {
-  border-color: var(--primary);
-  background: var(--primary);
-  color: #ffffff;
 }
