@@ -198,6 +198,14 @@ async function dispatch(type, payload = {}) {
         store.suggestionCache.clear();
       }
 
+      const requestedExtras = payload.options?.loadExtras || EXTRA_DATASET_KEYS;
+      const isMainRegionalReload = payload.options?.loadGeneral !== false
+        || payload.options?.loadPi1g !== false;
+      if (isMainRegionalReload && !requestedExtras.includes("fixedSurvey2021")) {
+        store.automatic.extra.fixedSurvey2021 = [];
+        delete store.automatic.extraAvailable.fixedSurvey2021;
+      }
+
       const loaded = await loadRegionalData(region, {
         ...payload.options,
         baseUrl: payload.baseUrl || self.__MI25_BASE_URL || self.location.href

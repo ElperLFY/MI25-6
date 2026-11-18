@@ -292,7 +292,7 @@
         <details>
           <summary>Come vengono caricati i dati della mia Regione?</summary>
           <p>Selezionando una Regione vengono caricati la mappatura generale 2025, l’Allegato A PI1G e gli archivi di prossimità 2025. La mappatura 2021, più pesante, è esclusa dal caricamento iniziale: puoi aggiungerla alla ricerca con il comando dedicato nelle Opzioni Avanzate Dati.</p>
-          <p>Gli archivi ZIP scaricati vengono conservati in IndexedDB nel browser per 30 giorni: alle visite successive non occorre scaricarli di nuovo. I file vengono comunque riaperti e analizzati localmente. Usa il pulsante “Cache Cleaner” per eliminare la cache e recuperare le versioni più recenti. Se IndexedDB non è disponibile o lo spazio locale è esaurito, il caricamento prosegue senza cache persistente.</p>
+          <p>Gli archivi ZIP vengono conservati in IndexedDB per 30 giorni. Anche i dataset parsati di dimensione contenuta possono essere riutilizzati nelle visite successive, evitando di ripetere decompressione e parsing; i dataset troppo grandi non vengono copiati nella cache dei record per contenere lo spazio occupato. “Cache Cleaner” elimina entrambe le cache e recupera gli archivi nuovamente. Se IndexedDB non è disponibile o lo spazio locale è esaurito, il caricamento prosegue senza cache persistente.</p>
         </details>
         <details>
           <summary>Posso caricare manualmente i miei file CSV o ZIP?</summary>

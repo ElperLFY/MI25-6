@@ -176,7 +176,9 @@ export async function putParsedDatasetCache(path, region, dataset, entryName, pa
         const entries = (request.result || []).sort((first, second) =>
           (first.cachedAt || 0) - (second.cachedAt || 0)
         );
-        let totalBytes = entries.reduce((total, entry) => total + (Number(entry.estimatedBytes) || 0), estimatedBytes);
+        let totalBytes = entries.reduce((total, entry) =>
+          total + (entry.key === key ? 0 : Number(entry.estimatedBytes) || 0), estimatedBytes
+        );
         for (const entry of entries) {
           if (totalBytes <= PARSED_DATASET_CACHE_TOTAL_LIMIT_BYTES) break;
           if (entry.key === key) continue;

@@ -66,7 +66,11 @@ function renderLoadDiagnostics(diagnostics) {
                 ? " · " + stage.bytes.toLocaleString("it-IT") + " byte"
                 : stage.status !== undefined
                   ? " · HTTP " + stage.status
-                  : "";
+                  : stage.records !== undefined
+                    ? " · " + stage.records.toLocaleString("it-IT") + " record indicizzati"
+                    : stage.reason
+                      ? " · " + stage.reason
+                      : "";
       item.textContent = stage.stage + time + detail;
       list.appendChild(item);
     }
@@ -167,6 +171,7 @@ function setAutomaticStatus(region, pi1gAvailable, extraAvailable = state.extraA
   for (const key of EXTRA_DATASET_KEYS) {
     const count = state.extraCounts[key] || 0;
     if (state.manualExtras.has(key)) messages.push(DATASET_DEFINITIONS[key].label + ": file manuale · " + count.toLocaleString("it-IT") + " record");
+    else if (key === "fixedSurvey2021" && state.checkedExtras.has(key) && extraAvailable[key] === false) messages.push(DATASET_DEFINITIONS[key].label + ": archivio regionale non disponibile");
     else if (state.checkedExtras.has(key)) messages.push(DATASET_DEFINITIONS[key].label + ": " + count.toLocaleString("it-IT") + " record disponibili per la Regione");
     else if (extraAvailable[key] === false) messages.push(DATASET_DEFINITIONS[key].label + ": archivio regionale non disponibile");
     else if (key === "fixedSurvey2021") messages.push(DATASET_DEFINITIONS[key].label + ": caricamento su richiesta");
