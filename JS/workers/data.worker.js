@@ -1,4 +1,5 @@
 import "../../vendor/jszip.min.js";
+import { nowMs, recordTiming } from "../data/diagnostics.js";
 import {
   cityIsKnown,
   collectRecords,
@@ -157,6 +158,7 @@ function getReaderPage({ page = 0, pageSize = 100, query = "" }) {
 async function dispatch(type, payload = {}) {
   switch (type) {
     case "LOAD_REGION": {
+      const workerLoadStartedAt = nowMs();
       const region = String(payload.region || "").trim();
       if (store.region !== region) {
         store.region = region;
@@ -182,7 +184,12 @@ async function dispatch(type, payload = {}) {
         store.automatic.extra[key] = loaded.extra[key] || [];
         store.automatic.extraAvailable[key] = loaded.extraAvailable[key] === true;
       }
+      const countStartedAt = nowMs();
       const counts = getCounts();
+      if (loaded.timings) {
+        recordTiming({ timings: loaded.timings.stages, datasetKey: "worker" }, "Aggiornamento stato e conteggi", countStartedAt);
+        loaded.timings.totalMs = nowMs() - workerLoadStartedAt;
+      }
       return {
         counts,
         extraErrors: loaded.extraErrors || {},

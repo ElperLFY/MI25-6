@@ -34,8 +34,14 @@ function renderLoadDiagnostics(diagnostics) {
 
   const total = document.createElement("p");
   total.className = "load-diagnostics-total";
-  total.textContent = "Tempo totale Worker: " + formatTime(diagnostics.totalMs);
+  total.textContent = "Round-trip Worker/UI: " + formatTime(diagnostics.roundTripMs ?? diagnostics.totalMs);
   content.appendChild(total);
+  if (diagnostics.totalMs !== undefined && diagnostics.roundTripMs !== undefined) {
+    const workerTotal = document.createElement("p");
+    workerTotal.className = "load-diagnostics-total";
+    workerTotal.textContent = "Elaborazione Worker: " + formatTime(diagnostics.totalMs);
+    content.appendChild(workerTotal);
+  }
 
   for (const [dataset, stages] of grouped) {
     const section = document.createElement("section");
@@ -137,12 +143,16 @@ async function loadSelectedRegion() {
   $("data-status").textContent = "Caricamento di tutti i dataset disponibili di " + region + "…";
   try {
     const automaticExtras = EXTRA_DATASET_KEYS.filter((key) => !state.manualExtras.has(key));
+    const roundTripStartedAt = globalThis.performance?.now?.() ?? Date.now();
     const loaded = await loadRegionalData(region, {
       loadGeneral: !state.manualGeneral,
       loadPi1g: !state.manualPi1g,
       loadExtras: automaticExtras,
       collectTimings: true
     });
+    if (loaded.timings) {
+      loaded.timings.roundTripMs = (globalThis.performance?.now?.() ?? Date.now()) - roundTripStartedAt;
+    }
     if (token !== state.loadToken) return;
     state.generalCount = loaded.counts.general;
     state.pi1gCount = loaded.counts.pi1g;
