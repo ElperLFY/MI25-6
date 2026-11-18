@@ -29,7 +29,7 @@ L'interpretazione delle classi 2026 riprende la legenda dell'interfaccia storica
 
 ## Modalità di consultazione
 
-La modalità standard mantiene in memoria la mappatura generale 2025 e l'Allegato A PI1G per suggerimenti e ricerca. Gli archivi aggiuntivi (mappatura fissa 2021, prossimità 2025 e FiberCop) vengono interrogati soltanto dopo l'invio di Comune e Via; il parser filtra le righe durante la lettura e conserva in memoria soltanto quelle corrispondenti. Il browser deve comunque scaricare e leggere lo ZIP regionale della fonte selezionata: il filtro riduce soprattutto gli oggetti creati, la memoria usata e i risultati da visualizzare, non trasforma un CSV statico in un'API server-side.
+La modalità standard carica tutti i dataset regionali disponibili quando viene selezionata la Regione: mappatura generale 2025, PI1G 2025, mappatura fissa 2021, prossimità 2025 e FiberCop. I record completi vengono mantenuti in memoria e alimentano tutti i suggerimenti e la ricerca indirizzo; l'invio della ricerca non scarica né rilegge gli stessi archivi. Gli ZIP scaricati sono inoltre mantenuti nella cache di sessione del modulo dati. In un sito statico il browser deve necessariamente scaricare e scandire i CSV regionali: la cache evita download ripetuti e il riuso dei record evita nuove scansioni durante le ricerche.
 
 CSV Reader è una modalità separata e volontaria. Permette di scegliere una sola fonte per volta e leggere tutte le righe del relativo CSV, mantenendo intestazioni, valori e ordine originale. Le righe sono mostrate in pagine da 50, 100 o 250 per evitare di creare una tabella DOM enorme. La lettura completa può richiedere tempo e memoria, soprattutto per la mappatura 2021. Per uscire, disattivare CSV Reader o tornare alla Ricerca indirizzo.
 
