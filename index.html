@@ -41,9 +41,10 @@
         <div class="mode-actions">
           <button type="button" class="button button-secondary mode-toggle" id="csv-reader-toggle" aria-pressed="false">CSV Reader OFF</button>
           <button type="button" class="button button-secondary mode-toggle" id="legacy-toggle" aria-pressed="false">Legacy mode OFF</button>
+          <button type="button" class="button button-secondary mode-toggle" id="refresh-data-cache" title="Svuota la cache locale e scarica nuovamente gli archivi automatici">Aggiorna archivi</button>
         </div>
       </div>
-      <p class="mode-help" id="mode-help">Ricerca indirizzo: carica i dataset principali per i suggerimenti e consulta gli archivi aggiuntivi soltanto dopo l'invio della ricerca. CSV Reader apre volontariamente tutte le righe del dataset selezionato. Legacy mode consulta separatamente l’archivio storico 2017-2021 di Handymenny.</p>
+      <p class="mode-help" id="mode-help">Ricerca indirizzo: carica tutti i dataset regionali disponibili per suggerimenti e ricerca. Gli archivi ZIP vengono conservati in IndexedDB per 30 giorni; usa Aggiorna archivi per scaricare le versioni più recenti. CSV Reader apre volontariamente tutte le righe del dataset selezionato. Legacy mode consulta separatamente l’archivio storico 2017-2021 di Handymenny.</p>
     </section>
 
     <section class="card" id="modern-search-card" aria-labelledby="address-title">
@@ -202,7 +203,7 @@
       <span aria-hidden="true">·</span>
       <a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a>
     </nav>
-    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Build 25</button>
+    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Build 26</button>
   </footer>
 
   <dialog class="info-dialog" id="info-dialog" aria-labelledby="dialog-title">
@@ -214,8 +215,8 @@
       <div id="faq-content" hidden>
         <details>
           <summary>Come vengono caricati i dati della mia Regione?</summary>
-          <p>Selezionando una Regione vengono caricati la mappatura generale 2025 e l’Allegato A PI1G, necessari per suggerimenti e ricerca. I dataset più voluminosi (mappatura 2021 e prossimità) vengono letti soltanto dopo aver inviato Comune e Via: il parser conserva le righe corrispondenti invece di costruire in memoria l’intero archivio.</p>
-          <p>I dati elaborati restano nella memoria del browser durante la sessione. Dopo aver chiuso o ricaricato la pagina, il caricamento automatico può essere ripetuto.</p>
+          <p>Selezionando una Regione vengono caricati tutti i dataset regionali disponibili: mappatura generale 2025, Allegato A PI1G, mappatura reti fisse 2021 e archivi di prossimità 2025. Tutti i record disponibili alimentano i suggerimenti e la ricerca indirizzo.</p>
+          <p>Gli archivi ZIP scaricati vengono conservati in IndexedDB nel browser per 30 giorni: alle visite successive non occorre scaricarli di nuovo. I file vengono comunque riaperti e analizzati localmente. Usa il pulsante “Aggiorna archivi” per eliminare la cache e recuperare le versioni più recenti. Se IndexedDB non è disponibile o lo spazio locale è esaurito, il caricamento prosegue senza cache persistente.</p>
         </details>
         <details>
           <summary>Posso caricare manualmente i miei file CSV o ZIP?</summary>
@@ -224,7 +225,7 @@
         </details>
         <details>
           <summary>Come posso cercare un indirizzo?</summary>
-          <p>Seleziona la Regione, poi inserisci almeno Comune e Via. Il civico è facoltativo. I suggerimenti cremisi aiutano a completare i campi; premendo Invio viene selezionato il primo suggerimento corrispondente e il cursore passa al campo successivo. Gli archivi aggiuntivi vengono interrogati quando invii la ricerca.</p>
+          <p>Seleziona la Regione, poi inserisci almeno Comune e Via. Il civico è facoltativo. I suggerimenti cremisi aiutano a completare i campi; premendo Invio viene selezionato il primo suggerimento corrispondente e il cursore passa al campo successivo. La ricerca utilizza i record di tutti i dataset regionali già caricati; non avvia un secondo download degli stessi archivi.</p>
         </details>
         <details>
           <summary>Che cos’è CSV Reader?</summary>
@@ -268,9 +269,11 @@
         </details>
       </div>
       <div id="changelog-content" hidden>
-        <p class="hint">Build 25 · ricerca mirata e CSV Reader</p>
+        <p class="hint">Build 26 · cache persistente e ricerca regionale completa</p>
         <ul>
-          <li>La ricerca standard carica gli archivi aggiuntivi solo dopo l’invio di Comune e Via e conserva soltanto i record corrispondenti.</li>
+          <li>Gli archivi ZIP automatici vengono salvati in IndexedDB per 30 giorni e riutilizzati tra visite e ricaricamenti della pagina.</li>
+          <li>Il comando “Aggiorna archivi” svuota la cache locale e recupera nuovamente le versioni pubblicate.</li>
+          <li>La selezione della Regione carica tutti i dataset regionali disponibili per suggerimenti e ricerca.</li>
           <li>CSV Reader opzionale per visualizzare tutte le righe del dataset selezionato, con intestazioni originali, ordine CSV e paginazione.</li>
           <li>Autocompletamento con Invio per selezionare il suggerimento e passare al campo successivo.</li>
           <li>Autocomplete per Regione, Provincia, Comune, Via e Civico con suggerimenti e hint cremisi; Invio seleziona il suggerimento e avanza al campo successivo.</li>
