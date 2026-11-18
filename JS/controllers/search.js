@@ -2,7 +2,7 @@ import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS, normalise } from "../data/inde
 
 export function createSearchController({
   $, state, searchRecords, cityIsKnown, parseUploadedFiles, clearManualDatasets,
-  renderResults, setAutomaticStatus, setFileMessages, scheduleSuggestions, loadSelectedRegion
+  renderResults, setAutomaticStatus, setFileMessages, scheduleSuggestions, loadSelectedRegion, loadCsvReaderDataset
 }) {
 function hasRecords() {
   if (state.generalCount || state.pi1gCount) return true;
@@ -117,10 +117,5 @@ async function restoreAutomaticData() {
 }
 
 
-const autocomplete = createAutocompleteController({
-  $, getSuggestions, findCityRecord, normalise, currentSearchState, renderOptions, suggestionValues
-});
-const scheduleSuggestions = autocomplete.scheduleSuggestions;
-const handleAutocompleteEnter = autocomplete.handleAutocompleteEnter;
   return { runSearch, clearSearch, handleFileUpload, restoreAutomaticData };
 }
