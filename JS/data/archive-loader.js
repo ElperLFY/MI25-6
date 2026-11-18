@@ -152,7 +152,7 @@ async function fetchArchive(paths, forcedType = "", region = "", options = {}) {
   let lastError = null;
   for (const path of paths) {
     try {
-      const buffer = await getArchiveBytes(path);
+      const buffer = await getArchiveBytes(path, options.baseUrl);
       if (!buffer) {
 
         continue;
