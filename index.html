@@ -74,6 +74,7 @@
                 <button type="button" class="description-tab" id="description-tab-csv" role="tab" aria-selected="true" aria-controls="description-panel-csv" data-description-tab="csv-reader">CSV Reader</button>
                 <button type="button" class="description-tab" id="description-tab-legacy" role="tab" aria-selected="false" aria-controls="description-panel-legacy" data-description-tab="legacy" tabindex="-1">Legacy Mode</button>
                 <button type="button" class="description-tab" id="description-tab-cache" role="tab" aria-selected="false" aria-controls="description-panel-cache" data-description-tab="cache" tabindex="-1">Aggiorna archivi</button>
+                <button type="button" class="description-tab" id="description-tab-2021" role="tab" aria-selected="false" aria-controls="description-panel-2021" data-description-tab="fixed-survey-2021" tabindex="-1">Mappatura 2021</button>
               </div>
               <div class="description-panel" id="description-panel-csv" role="tabpanel" aria-labelledby="description-tab-csv" data-description-panel="csv-reader">
                 <p><strong>CSV Reader</strong> apre il contenuto completo del CSV originale per la Regione e il dataset selezionati, mantenendo intestazioni, colonne e ordine delle righe. La tabella è paginata; il dataset completo viene caricato soltanto quando attivi questa modalità e può richiedere più memoria e tempo.</p>
@@ -83,6 +84,9 @@
               </div>
               <div class="description-panel" id="description-panel-cache" role="tabpanel" aria-labelledby="description-tab-cache" data-description-panel="cache" hidden>
                 <p><strong>Aggiorna archivi</strong> svuota le cache gestite da MI25-6: gli ZIP originali e i dataset già parsati in IndexedDB, oltre ai byte ZIP conservati in memoria dal Web Worker. Se hai selezionato una Regione, scarica nuovamente e rielabora i dataset automatici di quella Regione. Senza una Regione selezionata, svuota le cache e il nuovo download avviene alla selezione successiva. I file caricati manualmente restano invariati. Non cancella la cache generale di Chrome, i dati di altri siti o i dati dell’API Legacy.</p>
+              </div>
+              <div class="description-panel" id="description-panel-2021" role="tabpanel" aria-labelledby="description-tab-2021" data-description-panel="fixed-survey-2021" hidden>
+                <p><strong>Mappatura reti fisse 2021</strong> aggiunge alla ricerca l’archivio Infratel 2021 della sola Regione selezionata. Il pulsante dedicato scarica lo ZIP regionale, lo decomprime e analizza i CSV nel Web Worker; i record vengono poi confrontati con gli altri dataset già caricati e possono comparire nella scheda del risultato con i campi disponibili, tra cui operatore, tecnologia, anno di copertura e valori di velocità. È un caricamento differito perché l’archivio può essere pesante: non scarica il 2021 per tutte le Regioni, non sostituisce la classificazione PA/A/B/C della mappatura 2025 e non interroga l’API esterna di Legacy Mode.</p>
               </div>
             </div>
           </details>
@@ -305,7 +309,7 @@
       <span aria-hidden="true">·</span>
       <a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a>
     </nav>
-    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Patch 1.2:007</button>
+    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Patch 1.2.008</button>
   </footer>
 
   <dialog class="info-dialog" id="info-dialog" aria-labelledby="dialog-title">
@@ -371,9 +375,12 @@
         </details>
       </div>
       <div id="changelog-content" hidden>
-        <p class="hint">Patch 1.2:007 · legenda limitata ai codici caratteristica presenti nei CSV</p>
+        <p class="hint">Patch 1.2.008 · correzione della cache e descrizione della mappatura 2021</p>
         <ul>
-          <li>La legenda riconosce soltanto PA, A, B e C, i quattro codici effettivi del campo caratteristica nei CSV; B1, B2, B3 e BW non vengono più presentati come classi autonome.</li>
+          <li>Corretta la pulizia della cache: la transazione IndexedDB include sia gli archivi ZIP sia i dataset parsati.</li>
+           <li>Allineate le versioni dei moduli di caricamento e pulizia: entrambe le operazioni condividono la stessa cache in memoria.</li>
+           <li>Aggiunta la quarta scheda descrittiva «Mappatura 2021» nelle Opzioni Avanzate, dedicata al caricamento differito del dataset regionale.</li>
+           <li>La legenda è limitata ai quattro valori effettivi del campo caratteristica nei CSV: PA, A, B e C.</li>
           <li>Ripristinata la funzione currentSearchState() rimossa accidentalmente durante la rimozione del renderer datalist: l’autocomplete standard riceve nuovamente Regione, Provincia, Comune, Via e Civico.</li>
           <li>Uniformato l’autocomplete Legacy al combobox personalizzato della ricerca standard: rimossi i datalist nativi di Chrome e aggiunto un popup tematico con navigazione da tastiera.</li>
           <li>Rinominata l’azione in «Aggiorna archivi» e precisato il suo ambito: cache ZIP e dataset parsati di MI25-6, con ricaricamento della Regione selezionata; i file manuali restano invariati.</li>
@@ -398,6 +405,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="./JS/app.js?v=1.2.007"></script>
+  <script type="module" src="./JS/app.js?v=1.2.008"></script>
 </body>
 </html>
