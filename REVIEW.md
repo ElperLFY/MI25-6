@@ -4,6 +4,24 @@
 
 The rewrite keeps the application static and separates the interface, stylesheet, application behavior, dataset definitions, CSV/ZIP parsing, and historical API client.
 
+## Modular architecture and execution model
+
+The application entry point is now an orchestrator of 338 lines rather than a monolithic controller. Responsibilities are split into focused modules:
+
+- `JS/controllers/autocomplete.js`: debounced suggestions and keyboard navigation.
+- `JS/controllers/region-data.js`: full regional loading, status reporting, and cache refresh.
+- `JS/controllers/search.js`: address search, manual file imports, and restoring automatic datasets.
+- `JS/controllers/csv-reader.js`: CSV Reader loading, filtering, and pagination.
+- `JS/controllers/legacy-controller.js`: the independent historical lookup flow.
+- `JS/ui/results.js`: result rendering, historical comparison, and copyable reports.
+- `JS/services/data-client.js`: request/response bridge to the worker.
+- `JS/workers/data.worker.js`: long-running data engine.
+- `JS/data/`: archive loading, CSV parsing, normalization, IndexedDB cache, and record search.
+
+The browser's main thread no longer loads JSZip or parses the regional archives. JSZip is imported by the module Web Worker; CSV parsing, ZIP decompression, dataset merging, autocomplete lookups, address searches, and CSV Reader filtering/pagination execute there. The UI receives only the relevant results, counts, suggestions, or requested table page. The Worker keeps the currently loaded regional records in memory, so typing and searching do not re-download or re-parse those datasets.
+
+The ZIP byte cache is backed by IndexedDB with a 30-day expiry and a per-page in-memory request cache. Cache clearing invalidates both layers and is exposed through **Aggiorna archivi**. IndexedDB failures degrade to the in-memory/network path instead of disabling the application. This persists downloaded archive bytes across browser restarts; parsed records remain in the live Worker for the current page session and are reconstructed from cached ZIP bytes after a full reload.
+
 ## Dataset support
 
 The parser now recognises the supplied examples by normalized column names rather than positional column indexes:
@@ -58,7 +76,7 @@ The suite now contains thirteen tests:
 12. Regional lookup selecting only the matching nested regional archive, including the capitalized `Italia.zip` path.
 13. Explicit cache clearing causes the next regional load to fetch the ZIP again.
 
-All changed JavaScript modules and the test file pass syntax checks. A synthetic runtime smoke test confirms that the target address returns a single record while preserving its exact raw columns. A full `npm test` run in Node and a browser end-to-end run against GitHub Pages have not been performed in this environment.
+All changed JavaScript modules pass static syntax checks. The test file defines thirteen tests, but a full `npm test` run in Node and a browser end-to-end run against GitHub Pages have not been performed in this environment.
 
 ## Remaining runtime verification
 
