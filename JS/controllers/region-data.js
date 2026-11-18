@@ -116,6 +116,8 @@ function syncDeferredDatasetControl() {
   }
 }
 
+// Deliberately accepts no dataset key: this loader is bound to the 2021 button.
+// It also safely ignores any MouseEvent passed by a legacy direct listener.
 async function loadAdditionalDataset() {
   const key = "fixedSurvey2021";
   const region = $("region").value.trim();

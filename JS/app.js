@@ -12,7 +12,7 @@ import { createCsvReaderController } from "./controllers/csv-reader.js";
 import { LegacyClient } from "./legacy.js";
 import { createLegacyController } from "./controllers/legacy-controller.js";
 import { createAutocompleteController } from "./controllers/autocomplete.js";
-import { createRegionDataController } from "./controllers/region-data.js";
+import { createRegionDataController } from "./controllers/region-data.js?v=1.2.002";
 import { createSearchController } from "./controllers/search.js";
 
 const $ = (id) => document.getElementById(id);
