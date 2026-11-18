@@ -101,6 +101,24 @@ test("targeted CSV parsing keeps only the requested address and can retain origi
   assert.equal(parsed.records[0].sourceFile, "mappatura-reti-fisse-2021.csv");
 });
 
+test("CSV Reader preserves an extra leading index column and still detects the source region", () => {
+  const csv = [
+    "id_egon;regione;provincia;nome_com;strada;civico;colore_26",
+    "1;380100150514555;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA DELLO SPORT;10;g"
+  ].join("\n");
+
+  const reader = parseDataset(csv, "mappatura-reti-fisse-2021.csv", "", {
+    readerMode: true
+  });
+  assert.equal(reader.records.length, 1);
+  assert.equal(reader.records[0].sourceHeaders[0], "Indice sorgente");
+  assert.equal(reader.records[0].sourceHeaders[1], "id_egon");
+  assert.equal(reader.records[0].sourceValues[0], "1");
+  assert.equal(reader.records[0].sourceValues[1], "380100150514555");
+  assert.equal(reader.records[0].sourceValues[7], "g");
+  assert.equal(reader.records[0].normalisedRegion, "SICILIA");
+});
+
 test("fixed survey 2021 decodes color and 2026 speed bands", () => {
   assert.equal(decodeFixedSurvey2021Color("g"), "Grigio");
   assert.equal(decodeFixedSurvey2021Color("b"), "Bianco");
