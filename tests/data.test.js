@@ -580,7 +580,8 @@ test("clearing the archive cache causes a fresh regional ZIP fetch", async () =>
   };
 
   try {
-    await clearArchiveCache();
+    const initialClear = await clearArchiveCache();
+    if (initialClear.persistentAvailable) assert.equal(initialClear.persistentCleared, true);
     const options = {
       loadGeneral: false,
       loadPi1g: false,
@@ -592,7 +593,8 @@ test("clearing the archive cache causes a fresh regional ZIP fetch", async () =>
     assert.equal(second.extra.fixedSurvey2021.length, 1);
     assert.equal(fetchCount, 1, "the second load should reuse the in-memory ZIP cache");
 
-    await clearArchiveCache();
+    const cleared = await clearArchiveCache();
+    if (cleared.persistentAvailable) assert.equal(cleared.persistentCleared, true);
     const refreshed = await loadRegionalData("Sicilia", options);
     assert.equal(refreshed.extra.fixedSurvey2021.length, 1);
     assert.equal(fetchCount, 2, "clearing the cache should fetch the ZIP again");
