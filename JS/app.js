@@ -288,6 +288,8 @@ const regionData = createRegionDataController({
 const setAutomaticStatus = regionData.setAutomaticStatus;
 const loadSelectedRegion = regionData.loadSelectedRegion;
 const refreshAutomaticArchives = regionData.refreshAutomaticArchives;
+const loadAdditionalDataset = regionData.loadAdditionalDataset;
+const syncDeferredDatasetControl = regionData.syncDeferredDatasetControl;
 const searchController = createSearchController({
   $, state, searchRecords, cityIsKnown, parseUploadedFiles, clearManualDatasets,
   renderResults, setAutomaticStatus, setFileMessages, scheduleSuggestions,
@@ -314,8 +316,15 @@ function bindEvents() {
   $("region").addEventListener("change", loadSelectedRegion);
   $("search-form").addEventListener("submit", runSearch);
   $("clear-search").addEventListener("click", clearSearch);
-  $("file-input").addEventListener("change", handleFileUpload);
-  $("use-automatic-data").addEventListener("click", restoreAutomaticData);
+  $("file-input").addEventListener("change", async (event) => {
+    await handleFileUpload(event);
+    syncDeferredDatasetControl();
+  });
+  $("use-automatic-data").addEventListener("click", async () => {
+    await restoreAutomaticData();
+    syncDeferredDatasetControl();
+  });
+  $("load-2021-dataset").addEventListener("click", loadAdditionalDataset);
   $("refresh-data-cache").addEventListener("click", refreshAutomaticArchives);
   $("theme-toggle").addEventListener("click", () => {
     updateTheme(document.documentElement.dataset.theme !== "blue", true);
@@ -413,6 +422,7 @@ function initialise() {
   $("data-status").textContent = "Seleziona una Regione per caricare i dataset.";
   setFileMessages([]);
   initialiseTheme();
+  syncDeferredDatasetControl();
   bindEvents();
 }
 

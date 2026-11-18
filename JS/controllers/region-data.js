@@ -76,6 +76,83 @@ function renderLoadDiagnostics(diagnostics) {
   details.hidden = false;
 }
 
+function syncDeferredDatasetControl() {
+  const button = $("load-2021-dataset");
+  const status = $("load-2021-dataset-status");
+  if (!button || !status) return;
+
+  const region = $("region").value.trim();
+  if (state.manualExtras.has("fixedSurvey2021")) {
+    button.disabled = true;
+    button.textContent = "Mappatura 2021 manuale attiva";
+    status.textContent = "Il dataset 2021 è già disponibile dal file manuale.";
+  } else if (state.checkedExtras.has("fixedSurvey2021")) {
+    button.disabled = true;
+    button.textContent = "Mappatura 2021 caricata";
+    status.textContent = "La mappatura 2021 è inclusa nelle ricerche di questa Regione.";
+  } else if (!region || state.loadedRegion !== region) {
+    button.disabled = true;
+    button.textContent = "Carica mappatura 2021";
+    status.textContent = "Dataset storico più pesante: viene escluso dal caricamento iniziale e aggiunto solo quando richiesto.";
+  } else {
+    button.disabled = false;
+    button.textContent = "Carica mappatura 2021";
+    status.textContent = "Dataset storico non ancora caricato. Le ricerche ordinarie restano più leggere.";
+  }
+}
+
+async function loadAdditionalDataset(key = "fixedSurvey2021") {
+  if (key !== "fixedSurvey2021") throw new Error("Dataset differito non supportato.");
+  const region = $("region").value.trim();
+  if (!region || state.loadedRegion !== region) {
+    $("load-2021-dataset-status").textContent = "Seleziona prima una Regione e attendi il caricamento dei dataset principali.";
+    return;
+  }
+  if (state.manualExtras.has(key) || state.checkedExtras.has(key)) {
+    syncDeferredDatasetControl();
+    return;
+  }
+
+  const button = $("load-2021-dataset");
+  const status = $("load-2021-dataset-status");
+  const token = state.loadToken;
+  button.disabled = true;
+  button.textContent = "Caricamento 2021…";
+  status.textContent = "Download, decompressione e parsing della mappatura 2021 nel Web Worker…";
+
+  try {
+    const loaded = await loadRegionalData(region, {
+      loadGeneral: false,
+      loadPi1g: false,
+      loadExtras: [key],
+      collectTimings: true
+    });
+    if (token !== state.loadToken || $("region").value.trim() !== region) return;
+
+    state.extraCounts[key] = loaded.counts.extra[key] || 0;
+    state.extraAvailability[key] = loaded.counts.extraAvailable[key] === true;
+    if (!loaded.extraErrors?.[key]) state.checkedExtras.add(key);
+
+    setAutomaticStatus(region, state.pi1gAvailable, state.extraAvailability);
+    renderLoadDiagnostics(loaded.timings);
+    if (loaded.extraErrors?.[key]) {
+      status.textContent = DATASET_DEFINITIONS[key].label + " · errore: " + loaded.extraErrors[key] + ". Puoi riprovare.";
+      state.checkedExtras.delete(key);
+    } else if (!state.extraAvailability[key] || state.extraCounts[key] === 0) {
+      status.textContent = "L'archivio della mappatura 2021 non risulta disponibile per " + region + ".";
+    } else {
+      status.textContent = DATASET_DEFINITIONS[key].label + " · " + state.extraCounts[key].toLocaleString("it-IT") + " record aggiunti alla ricerca.";
+    }
+    syncDeferredDatasetControl();
+    if (loaded.timings) $("data-status").textContent += " · Mappatura 2021 caricata su richiesta.";
+  } catch (error) {
+    if (token !== state.loadToken) return;
+    status.textContent = error.message || "Impossibile caricare la mappatura 2021.";
+  } finally {
+    syncDeferredDatasetControl();
+  }
+}
+
 function setAutomaticStatus(region, pi1gAvailable, extraAvailable = state.extraAvailability) {
   const messages = [
     "Mappatura generale: " + state.generalCount.toLocaleString("it-IT") + " record",
@@ -88,6 +165,7 @@ function setAutomaticStatus(region, pi1gAvailable, extraAvailable = state.extraA
     if (state.manualExtras.has(key)) messages.push(DATASET_DEFINITIONS[key].label + ": file manuale · " + count.toLocaleString("it-IT") + " record");
     else if (state.checkedExtras.has(key)) messages.push(DATASET_DEFINITIONS[key].label + ": " + count.toLocaleString("it-IT") + " record disponibili per la Regione");
     else if (extraAvailable[key] === false) messages.push(DATASET_DEFINITIONS[key].label + ": archivio regionale non disponibile");
+    else if (key === "fixedSurvey2021") messages.push(DATASET_DEFINITIONS[key].label + ": caricamento su richiesta");
     else messages.push(DATASET_DEFINITIONS[key].label + ": non ancora caricato");
   }
   if (state.manualGeneral) messages[0] = "Mappatura generale: file manuale attivo · " + state.generalCount.toLocaleString("it-IT") + " record";
@@ -113,6 +191,7 @@ async function loadSelectedRegion() {
     $("region-hint").textContent = "Seleziona una Regione valida dall'elenco dei suggerimenti.";
     $("data-status").textContent = "Regione non riconosciuta.";
     $("search-button").disabled = false;
+    syncDeferredDatasetControl();
     return;
   }
   if (!region) {
@@ -124,6 +203,7 @@ async function loadSelectedRegion() {
     $("region-hint").textContent = "Seleziona una Regione per attivare i suggerimenti.";
     $("data-status").textContent = "Seleziona una Regione per caricare i dataset.";
     $("search-button").disabled = false;
+    syncDeferredDatasetControl();
     if (state.csvReaderMode) {
       $("csv-reader-dataset").disabled = false;
       $("csv-reader-page-size").disabled = false;
@@ -134,15 +214,19 @@ async function loadSelectedRegion() {
   }
   if (state.loadedRegion === region) {
     setAutomaticStatus(region, state.pi1gAvailable, state.extraAvailability);
+    syncDeferredDatasetControl();
     if (state.csvReaderMode) await loadCsvReaderDataset();
     return;
   }
 
-  $("region-hint").textContent = "Caricamento di tutti i dataset disponibili per suggerimenti e ricerca…";
+  syncDeferredDatasetControl();
+  $("region-hint").textContent = "Caricamento dei dataset principali per suggerimenti e ricerca…";
   $("search-button").disabled = true;
   $("data-status").textContent = "Caricamento di tutti i dataset disponibili di " + region + "…";
   try {
-    const automaticExtras = EXTRA_DATASET_KEYS.filter((key) => !state.manualExtras.has(key));
+    const automaticExtras = EXTRA_DATASET_KEYS.filter((key) =>
+      key !== "fixedSurvey2021" && !state.manualExtras.has(key)
+    );
     const roundTripStartedAt = globalThis.performance?.now?.() ?? Date.now();
     const loaded = await loadRegionalData(region, {
       loadGeneral: !state.manualGeneral,
@@ -171,10 +255,12 @@ async function loadSelectedRegion() {
       $("region-hint").textContent = region + " · dataset caricati; suggerimenti e ricerca sono pronti.";
     }
     scheduleSuggestions("province");
+    syncDeferredDatasetControl();
   } catch (error) {
     if (token !== state.loadToken) return;
     state.loadedRegion = "";
     $("region-hint").textContent = "Caricamento non riuscito per " + region + ". Verifica lo stato dei dataset.";
+    syncDeferredDatasetControl();
     $("data-status").textContent = "Impossibile caricare tutti i dataset di " + region + ". " + (error.message || "Verifica i file o carica i dataset manualmente.");
   } finally {
     if (token === state.loadToken) {
@@ -211,5 +297,11 @@ async function refreshAutomaticArchives() {
 }
 
 
-  return { setAutomaticStatus, loadSelectedRegion, refreshAutomaticArchives };
+  return {
+    setAutomaticStatus,
+    loadSelectedRegion,
+    loadAdditionalDataset,
+    syncDeferredDatasetControl,
+    refreshAutomaticArchives
+  };
 }

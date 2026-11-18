@@ -1,5 +1,18 @@
 import { normalise } from "./normalization.js";
 
+function forEachRecord(groupsOrRecords, callback) {
+  if (!Array.isArray(groupsOrRecords)) return;
+  const groups = groupsOrRecords.length && Array.isArray(groupsOrRecords[0])
+    ? groupsOrRecords
+    : [groupsOrRecords];
+  for (const records of groups) {
+    for (const record of records) {
+      if (callback(record) === false) return false;
+    }
+  }
+  return true;
+}
+
 function matches(record, query) {
   if (query.region && !record.normalisedRegion.startsWith(query.region)) return false;
   if (query.province && !record.normalisedProvince.includes(query.province)) return false;
@@ -65,47 +78,19 @@ export function cityIsKnown(general, pi1g, extra, city, region = "") {
   const lists = [general, pi1g];
   for (const records of Object.values(extra || {})) lists.push(records);
 
-  for (const records of lists) {
-    for (const record of records) {
-      if (record.normalisedCity.includes(query)
-        && (!selectedRegion || record.normalisedRegion.startsWith(selectedRegion))) return true;
+  let found = false;
+  forEachRecord(lists, (record) => {
+    if (record.normalisedCity.includes(query)
+      && (!selectedRegion || record.normalisedRegion.startsWith(selectedRegion))) {
+      found = true;
+      return false;
     }
-  }
-  return false;
+    return true;
+  });
+  return found;
 }
 
-export function getSuggestions(field, search, state, records) {
-  const query = normalise(search);
-  const values = new Set();
-  const fieldNames = { province: "province", city: "city", street: "street" };
-  const selected = {
-    region: normalise(state.region),
-    province: field === "province" ? "" : normalise(state.province),
-    city: field === "city" ? "" : normalise(state.city),
-    street: field === "street" ? "" : normalise(state.street)
-  };
-
-  for (const record of records) {
-    if (selected.region && !record.normalisedRegion.startsWith(selected.region)) continue;
-    if (selected.province && !record.normalisedProvince.includes(selected.province)) continue;
-    if (selected.city && !record.normalisedCity.includes(selected.city)) continue;
-    if (selected.street && !record.normalisedStreet.includes(selected.street)) continue;
-
-    let value = "";
-    if (field === "number") {
-      value = !record.normalisedNumber || record.normalisedNumber === "0"
-        ? "SNC"
-        : record.number + (record.suffix ? "/" + record.suffix : "");
-    } else {
-      value = record[fieldNames[field]] ?? "";
-    }
-
-    if (!value) continue;
-    const normalisedValue = normalise(value);
-    if (query && !normalisedValue.startsWith(query) && !normalisedValue.includes(" " + query)) continue;
-    values.add(value);
-  }
-
+function sortSuggestionValues(values) {
   return Array.from(values).sort((first, second) => {
     const firstNumber = Number.parseInt(first, 10);
     const secondNumber = Number.parseInt(second, 10);
@@ -113,5 +98,54 @@ export function getSuggestions(field, search, state, records) {
       return first.localeCompare(second, "it");
     }
     return firstNumber - secondNumber;
+  });
+}
+
+export function getSuggestions(field, search, state, records, cache = null) {
+  const query = normalise(search);
+  const fieldNames = { province: "province", city: "city", street: "street" };
+  const selected = {
+    region: normalise(state.region),
+    province: field === "province" ? "" : normalise(state.province),
+    city: field === "city" ? "" : normalise(state.city),
+    street: field === "street" ? "" : normalise(state.street)
+  };
+  const cacheKey = [
+    field, selected.region, selected.province, selected.city, selected.street
+  ].join("\u001f");
+
+  let candidates = cache?.get(cacheKey);
+  if (!candidates) {
+    const values = new Set();
+    forEachRecord(records, (record) => {
+      if (selected.region && !record.normalisedRegion.startsWith(selected.region)) return;
+      if (selected.province && !record.normalisedProvince.includes(selected.province)) return;
+      if (selected.city && !record.normalisedCity.includes(selected.city)) return;
+      if (selected.street && !record.normalisedStreet.includes(selected.street)) return;
+
+      let value = "";
+      if (field === "number") {
+        value = !record.normalisedNumber || record.normalisedNumber === "0"
+          ? "SNC"
+          : record.number + (record.suffix ? "/" + record.suffix : "");
+      } else {
+        value = record[fieldNames[field]] ?? "";
+      }
+      if (value) values.add(value);
+    });
+
+    candidates = sortSuggestionValues(values);
+    // Cache only bounded option lists. A broad street/number query can have
+    // hundreds of thousands of distinct values and should not retain them.
+    if (cache && candidates.length <= 20_000) {
+      if (cache.size >= 48) cache.delete(cache.keys().next().value);
+      cache.set(cacheKey, candidates);
+    }
+  }
+
+  if (!query) return candidates.slice();
+  return candidates.filter((value) => {
+    const normalizedValue = normalise(value);
+    return normalizedValue.startsWith(query) || normalizedValue.includes(" " + query);
   });
 }

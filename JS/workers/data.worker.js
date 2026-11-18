@@ -2,7 +2,6 @@ import "../../vendor/jszip.min.js";
 import { nowMs, recordTiming } from "../data/diagnostics.js";
 import {
   cityIsKnown,
-  collectRecords,
   clearArchiveCache,
   getSuggestions,
   loadRegionalData,
@@ -19,21 +18,35 @@ const store = {
   automatic: { general: [], pi1g: [], extra: emptyExtra(), pi1gAvailable: false, extraAvailable: {} },
   manual: { general: [], pi1g: [], extra: emptyExtra() },
   readerDataset: "",
-  readerRecords: []
+  readerRecords: [],
+  suggestionCache: new Map()
 };
 
 function mergedDatasets() {
   const extra = {};
   for (const key of EXTRA_DATASET_KEYS) {
-    extra[key] = [
-      ...(store.manual.extra[key].length ? store.manual.extra[key] : store.automatic.extra[key] || [])
-    ];
+    extra[key] = store.manual.extra[key].length
+      ? store.manual.extra[key]
+      : store.automatic.extra[key] || [];
   }
   return {
     general: store.manual.general.length ? store.manual.general : store.automatic.general,
     pi1g: store.manual.pi1g.length ? store.manual.pi1g : store.automatic.pi1g,
     extra
   };
+}
+
+function getRecordGroups(data) {
+  return [data.general, data.pi1g, ...Object.values(data.extra)];
+}
+
+function findInRecordGroups(groups, predicate) {
+  for (const records of groups) {
+    for (const record of records) {
+      if (predicate(record)) return record;
+    }
+  }
+  return null;
 }
 
 function getCounts() {
@@ -185,6 +198,7 @@ async function dispatch(type, payload = {}) {
         store.automatic.extraAvailable[key] = loaded.extraAvailable[key] === true;
       }
       const countStartedAt = nowMs();
+      store.suggestionCache.clear();
       const counts = getCounts();
       if (loaded.timings) {
         recordTiming({ timings: loaded.timings.stages, datasetKey: "worker" }, "Aggiornamento stato e conteggi", countStartedAt);
@@ -207,20 +221,18 @@ async function dispatch(type, payload = {}) {
 
     case "GET_SUGGESTIONS": {
       const data = mergedDatasets();
-      const records = collectRecords(data.general, data.pi1g, data.extra);
-      return getSuggestions(payload.field, payload.search, payload.state || {}, records);
+      return getSuggestions(payload.field, payload.search, payload.state || {}, getRecordGroups(data), store.suggestionCache);
     }
 
     case "FIND_CITY": {
       const city = normalise(payload.city);
       const data = mergedDatasets();
-      return collectRecords(data.general, data.pi1g, data.extra)
-        .find((record) => record.normalisedCity === city) || null;
+      return findInRecordGroups(getRecordGroups(data), (record) => record.normalisedCity === city);
     }
 
     case "CITY_IS_KNOWN": {
       const data = mergedDatasets();
-      return cityIsKnown(data.general, data.pi1g, data.extra, payload.city, payload.region || "");
+      return cityIsKnown(getRecordGroups(data), [], {}, payload.city, payload.region || "");
     }
 
     case "PARSE_UPLOAD": {
@@ -230,6 +242,7 @@ async function dispatch(type, payload = {}) {
         else if (key === "pi1g2025") store.manual.pi1g.push(...records);
         else if (EXTRA_DATASET_KEYS.includes(key)) store.manual.extra[key].push(...records);
       }
+      store.suggestionCache.clear();
       const counts = Object.fromEntries(Object.entries(imported.datasets).map(([key, records]) => [key, records.length]));
       return { messages: imported.messages, counts, summary: getCounts() };
     }
@@ -238,6 +251,7 @@ async function dispatch(type, payload = {}) {
       store.manual = { general: [], pi1g: [], extra: emptyExtra() };
       store.readerDataset = "";
       store.readerRecords = [];
+      store.suggestionCache.clear();
       return getCounts();
     }
 

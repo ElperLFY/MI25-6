@@ -1310,3 +1310,48 @@ body {
   margin: 2px 0;
   overflow-wrap: anywhere;
 }
+
+
+/* The largest historical dataset is explicitly opt-in. */
+.deferred-dataset-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--background);
+}
+
+.deferred-dataset-copy {
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.deferred-dataset-copy > strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.deferred-dataset-copy .hint {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+#load-2021-dataset {
+  flex: 0 1 auto;
+}
+
+@media (max-width: 560px) {
+  .deferred-dataset-control {
+    align-items: stretch;
+  }
+
+  #load-2021-dataset {
+    width: 100%;
+  }
+}
