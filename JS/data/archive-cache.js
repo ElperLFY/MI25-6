@@ -313,7 +313,7 @@ export async function clearArchiveCache() {
   }
   return new Promise((resolve) => {
     try {
-      const transaction = database.transaction(ARCHIVE_CACHE_STORE, "readwrite");
+      const transaction = database.transaction([ARCHIVE_CACHE_STORE, PARSED_DATASET_CACHE_STORE], "readwrite");
       transaction.objectStore(ARCHIVE_CACHE_STORE).clear();
       transaction.objectStore(PARSED_DATASET_CACHE_STORE).clear();
       transaction.oncomplete = () => resolve({
