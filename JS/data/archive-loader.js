@@ -5,7 +5,7 @@ import {
   getArchiveBytes,
   getParsedDatasetCache,
   putParsedDatasetCache
-} from "./archive-cache.js";
+} from "./archive-cache.js?v=1.2.005";
 import { measureAsync, measureSync, nowMs } from "./diagnostics.js";
 
 const PI1G_FILES = {
