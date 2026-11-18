@@ -1355,3 +1355,17 @@ body {
     width: 100%;
   }
 }
+
+
+/* Legacy suggestions share the same themed combobox as the main address search. */
+.autocomplete-option {
+  flex-direction: column;
+  gap: 3px;
+}
+
+.autocomplete-option-meta {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
