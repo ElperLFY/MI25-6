@@ -669,7 +669,7 @@ SECONDA RIGA";9002`);
   const parsed = parseDataset(csv, "streamed.csv", "general2025");
   assert.equal(streamed.records.length, parsed.records.length);
   assert.deepEqual(streamed.records.at(-1), parsed.records.at(-1));
-  assert.equal(streamed.records.at(-1).street, 'VIA TEST "SPECIALE"\nSECONDA RIGA');
+  assert.equal(streamed.records.at(-1).street, 'VIA "SPECIALE"\nSECONDA RIGA');
 });
 
 test("streaming parser handles small CSVs and CR-only rows", async () => {
