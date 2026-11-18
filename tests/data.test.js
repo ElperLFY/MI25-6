@@ -236,6 +236,7 @@ test("italia.zip opens uppercase regional ZIPs and imports their CSV files", asy
     },
     REGION_SICILIA: { files: { "CIVICI.csv": entry("CIVICI.csv", csv) } }
   };
+  const oldJSZip = globalThis.JSZip;
   globalThis.window = {
     JSZip: {
       loadAsync: async (buffer) => {
@@ -245,6 +246,7 @@ test("italia.zip opens uppercase regional ZIPs and imports their CSV files", asy
       }
     }
   };
+  globalThis.JSZip = globalThis.window.JSZip;
   try {
     const imported = await parseUploadedFiles([{
       name: "italia.zip",
@@ -258,6 +260,8 @@ test("italia.zip opens uppercase regional ZIPs and imports their CSV files", asy
     );
   } finally {
     delete globalThis.window;
+    if (oldJSZip === undefined) delete globalThis.JSZip;
+    else globalThis.JSZip = oldJSZip;
   }
 });
 
@@ -277,6 +281,7 @@ test("FiberCop is inferred from eligibility and exclusion headers inside a regio
     ROOT_FC: { files: { "SICILIA.zip": entry("SICILIA.zip", "REGION_FC") } },
     REGION_FC: { files: { "CIVICI.csv": entry("CIVICI.csv", csv) } }
   };
+  const oldJSZip = globalThis.JSZip;
   globalThis.window = {
     JSZip: {
       loadAsync: async (buffer) => {
@@ -286,6 +291,7 @@ test("FiberCop is inferred from eligibility and exclusion headers inside a regio
       }
     }
   };
+  globalThis.JSZip = globalThis.window.JSZip;
   try {
     const imported = await parseUploadedFiles([{
       name: "italia.zip",
@@ -296,6 +302,8 @@ test("FiberCop is inferred from eligibility and exclusion headers inside a regio
     assert.equal(imported.datasets.fiberCopProximity2025[0].eligibility, "SI");
   } finally {
     delete globalThis.window;
+    if (oldJSZip === undefined) delete globalThis.JSZip;
+    else globalThis.JSZip = oldJSZip;
   }
 });
 
@@ -318,6 +326,7 @@ test("2021 regional data loads from the uploaded uppercase regional ZIP", async 
   const oldWindow = globalThis.window;
   const oldFetch = globalThis.fetch;
   const requested = [];
+  const oldJSZip = globalThis.JSZip;
   globalThis.window = {
     JSZip: {
       loadAsync: async (buffer) => {
@@ -326,6 +335,7 @@ test("2021 regional data loads from the uploaded uppercase regional ZIP", async 
       }
     }
   };
+  globalThis.JSZip = globalThis.window.JSZip;
   globalThis.fetch = async (path) => {
     requested.push(path);
     if (path === "data/fixed-2021/SICILIA.zip") {
@@ -385,6 +395,8 @@ test("2021 regional data loads from the uploaded uppercase regional ZIP", async 
   } finally {
     if (oldWindow === undefined) delete globalThis.window;
     else globalThis.window = oldWindow;
+    if (oldJSZip === undefined) delete globalThis.JSZip;
+    else globalThis.JSZip = oldJSZip;
     if (oldFetch === undefined) delete globalThis.fetch;
     else globalThis.fetch = oldFetch;
   }
@@ -414,6 +426,7 @@ test("regional lookup opens only the matching uppercase ZIP from italia.zip", as
   const loaded = [];
   const oldWindow = globalThis.window;
   const oldFetch = globalThis.fetch;
+  const oldJSZip = globalThis.JSZip;
   globalThis.window = {
     JSZip: {
       loadAsync: async (buffer) => {
@@ -424,6 +437,7 @@ test("regional lookup opens only the matching uppercase ZIP from italia.zip", as
       }
     }
   };
+  globalThis.JSZip = globalThis.window.JSZip;
   globalThis.fetch = async (path) => {
     if (path.endsWith("/sicilia.zip")) return { status: 404, ok: false };
     if (path.endsWith("/italia.zip")) return { status: 404, ok: false };
@@ -446,6 +460,8 @@ test("regional lookup opens only the matching uppercase ZIP from italia.zip", as
   } finally {
     if (oldWindow === undefined) delete globalThis.window;
     else globalThis.window = oldWindow;
+    if (oldJSZip === undefined) delete globalThis.JSZip;
+    else globalThis.JSZip = oldJSZip;
     if (oldFetch === undefined) delete globalThis.fetch;
     else globalThis.fetch = oldFetch;
   }
@@ -469,6 +485,7 @@ test("clearing the archive cache causes a fresh regional ZIP fetch", async () =>
   const oldFetch = globalThis.fetch;
   let fetchCount = 0;
 
+  const oldJSZip = globalThis.JSZip;
   globalThis.window = {
     JSZip: {
       loadAsync: async (buffer) => {
@@ -477,6 +494,7 @@ test("clearing the archive cache causes a fresh regional ZIP fetch", async () =>
       }
     }
   };
+  globalThis.JSZip = globalThis.window.JSZip;
   globalThis.fetch = async (path) => {
     if (path === "data/fixed-2021/SICILIA.zip") {
       fetchCount += 1;
@@ -510,6 +528,8 @@ test("clearing the archive cache causes a fresh regional ZIP fetch", async () =>
     await clearArchiveCache();
     if (oldWindow === undefined) delete globalThis.window;
     else globalThis.window = oldWindow;
+    if (oldJSZip === undefined) delete globalThis.JSZip;
+    else globalThis.JSZip = oldJSZip;
     if (oldFetch === undefined) delete globalThis.fetch;
     else globalThis.fetch = oldFetch;
   }
