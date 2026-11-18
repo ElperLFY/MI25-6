@@ -24,15 +24,22 @@ function decodeBuffer(buffer) {
 }
 
 function parsePlainDelimitedRows(text, delimiter, onRow) {
+  // Determine the line-ending style once. Searching for both \n and \r from
+  // every row makes LF-only files quadratic because the absent character is
+  // repeatedly searched all the way to the end of the remaining CSV.
+  const lineBreak = text.includes("\n") ? "\n" : "\r";
   let start = 0;
 
   while (start < text.length) {
-    let lineEnd = text.indexOf("\n", start);
-    const carriageEnd = text.indexOf("\r", start);
-    if (lineEnd < 0 || (carriageEnd >= 0 && carriageEnd < lineEnd)) lineEnd = carriageEnd;
-    if (lineEnd < 0) lineEnd = text.length;
+    const separatorIndex = text.indexOf(lineBreak, start);
+    const lineEnd = separatorIndex < 0 ? text.length : separatorIndex;
+    const contentEnd = lineBreak === "\n"
+      && lineEnd > start
+      && text.charCodeAt(lineEnd - 1) === 13
+      ? lineEnd - 1
+      : lineEnd;
+    const line = text.slice(start, contentEnd);
 
-    const line = text.slice(start, lineEnd);
     if (line) {
       const row = line.split(delimiter);
       let hasContent = false;
@@ -45,10 +52,9 @@ function parsePlainDelimitedRows(text, delimiter, onRow) {
       if (hasContent && onRow(row) === false) return;
     }
 
-    if (lineEnd === text.length) break;
-    const lineEnding = text[lineEnd];
-    start = lineEnd + 1;
-    if (lineEnding === "\r" && text[start] === "\n") start += 1;
+    if (separatorIndex < 0) break;
+    start = separatorIndex + 1;
+    if (lineBreak === "\r" && text[start] === "\n") start += 1;
   }
 }
 
