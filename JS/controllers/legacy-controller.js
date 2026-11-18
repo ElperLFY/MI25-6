@@ -1,7 +1,8 @@
 import { legacyReport, legacySections } from "../legacy.js";
+import { createLegacyAutocomplete } from "./legacy-autocomplete.js?v=1.2.005";
 
 export function createLegacyController({
-  $, state, normalise, createElement, renderOptions, copyText,
+  $, state, normalise, createElement, copyText,
   setCsvReaderMode, legacyClient
 }) {
 const legacyState = {
@@ -31,24 +32,34 @@ const legacyTokens = {
 
 const legacyNumberItems = [];
 
-// Gli ID dei datalist HTML usano il nome singolare del campo.
-const LEGACY_DATALISTS = {
-  regions: "legacy-region-options",
-  provinces: "legacy-province-options",
-  cities: "legacy-city-options",
-  streets: "legacy-street-options",
-  numbers: "legacy-number-options"
+const LEGACY_LIST_FIELDS = {
+  regions: "region",
+  provinces: "province",
+  cities: "city",
+  streets: "street",
+  numbers: "number"
 };
 
 function legacyInput(id) {
   return $("legacy-" + id);
 }
 
-function clearLegacyDatalist(key) {
-  const listId = LEGACY_DATALISTS[key];
-  if (!listId) return;
-  const list = $(listId);
-  if (list) list.replaceChildren();
+const legacyAutocomplete = createLegacyAutocomplete({
+  $,
+  normalise,
+  onSelect(key, item) {
+    if (key === "number") {
+      legacySetNumberSelection(item && typeof item === "object" ? item.number : item);
+      return;
+    }
+    const input = legacyInput(key);
+    input.value = String(item);
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+});
+
+function clearLegacyOptions(key) {
+  legacyAutocomplete.clear(LEGACY_LIST_FIELDS[key] || key);
 }
 
 function legacySetStatus(message) {
@@ -80,12 +91,12 @@ function legacyResetFrom(level) {
   for (const key of order.slice(index + 1)) {
     legacyState[key] = "";
     legacyInput(key).value = "";
-    legacyInput(key).disabled = true;
+    legacyAutocomplete.setDisabled(key, true);
     const listKey = ({ province: "provinces", city: "cities", street: "streets", number: "numbers" })[key];
     if (listKey) {
       legacyTokens[listKey] += 1;
       legacyLists[listKey] = [];
-      clearLegacyDatalist(listKey);
+      clearLegacyOptions(listKey);
     }
   }
 
@@ -103,14 +114,14 @@ function legacyResetFrom(level) {
 function legacyFillList(key, items) {
   legacyLists[key] = items;
   const controlName = ({ regions: "region", provinces: "province", cities: "city", streets: "street", numbers: "number" })[key];
-  renderOptions(LEGACY_DATALISTS[key], items, key === "numbers");
-  legacyInput(controlName).disabled = false;
+  legacyAutocomplete.setOptions(controlName, items);
+  legacyAutocomplete.setDisabled(controlName, false);
 }
 
 async function legacyLoadList(key, request, label) {
   const token = ++legacyTokens[key];
   const inputName = ({ provinces: "province", cities: "city", streets: "street", numbers: "number" })[key];
-  legacyInput(inputName).disabled = true;
+  legacyAutocomplete.setDisabled(inputName, true);
   legacySetStatus("Caricamento " + label + " dall’API Handymenny…");
   legacySetError("");
 
@@ -134,14 +145,14 @@ async function legacyLoadList(key, request, label) {
     if (!items.length) legacySetError("L’API non restituisce voci per questa selezione.");
   } catch (error) {
     if (token !== legacyTokens[key]) return;
-    legacyInput(inputName).disabled = true;
+    legacyAutocomplete.setDisabled(inputName, true);
     legacySetStatus("");
     legacySetError(error.message || "Impossibile caricare i dati Legacy.");
   }
 }
 
 async function legacyLoadRegions() {
-  legacyInput("region").disabled = true;
+  legacyAutocomplete.setDisabled("region", true);
   legacySetStatus("Caricamento elenco Regioni dall’API Handymenny…");
   legacySetError("");
 
@@ -202,6 +213,14 @@ function legacyHandleNumberInput() {
 
 function bindLegacyLevel(key) {
   const input = legacyInput(key);
+  legacyAutocomplete.bind(key);
+
+  if (key === "number") {
+    input.addEventListener("input", legacyHandleNumberInput);
+    input.addEventListener("change", () => legacySetNumberSelection(input.value));
+    return;
+  }
+
   const listKey = ({ region: "regions", province: "provinces", city: "cities", street: "streets" })[key];
 
   input.addEventListener("input", () => {
@@ -321,11 +340,11 @@ function clearLegacySearch() {
 
   for (const key of ["region", "province", "city", "street", "number"]) {
     legacyInput(key).value = "";
-    legacyInput(key).disabled = key !== "region";
+    legacyAutocomplete.setDisabled(key, key !== "region");
   }
   for (const key of ["provinces", "cities", "streets", "numbers"]) {
     legacyLists[key] = [];
-    clearLegacyDatalist(key);
+    clearLegacyOptions(key);
   }
   for (const key of Object.keys(legacyTokens)) legacyTokens[key] += 1;
 
@@ -362,7 +381,7 @@ function setLegacyMode(enabled) {
 
 
   return {
-    legacyInput, legacySetNumberSelection, legacyHandleNumberInput, bindLegacyLevel,
+    bindLegacyLevel,
     runLegacySearch, clearLegacySearch, setLegacyMode, legacyLoadRegions
   };
 }
