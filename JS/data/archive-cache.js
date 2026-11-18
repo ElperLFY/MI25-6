@@ -71,19 +71,80 @@ async function writePersistentArchive(path, buffer, generation) {
   });
 }
 
-export async function getArchiveBytes(path, baseUrl = "") {
+const DEFAULT_ARCHIVE_IDLE_TIMEOUT_MS = 30_000;
+
+export async function getArchiveBytes(path, baseUrl = "", options = {}) {
   const requestUrl = baseUrl ? new URL(path, baseUrl).href : path;
   if (!archiveBytesCache.has(requestUrl)) {
     const generation = archiveCacheGeneration;
+    const idleTimeoutMs = Math.max(1_000, Number(options.idleTimeoutMs) || DEFAULT_ARCHIVE_IDLE_TIMEOUT_MS);
     const task = (async () => {
       const cached = await readPersistentArchive(requestUrl);
       if (cached) return cached;
-      const response = await fetch(requestUrl, { cache: "no-cache" });
-      if (response.status === 404) return null;
-      if (!response.ok) throw new Error("HTTP " + response.status + " durante il caricamento di " + requestUrl);
-      const buffer = await response.arrayBuffer();
-      await writePersistentArchive(requestUrl, buffer, generation);
-      return buffer;
+
+      const controller = new AbortController();
+      let timeoutId;
+      const armIdleTimeout = () => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => controller.abort(), idleTimeoutMs);
+      };
+
+      try {
+        armIdleTimeout();
+        const response = await fetch(requestUrl, {
+          cache: "no-cache",
+          signal: controller.signal
+        });
+        if (response.status === 404) return null;
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status + " durante il caricamento di " + requestUrl);
+        }
+
+        let buffer;
+        if (response.body?.getReader) {
+          const reader = response.body.getReader();
+          const chunks = [];
+          let totalBytes = 0;
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              if (value?.byteLength) {
+                chunks.push(value);
+                totalBytes += value.byteLength;
+                armIdleTimeout();
+              }
+            }
+          } finally {
+            reader.releaseLock();
+          }
+
+          const combined = new Uint8Array(totalBytes);
+          let offset = 0;
+          for (const chunk of chunks) {
+            combined.set(chunk, offset);
+            offset += chunk.byteLength;
+          }
+          buffer = combined.buffer;
+        } else {
+          buffer = await response.arrayBuffer();
+        }
+
+        await writePersistentArchive(requestUrl, buffer, generation);
+        return buffer;
+      } catch (error) {
+        if (controller.signal.aborted) {
+          throw new Error(
+            "Download interrotto: nessun dato ricevuto per "
+            + Math.round(idleTimeoutMs / 1000)
+            + " secondi da " + requestUrl
+            + ". Controlla la connessione e riprova."
+          );
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
+      }
     })();
     archiveBytesCache.set(requestUrl, task);
     task.catch(() => archiveBytesCache.delete(requestUrl));

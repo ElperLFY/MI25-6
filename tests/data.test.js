@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { clearArchiveCache, decodeBuffer, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, REGIONS, searchRecords } from "../JS/data.js";
+import { getArchiveBytes } from "../JS/data/archive-cache.js";
 
 const proximityHeaders = [
   "cod_egon_civ",
@@ -65,6 +66,26 @@ test("quoted CSV fields retain delimiters and embedded newlines", () => {
   assert.equal(parsed.records.length, 2);
   assert.equal(parsed.records[0].street, "VIA ROMA; INTERNA");
   assert.equal(parsed.records[1].street, "VIA ROMA\nINTERNA");
+});
+
+test("archive fetch aborts when the server sends no response", async () => {
+  const oldFetch = globalThis.fetch;
+  const path = "data/test/archive-idle-timeout.zip";
+  globalThis.fetch = async (_url, { signal }) => new Promise((_resolve, reject) => {
+    signal.addEventListener("abort", () => {
+      reject(new DOMException("The operation was aborted", "AbortError"));
+    }, { once: true });
+  });
+
+  try {
+    await assert.rejects(
+      getArchiveBytes(path, "https://mi25-6.test/", { idleTimeoutMs: 1000 }),
+      /nessun dato ricevuto per 1 secondi/
+    );
+  } finally {
+    globalThis.fetch = oldFetch;
+    await clearArchiveCache();
+  }
 });
 
 test("CSV buffer decoder is exported and supports UTF-8 and Windows-1252", () => {
