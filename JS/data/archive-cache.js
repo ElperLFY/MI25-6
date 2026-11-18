@@ -308,15 +308,35 @@ export async function clearArchiveCache() {
   parsedDatasetCacheGeneration += 1;
   archiveBytesCache.clear();
   const database = await openArchiveCacheDatabase();
-  if (!database) return false;
+  if (!database) {
+    return { memoryCleared: true, persistentAvailable: false, persistentCleared: false };
+  }
   return new Promise((resolve) => {
     try {
       const transaction = database.transaction(ARCHIVE_CACHE_STORE, "readwrite");
       transaction.objectStore(ARCHIVE_CACHE_STORE).clear();
       transaction.objectStore(PARSED_DATASET_CACHE_STORE).clear();
-      transaction.oncomplete = () => resolve(true);
-      transaction.onerror = () => resolve(false);
-      transaction.onabort = () => resolve(false);
-    } catch { resolve(false); }
+      transaction.oncomplete = () => resolve({
+        memoryCleared: true,
+        persistentAvailable: true,
+        persistentCleared: true
+      });
+      transaction.onerror = () => resolve({
+        memoryCleared: true,
+        persistentAvailable: true,
+        persistentCleared: false
+      });
+      transaction.onabort = () => resolve({
+        memoryCleared: true,
+        persistentAvailable: true,
+        persistentCleared: false
+      });
+    } catch {
+      resolve({
+        memoryCleared: true,
+        persistentAvailable: true,
+        persistentCleared: false
+      });
+    }
   });
 }
