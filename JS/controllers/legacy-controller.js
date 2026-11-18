@@ -31,8 +31,24 @@ const legacyTokens = {
 
 const legacyNumberItems = [];
 
+// Gli ID dei datalist HTML usano il nome singolare del campo.
+const LEGACY_DATALISTS = {
+  regions: "legacy-region-options",
+  provinces: "legacy-province-options",
+  cities: "legacy-city-options",
+  streets: "legacy-street-options",
+  numbers: "legacy-number-options"
+};
+
 function legacyInput(id) {
   return $("legacy-" + id);
+}
+
+function clearLegacyDatalist(key) {
+  const listId = LEGACY_DATALISTS[key];
+  if (!listId) return;
+  const list = $(listId);
+  if (list) list.replaceChildren();
 }
 
 function legacySetStatus(message) {
@@ -69,7 +85,7 @@ function legacyResetFrom(level) {
     if (listKey) {
       legacyTokens[listKey] += 1;
       legacyLists[listKey] = [];
-      $("legacy-" + listKey + "-options").textContent = "";
+      clearLegacyDatalist(listKey);
     }
   }
 
@@ -87,7 +103,7 @@ function legacyResetFrom(level) {
 function legacyFillList(key, items) {
   legacyLists[key] = items;
   const controlName = ({ regions: "region", provinces: "province", cities: "city", streets: "street", numbers: "number" })[key];
-  renderOptions("legacy-" + key + "-options", items, key === "numbers");
+  renderOptions(LEGACY_DATALISTS[key], items, key === "numbers");
   legacyInput(controlName).disabled = false;
 }
 
@@ -293,7 +309,7 @@ function clearLegacySearch() {
   }
   for (const key of ["provinces", "cities", "streets", "numbers"]) {
     legacyLists[key] = [];
-    $("legacy-" + key + "-options").textContent = "";
+    clearLegacyDatalist(key);
   }
   for (const key of Object.keys(legacyTokens)) legacyTokens[key] += 1;
 
