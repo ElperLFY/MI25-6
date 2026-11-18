@@ -36,8 +36,6 @@ const FIXED_SURVEY_2021_FILES = Object.freeze({
 
 const MAX_FILE_SIZE = 200 * 1024 * 1024;
 const MAX_ARCHIVE_SIZE = 1024 * 1024 * 1024;
-const HEADER_SCAN_LIMIT = 100;
-const HEADER_SAMPLE_SIZE = 512 * 1024;
 
 function regionSlug(region) {
   return normalise(region).toLowerCase().replace(/ /g, "-");

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { clearArchiveCache, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, searchRecords } from "../JS/data.js";
+import { clearArchiveCache, decodeBuffer, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, searchRecords } from "../JS/data.js";
 
 const proximityHeaders = [
   "cod_egon_civ",
@@ -36,6 +36,27 @@ test("proximity 2025 recognises long headers and does not require barrato", () =
   assert.equal(parsed.records[0].coveredJune2025, "SI");
   assert.equal(parsed.records[0].latitude, "40.8956413");
   assert.equal(parsed.records[0].longitude, "14.8182354");
+});
+
+test("CSV buffer decoder is exported and supports UTF-8 and Windows-1252", () => {
+  const utf8 = new TextEncoder().encode("Città").buffer;
+  const windows1252 = Uint8Array.from([0x43, 0x69, 0x74, 0x74, 0xe0]).buffer;
+
+  assert.equal(decodeBuffer(utf8), "Città");
+  assert.equal(decodeBuffer(windows1252), "Città");
+});
+
+test("dataset type fallback resolves the imported dataset definition", () => {
+  const csv = [
+    ["id_egon", "regione", "provincia", "comune", "strada"].join(";"),
+    ["123456789", "SICILIA", "PALERMO", "PALERMO", "VIA ROMA"].join(";")
+  ].join("\n");
+
+  const parsed = parseDataset(csv, "generic.csv", "general2025");
+
+  assert.equal(parsed.id, "general2025");
+  assert.equal(parsed.records.length, 1);
+  assert.equal(parsed.records[0].id, "123456789");
 });
 
 test("FiberCop proximity handles an optional leading index and SNC suffix", () => {

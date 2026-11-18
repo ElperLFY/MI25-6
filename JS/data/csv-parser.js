@@ -1,7 +1,10 @@
-import { FIELD_ALIASES } from "../datasets.js";
+import { DATASET_DEFINITIONS, FIELD_ALIASES } from "../datasets.js";
 import { normalise } from "./normalization.js";
 
 const FIELD_HEADER_KEYS = new Set(Object.values(FIELD_ALIASES).flat());
+
+const HEADER_SCAN_LIMIT = 100;
+const HEADER_SAMPLE_SIZE = 512 * 1024;
 
 function headerKey(value) {
   return String(value ?? "")
@@ -406,4 +409,4 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
   return { id: datasetId, records, name };
 }
 
-export { headerKey };
+export { decodeBuffer, headerKey };
