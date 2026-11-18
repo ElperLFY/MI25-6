@@ -764,6 +764,8 @@ input[type="file"]::file-selector-button:hover {
 :root {
   --gradient-start: #4a0715;
   --gradient-end: #b3203f;
+  --background-glow: #fff8fa;
+  --background-edge: #f4e1e6;
   --field-note: #b3123d;
   --dialog-backdrop: rgb(30 4 10 / 65%);
 }
@@ -772,6 +774,8 @@ input[type="file"]::file-selector-button:hover {
   :root {
     --gradient-start: #26060d;
     --gradient-end: #c9304f;
+    --background-glow: #34101a;
+    --background-edge: #170309;
     --field-note: #ff829e;
   }
 }
@@ -789,6 +793,8 @@ input[type="file"]::file-selector-button:hover {
   --focus: #398be0;
   --gradient-start: #071e40;
   --gradient-end: #3989da;
+  --background-glow: #f8fbff;
+  --background-edge: #e0ebf8;
   --field-note: #1c5da4;
   --dialog-backdrop: rgb(5 24 50 / 70%);
 }
@@ -807,6 +813,8 @@ input[type="file"]::file-selector-button:hover {
     --focus: #8bc2ff;
     --gradient-start: #06152b;
     --gradient-end: #256ab2;
+    --background-glow: #102845;
+    --background-edge: #030d1b;
     --field-note: #8dbdf3;
     --dialog-backdrop: rgb(2 13 32 / 76%);
   }
@@ -1086,4 +1094,30 @@ input[type="file"]::file-selector-button:hover {
   .description-disclosure > summary::after {
     transition: none;
   }
+}
+
+
+/* Soft radial vignette: a gently illuminated centre with darker outer edges. */
+body {
+  background:
+    radial-gradient(
+      ellipse 88% 72% at 50% 0%,
+      var(--background-glow) 0%,
+      var(--background) 62%,
+      var(--background-edge) 100%
+    );
+  background-attachment: fixed;
+}
+
+/* Keep dialog controls inside the active colour theme, including while idle. */
+.button-dialog {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.button-dialog:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
 }
