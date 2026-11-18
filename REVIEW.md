@@ -36,11 +36,11 @@ The standard search loads the 2025 general mapping and PI1G list for autocomplet
 
 CSV Reader is opt-in and loads one selected dataset in full. Its parser uses a memory-light representation: the original header array is shared by rows from the same CSV, and each row retains only its original value array, source file, row number, and normalized region for filtering. It does not build the full normalized search-record object for every row. The UI renders only the current 50/100/250-row page, in the source CSV order, with original column names and a source-file column. Turning the mode off releases the in-memory full-reader array. Manual files loaded while CSV Reader is active retain their raw columns; manual files imported beforehand must be reloaded to recover the original column order.
 
-Autocomplete uses the main mapping and PI1G records. Pressing Enter resolves the best available matching suggestion and advances Provincia → Città → Via → Civico → search. Crimson hints show suggestion counts and permit manual entry when a prefix has no match. Additional datasets are checked after Comune and Via are supplied; the civic remains optional.
+Autocomplete uses the main mapping and PI1G records. Pressing Enter resolves the best available matching suggestion and advances Provincia → Città → Via → Civico → search. Crimson hints show matching Regions and suggestion counts and permit manual entry when a prefix has no match. Region is a searchable input backed by a datalist; pressing Enter resolves the Region then advances to Province. Additional datasets are checked after Comune and Via are supplied; the civic remains optional.
 
 ## Automated checks
 
-The suite now contains eleven tests:
+The suite now contains twelve tests:
 
 1. Proximity 2025, including the long header and missing `barrato`.
 2. FiberCop proximity 2025, including an exported leading index column and an SNC suffix.
@@ -52,7 +52,8 @@ The suite now contains eleven tests:
 8. National ZIP containing uppercase regional ZIP files.
 9. FiberCop type inference from eligibility/exclusion fields inside a regional ZIP.
 10. Direct loading of a 2021 regional ZIP with its uploaded uppercase filename, both filtered address lookup and full source-field read.
-11. Regional lookup selecting only the matching nested regional archive, including the capitalized `Italia.zip` path.
+11. CSV Reader preserves an extra leading index column and still resolves the source region.
+12. Regional lookup selecting only the matching nested regional archive, including the capitalized `Italia.zip` path.
 
 All changed JavaScript modules and the test file pass syntax checks. A synthetic runtime smoke test confirms that the target address returns a single record while preserving its exact raw columns. A full `npm test` run in Node and a browser end-to-end run against GitHub Pages have not been performed in this environment.
 
