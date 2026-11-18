@@ -3,6 +3,14 @@ import assert from "node:assert/strict";
 import { clearArchiveCache, decodeBuffer, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, REGIONS, searchRecords, cityIsKnown, getSuggestions, buildCityIndex } from "../JS/data.js";
 import { getArchiveBytes } from "../JS/data/archive-cache.js";
 import { parseDatasetStream } from "../JS/data/csv-parser.js";
+import { DOTS } from "../JS/datasets.js";
+
+test("characteristic legend recognises only CSV civic codes", () => {
+  assert.deepEqual(Object.keys(DOTS), ["PA", "A", "B", "C"]);
+  for (const code of ["B1", "B2", "B3", "BW"]) {
+    assert.equal(Object.hasOwn(DOTS, code), false);
+  }
+});
 
 const proximityHeaders = [
   "cod_egon_civ",
