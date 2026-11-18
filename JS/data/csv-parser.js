@@ -212,6 +212,10 @@ const INTERNED_FIELDS = new Set([
   "suffix",
   "municipalityCode"
 ]);
+const DEFAULT_RECORD_FIELDS = Object.freeze([
+  "characteristic", "region", "province", "city",
+  "district", "procom", "number", "suffix"
+]);
 
 function createNormaliseCache() {
   const values = new Map();
@@ -282,7 +286,7 @@ function makeRecord(row, originalHeaders, headers, columns, recordFieldColumns, 
 
   record.street = record.street || fullAddress;
   record.fullAddress = fullAddress;
-  for (const field of ["characteristic", "region", "province", "city", "district", "procom", "number", "suffix"]) {
+  for (const field of DEFAULT_RECORD_FIELDS) {
     if (record[field] === undefined) record[field] = "";
   }
   record.openFiberDeclared2024 = readValue(row, columns.openFiberDeclared2024);
