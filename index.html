@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
   <link rel="manifest" href="./site.webmanifest">
-  <link rel="stylesheet" href="./PageUI/style.css">
+  <link rel="stylesheet" href="./PageUI/style.css?v=1.2.005">
   <title>Esiti mappatura infrastrutture di rete fissa 2025-26</title>
 </head>
 <body>
@@ -56,7 +56,7 @@
           <div class="mode-actions" aria-label="Comandi avanzati">
             <button type="button" class="button button-secondary mode-toggle" id="csv-reader-toggle" aria-pressed="false">CSV Reader OFF</button>
             <button type="button" class="button button-secondary mode-toggle" id="legacy-toggle" aria-pressed="false">Legacy mode OFF</button>
-            <button type="button" class="button button-secondary mode-toggle" id="refresh-data-cache" title="Svuota la cache ZIP locale e ricarica gli archivi della Regione selezionata">Cache Cleaner</button>
+            <button type="button" class="button button-secondary mode-toggle" id="refresh-data-cache" title="Svuota le cache locali gestite da MI25-6 e ricarica i dataset automatici della Regione selezionata">Aggiorna archivi</button>
           </div>
           <p class="mode-help" id="mode-help">Ricerca indirizzo: seleziona una Regione per caricare i dataset disponibili. CSV Reader e Legacy mode sono strumenti separati.</p>
           <div class="deferred-dataset-control">
@@ -73,7 +73,7 @@
               <div class="description-tabs" role="tablist" aria-label="Descrizione delle opzioni avanzate">
                 <button type="button" class="description-tab" id="description-tab-csv" role="tab" aria-selected="true" aria-controls="description-panel-csv" data-description-tab="csv-reader">CSV Reader</button>
                 <button type="button" class="description-tab" id="description-tab-legacy" role="tab" aria-selected="false" aria-controls="description-panel-legacy" data-description-tab="legacy" tabindex="-1">Legacy Mode</button>
-                <button type="button" class="description-tab" id="description-tab-cache" role="tab" aria-selected="false" aria-controls="description-panel-cache" data-description-tab="cache" tabindex="-1">Cache Cleaner</button>
+                <button type="button" class="description-tab" id="description-tab-cache" role="tab" aria-selected="false" aria-controls="description-panel-cache" data-description-tab="cache" tabindex="-1">Aggiorna archivi</button>
               </div>
               <div class="description-panel" id="description-panel-csv" role="tabpanel" aria-labelledby="description-tab-csv" data-description-panel="csv-reader">
                 <p><strong>CSV Reader</strong> apre il contenuto completo del CSV originale per la Regione e il dataset selezionati, mantenendo intestazioni, colonne e ordine delle righe. La tabella è paginata; il dataset completo viene caricato soltanto quando attivi questa modalità e può richiedere più memoria e tempo.</p>
@@ -82,7 +82,7 @@
                 <p><strong>Legacy Mode</strong> consulta separatamente l’archivio storico 2017-2021 tramite il servizio API di Handymenny. I dati sono indipendenti dalla mappatura 2025-26 e descrivono una situazione storica, non la copertura attuale. Le informazioni dell’indirizzo e gli ID EGON necessari alla consultazione vengono inviati al servizio esterno.</p>
               </div>
               <div class="description-panel" id="description-panel-cache" role="tabpanel" aria-labelledby="description-tab-cache" data-description-panel="cache" hidden>
-                <p><strong>Cache Cleaner</strong> elimina gli archivi ZIP e i dataset già parsati salvati localmente in IndexedDB. Se hai già selezionato una Regione, scarica nuovamente gli archivi e ricostruisce i dati; è utile per recuperare versioni aggiornate o correggere una cache locale non valida. Senza una Regione selezionata, svuota entrambe le cache e attende la successiva selezione per scaricare i dataset.</p>
+                <p><strong>Aggiorna archivi</strong> svuota le cache gestite da MI25-6: gli ZIP originali e i dataset già parsati in IndexedDB, oltre ai byte ZIP conservati in memoria dal Web Worker. Se hai selezionato una Regione, scarica nuovamente e rielabora i dataset automatici di quella Regione. Senza una Regione selezionata, svuota le cache e il nuovo download avviene alla selezione successiva. I file caricati manualmente restano invariati. Non cancella la cache generale di Chrome, i dati di altri siti o i dati dell’API Legacy.</p>
               </div>
             </div>
           </details>
@@ -221,28 +221,53 @@
       <div class="field-grid">
         <div class="field">
           <label for="legacy-region">Regione</label>
-          <input id="legacy-region" list="legacy-region-options" autocomplete="off" placeholder="Caricamento Regioni…" disabled>
-          <datalist id="legacy-region-options"></datalist>
+          <div class="autocomplete-control" data-autocomplete-control="legacy-region">
+            <input id="legacy-region" autocomplete="off" placeholder="Caricamento Regioni…" disabled>
+            <button type="button" class="autocomplete-trigger" aria-label="Mostra suggerimenti Regione" aria-expanded="false" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+            <div class="autocomplete-popup" id="legacy-region-suggestions" role="listbox" aria-label="Suggerimenti Regione" hidden></div>
+          </div>
         </div>
         <div class="field">
           <label for="legacy-province">Provincia</label>
-          <input id="legacy-province" list="legacy-province-options" autocomplete="off" placeholder="Seleziona prima la Regione" disabled>
-          <datalist id="legacy-province-options"></datalist>
+          <div class="autocomplete-control" data-autocomplete-control="legacy-province">
+            <input id="legacy-province" autocomplete="off" placeholder="Seleziona prima la Regione" disabled>
+            <button type="button" class="autocomplete-trigger" aria-label="Mostra suggerimenti Provincia" aria-expanded="false" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+            <div class="autocomplete-popup" id="legacy-province-suggestions" role="listbox" aria-label="Suggerimenti Provincia" hidden></div>
+          </div>
         </div>
         <div class="field">
           <label for="legacy-city">Città</label>
-          <input id="legacy-city" list="legacy-city-options" autocomplete="off" placeholder="Seleziona prima la Provincia" disabled>
-          <datalist id="legacy-city-options"></datalist>
+          <div class="autocomplete-control" data-autocomplete-control="legacy-city">
+            <input id="legacy-city" autocomplete="off" placeholder="Seleziona prima la Provincia" disabled>
+            <button type="button" class="autocomplete-trigger" aria-label="Mostra suggerimenti Città" aria-expanded="false" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+            <div class="autocomplete-popup" id="legacy-city-suggestions" role="listbox" aria-label="Suggerimenti Città" hidden></div>
+          </div>
         </div>
         <div class="field">
           <label for="legacy-street">Via</label>
-          <input id="legacy-street" list="legacy-street-options" autocomplete="off" placeholder="Seleziona prima la Città" disabled>
-          <datalist id="legacy-street-options"></datalist>
+          <div class="autocomplete-control" data-autocomplete-control="legacy-street">
+            <input id="legacy-street" autocomplete="off" placeholder="Seleziona prima la Città" disabled>
+            <button type="button" class="autocomplete-trigger" aria-label="Mostra suggerimenti Via" aria-expanded="false" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+            <div class="autocomplete-popup" id="legacy-street-suggestions" role="listbox" aria-label="Suggerimenti Via" hidden></div>
+          </div>
         </div>
         <div class="field">
           <label for="legacy-number">Civico</label>
-          <input id="legacy-number" list="legacy-number-options" autocomplete="off" placeholder="Seleziona prima la Via" disabled>
-          <datalist id="legacy-number-options"></datalist>
+          <div class="autocomplete-control" data-autocomplete-control="legacy-number">
+            <input id="legacy-number" autocomplete="off" placeholder="Seleziona prima la Via" disabled>
+            <button type="button" class="autocomplete-trigger" aria-label="Mostra suggerimenti Civico" aria-expanded="false" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+            <div class="autocomplete-popup" id="legacy-number-suggestions" role="listbox" aria-label="Suggerimenti Civico" hidden></div>
+          </div>
           <p class="field-note" id="legacy-number-note">Le voci duplicate possono avere un suffisso distintivo.</p>
         </div>
       </div>
@@ -280,7 +305,7 @@
       <span aria-hidden="true">·</span>
       <a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a>
     </nav>
-    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Patch 1.2:002</button>
+    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Patch 1.2:005</button>
   </footer>
 
   <dialog class="info-dialog" id="info-dialog" aria-labelledby="dialog-title">
@@ -293,7 +318,7 @@
         <details>
           <summary>Come vengono caricati i dati della mia Regione?</summary>
           <p>Selezionando una Regione vengono caricati la mappatura generale 2025, l’Allegato A PI1G e gli archivi di prossimità 2025. La mappatura 2021, più pesante, è esclusa dal caricamento iniziale: puoi aggiungerla alla ricerca con il comando dedicato nelle Opzioni Avanzate Dati.</p>
-          <p>Gli archivi ZIP vengono conservati in IndexedDB per 30 giorni. Anche i dataset parsati di dimensione contenuta possono essere riutilizzati nelle visite successive, evitando di ripetere decompressione e parsing; i dataset troppo grandi non vengono copiati nella cache dei record per contenere lo spazio occupato. “Cache Cleaner” elimina entrambe le cache e recupera gli archivi nuovamente. Se IndexedDB non è disponibile o lo spazio locale è esaurito, il caricamento prosegue senza cache persistente.</p>
+          <p>Gli archivi ZIP vengono conservati in IndexedDB per 30 giorni. Anche i dataset parsati di dimensione contenuta possono essere riutilizzati nelle visite successive, evitando di ripetere decompressione e parsing; i dataset troppo grandi non vengono copiati nella cache dei record per contenere lo spazio occupato. “Aggiorna archivi” elimina le cache ZIP e dei dataset parsati gestite da MI25-6, poi ricarica i dataset automatici della Regione selezionata. Se IndexedDB non è disponibile o lo spazio locale è esaurito, il caricamento prosegue senza cache persistente.</p>
         </details>
         <details>
           <summary>Posso caricare manualmente i miei file CSV o ZIP?</summary>
@@ -346,8 +371,10 @@
         </details>
       </div>
       <div id="changelog-content" hidden>
-        <p class="hint">Patch 1.2:004 · completamento rendering Legacy e correzione stato modalità</p>
+        <p class="hint">Patch 1.2:005 · autocomplete Legacy uniforme e aggiornamento trasparente degli archivi</p>
         <ul>
+          <li>Uniformato l’autocomplete Legacy al combobox personalizzato della ricerca standard: rimossi i datalist nativi di Chrome e aggiunto un popup tematico con navigazione da tastiera.</li>
+          <li>Rinominata l’azione in «Aggiorna archivi» e precisato il suo ambito: cache ZIP e dataset parsati di MI25-6, con ricaricamento della Regione selezionata; i file manuali restano invariati.</li>
           <li>Aggiunto il renderer dei risultati Legacy, collegato alle sezioni dati esportate dal modulo storico.</li>
           <li>Corretto l'elemento di descrizione dello stato modalità: ora esiste nell'HTML e viene aggiornato in modo protetto.</li>
           <li>Corretti gli ID dei datalist Legacy: ora il caricamento e la pulizia di Regioni, Province, Comuni, Vie e civici utilizzano gli identificativi effettivamente presenti nell’HTML.</li>
@@ -369,6 +396,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="./JS/app.js?v=1.2.004"></script>
+  <script type="module" src="./JS/app.js?v=1.2.005"></script>
 </body>
 </html>
