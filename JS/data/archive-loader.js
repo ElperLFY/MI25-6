@@ -1,7 +1,11 @@
 import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS } from "../datasets.js";
 import { normalise } from "./normalization.js";
 import { decodeBuffer, headerKey, parseDataset } from "./csv-parser.js";
-import { getArchiveBytes } from "./archive-cache.js";
+import {
+  getArchiveBytes,
+  getParsedDatasetCache,
+  putParsedDatasetCache
+} from "./archive-cache.js";
 import { measureAsync, measureSync, nowMs } from "./diagnostics.js";
 
 const PI1G_FILES = {
@@ -129,10 +133,23 @@ async function readArchiveEntries(archive, name, forcedType, region, budget, dep
     if (budget.expandedBytes > MAX_ARCHIVE_SIZE) {
       throw new Error("L’archivio supera il limite di dimensione espansa consentito.");
     }
+
+    const cachePath = options.cacheArchivePath || name;
+    const cachedDataset = await getParsedDatasetCache(
+      cachePath, region, archiveType, entry.name, options
+    );
+    if (cachedDataset) {
+      parsed.push(cachedDataset);
+      continue;
+    }
+
     const csvBuffer = await measureAsync(options, "Decompressione CSV", () => entry.async("arraybuffer"), { entry: entry.name });
     const content = measureSync(options, "Decodifica CSV", () => decodeBuffer(csvBuffer), { entry: entry.name });
     const dataset = measureSync(options, "Parsing CSV", () => parseDataset(content, entry.name || name, archiveType, options), { entry: entry.name });
-    if (dataset) parsed.push(dataset);
+    if (dataset) {
+      parsed.push(dataset);
+      void putParsedDatasetCache(cachePath, region, dataset.id, entry.name, dataset, options).catch(() => {});
+    }
   }
 
   return parsed;
@@ -157,7 +174,10 @@ async function fetchArchive(paths, forcedType = "", region = "", options = {}) {
 
         continue;
       }
-      return await readArchiveBuffer(buffer, path, forcedType, region, options);
+      return await readArchiveBuffer(buffer, path, forcedType, region, {
+        ...options,
+        cacheArchivePath: path
+      });
     } catch (error) {
       lastError = error;
 

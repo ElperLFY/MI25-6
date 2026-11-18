@@ -232,7 +232,7 @@ async function dispatch(type, payload = {}) {
 
     case "CITY_IS_KNOWN": {
       const data = mergedDatasets();
-      return cityIsKnown(getRecordGroups(data), [], {}, payload.city, payload.region || "");
+      return cityIsKnown(data.general, data.pi1g, data.extra, payload.city, payload.region || "");
     }
 
     case "PARSE_UPLOAD": {

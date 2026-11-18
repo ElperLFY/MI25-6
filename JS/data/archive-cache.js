@@ -1,8 +1,15 @@
 const archiveBytesCache = new Map();
 const ARCHIVE_CACHE_DB_NAME = "mi25-6-archive-cache";
-const ARCHIVE_CACHE_DB_VERSION = 1;
+const ARCHIVE_CACHE_DB_VERSION = 2;
 const ARCHIVE_CACHE_STORE = "archives";
+const PARSED_DATASET_CACHE_STORE = "parsed-datasets";
 const ARCHIVE_CACHE_FORMAT_VERSION = 1;
+const PARSED_DATASET_CACHE_VERSION = 1;
+const PARSED_DATASET_CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const PARSED_DATASET_CACHE_MAX_RECORDS = 150_000;
+const PARSED_DATASET_CACHE_ESTIMATED_RECORD_BYTES = 640;
+const PARSED_DATASET_CACHE_MAX_BYTES = 96 * 1024 * 1024;
+const parsedDatasetMemoryCache = new Map();
 const ARCHIVE_CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 function nowMs() {
@@ -35,6 +42,7 @@ function openArchiveCacheDatabase() {
       request.onupgradeneeded = () => {
         const database = request.result;
         if (!database.objectStoreNames.contains(ARCHIVE_CACHE_STORE)) database.createObjectStore(ARCHIVE_CACHE_STORE, { keyPath: "key" });
+        if (!database.objectStoreNames.contains(PARSED_DATASET_CACHE_STORE)) database.createObjectStore(PARSED_DATASET_CACHE_STORE, { keyPath: "key" });
       };
       request.onsuccess = () => {
         const database = request.result;
@@ -82,6 +90,98 @@ async function writePersistentArchive(path, buffer, generation) {
       transaction.onerror = () => resolve(false);
       transaction.onabort = () => resolve(false);
     } catch { resolve(false); }
+  });
+}
+
+function parsedDatasetCacheKey(path, region, dataset, entryName) {
+  return "v" + PARSED_DATASET_CACHE_VERSION + ":"
+    + [path, region, dataset, entryName].map((part) => String(part ?? "")).join("|");
+}
+
+export async function getParsedDatasetCache(path, region, dataset, entryName, options = {}) {
+  if (options.readerMode || options.includeSourceFields || options.query) return null;
+  const key = parsedDatasetCacheKey(path, region, dataset, entryName);
+  const memoryHit = parsedDatasetMemoryCache.get(key);
+  if (memoryHit) {
+    recordCacheTiming(options, "Cache dati parsati", nowMs(), { source: "memoria Worker", hit: true });
+    return memoryHit;
+  }
+
+  const startedAt = nowMs();
+  const database = await openArchiveCacheDatabase();
+  if (!database) {
+    recordCacheTiming(options, "Cache dati parsati", startedAt, { source: "IndexedDB", hit: false });
+    return null;
+  }
+
+  const entry = await new Promise((resolve) => {
+    try {
+      const transaction = database.transaction(PARSED_DATASET_CACHE_STORE, "readonly");
+      const request = transaction.objectStore(PARSED_DATASET_CACHE_STORE).get(key);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => resolve(null);
+      transaction.onabort = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+
+  const valid = entry
+    && entry.dataset
+    && Array.isArray(entry.dataset.records)
+    && Number.isFinite(entry.cachedAt)
+    && Date.now() - entry.cachedAt <= PARSED_DATASET_CACHE_MAX_AGE_MS;
+
+  if (valid) parsedDatasetMemoryCache.set(key, entry.dataset);
+  else if (entry) {
+    try {
+      database.transaction(PARSED_DATASET_CACHE_STORE, "readwrite")
+        .objectStore(PARSED_DATASET_CACHE_STORE).delete(key);
+    } catch {}
+  }
+
+  recordCacheTiming(options, "Cache dati parsati", startedAt, {
+    source: "IndexedDB",
+    hit: Boolean(valid),
+    records: valid ? entry.dataset.records.length : 0
+  });
+  return valid ? entry.dataset : null;
+}
+
+export async function putParsedDatasetCache(path, region, dataset, entryName, parsed, options = {}) {
+  if (options.readerMode || options.includeSourceFields || options.query
+    || !parsed || !Array.isArray(parsed.records) || !parsed.records.length) return false;
+
+  const estimatedBytes = parsed.records.length * PARSED_DATASET_CACHE_ESTIMATED_RECORD_BYTES;
+  if (parsed.records.length > PARSED_DATASET_CACHE_MAX_RECORDS || estimatedBytes > PARSED_DATASET_CACHE_MAX_BYTES) {
+    recordCacheTiming(options, "Cache dati parsati", nowMs(), {
+      source: "non memorizzato",
+      records: parsed.records.length,
+      reason: "limite di dimensione"
+    });
+    return false;
+  }
+
+  const key = parsedDatasetCacheKey(path, region, dataset, entryName);
+  parsedDatasetMemoryCache.set(key, parsed);
+  const database = await openArchiveCacheDatabase();
+  if (!database) return false;
+
+  return new Promise((resolve) => {
+    try {
+      const transaction = database.transaction(PARSED_DATASET_CACHE_STORE, "readwrite");
+      transaction.objectStore(PARSED_DATASET_CACHE_STORE).put({
+        key,
+        cachedAt: Date.now(),
+        estimatedBytes,
+        dataset: parsed
+      });
+      transaction.oncomplete = () => resolve(true);
+      transaction.onerror = () => resolve(false);
+      transaction.onabort = () => resolve(false);
+    } catch {
+      resolve(false);
+    }
   });
 }
 
@@ -184,12 +284,14 @@ export async function getArchiveBytes(path, baseUrl = "", options = {}) {
 export async function clearArchiveCache() {
   archiveCacheGeneration += 1;
   archiveBytesCache.clear();
+  parsedDatasetMemoryCache.clear();
   const database = await openArchiveCacheDatabase();
   if (!database) return false;
   return new Promise((resolve) => {
     try {
       const transaction = database.transaction(ARCHIVE_CACHE_STORE, "readwrite");
       transaction.objectStore(ARCHIVE_CACHE_STORE).clear();
+      transaction.objectStore(PARSED_DATASET_CACHE_STORE).clear();
       transaction.oncomplete = () => resolve(true);
       transaction.onerror = () => resolve(false);
       transaction.onabort = () => resolve(false);

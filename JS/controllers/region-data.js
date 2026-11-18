@@ -86,6 +86,10 @@ function syncDeferredDatasetControl() {
     button.disabled = true;
     button.textContent = "Mappatura 2021 manuale attiva";
     status.textContent = "Il dataset 2021 è già disponibile dal file manuale.";
+  } else if (state.checkedExtras.has("fixedSurvey2021") && state.extraAvailability.fixedSurvey2021 === false) {
+    button.disabled = true;
+    button.textContent = "Archivio 2021 non disponibile";
+    status.textContent = "La fonte non pubblica un archivio 2021 per questa Regione.";
   } else if (state.checkedExtras.has("fixedSurvey2021")) {
     button.disabled = true;
     button.textContent = "Mappatura 2021 caricata";

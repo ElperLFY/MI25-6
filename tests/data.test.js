@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { clearArchiveCache, decodeBuffer, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, REGIONS, searchRecords } from "../JS/data.js";
+import { clearArchiveCache, decodeBuffer, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, REGIONS, searchRecords, cityIsKnown, getSuggestions } from "../JS/data.js";
 import { getArchiveBytes } from "../JS/data/archive-cache.js";
 
 const proximityHeaders = [
@@ -596,4 +596,36 @@ test("clearing the archive cache causes a fresh regional ZIP fetch", async () =>
     if (oldFetch === undefined) delete globalThis.fetch;
     else globalThis.fetch = oldFetch;
   }
+});
+
+
+test("suggestion cache reuses the unique contextual values while filtering query prefixes", () => {
+  const record = (city, street, number) => ({
+    region: "SICILIA", province: "AGRIGENTO", city, street, number, suffix: "",
+    normalisedRegion: "SICILIA", normalisedProvince: "AGRIGENTO",
+    normalisedCity: city, normalisedStreet: street, normalisedNumber: number,
+    normalisedSuffix: "", normalisedFullAddress: street + " " + number,
+    normalisedFullNumber: number, key: city + street + number
+  });
+  const records = [
+    record("PORTO EMPEDOCLE", "VIA ROMA", "1"),
+    record("PORTO EMPEDOCLE", "VIA ROSSI", "2"),
+    record("AGRIGENTO", "VIA ROMA", "3")
+  ];
+  const cache = new Map();
+  const context = { region: "SICILIA", province: "AGRIGENTO", city: "PORTO EMPEDOCLE", street: "" };
+
+  assert.deepEqual(getSuggestions("street", "VIA R", context, records, cache), ["VIA ROMA", "VIA ROSSI"]);
+  assert.equal(cache.size, 1);
+  assert.deepEqual(getSuggestions("street", "VIA RO", context, records, cache), ["VIA ROMA", "VIA ROSSI"]);
+  assert.equal(cache.size, 1);
+});
+
+test("cityIsKnown accepts the regular independent dataset arrays", () => {
+  const createRecord = (city) => ({
+    normalisedCity: city,
+    normalisedRegion: "SICILIA"
+  });
+  assert.equal(cityIsKnown([createRecord("PORTO EMPEDOCLE")], [createRecord("AGRIGENTO")], {}, "PORTO EMPEDOCLE", "SICILIA"), true);
+  assert.equal(cityIsKnown([createRecord("PORTO EMPEDOCLE")], [], {}, "SCIACCA", "SICILIA"), false);
 });
