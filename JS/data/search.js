@@ -13,6 +13,46 @@ function forEachRecord(groupsOrRecords, callback) {
   return true;
 }
 
+function createCityBucket() {
+  return { general: [], pi1g: [], extra: {} };
+}
+
+function getCityBucketGroups(bucket) {
+  if (!bucket) return [];
+  return [bucket.general, bucket.pi1g, ...Object.values(bucket.extra)];
+}
+
+export function addCityIndexRecords(index, records, datasetKey) {
+  if (!(index instanceof Map) || !Array.isArray(records)) return index;
+  for (const record of records) {
+    const city = record.normalisedCity;
+    if (!city) continue;
+    let bucket = index.get(city);
+    if (!bucket) {
+      bucket = createCityBucket();
+      index.set(city, bucket);
+    }
+
+    if (datasetKey === "general2025") bucket.general.push(record);
+    else if (datasetKey === "pi1g2025") bucket.pi1g.push(record);
+    else {
+      if (!bucket.extra[datasetKey]) bucket.extra[datasetKey] = [];
+      bucket.extra[datasetKey].push(record);
+    }
+  }
+  return index;
+}
+
+export function buildCityIndex(general, pi1g, extra = {}) {
+  const index = new Map();
+  addCityIndexRecords(index, general, "general2025");
+  addCityIndexRecords(index, pi1g, "pi1g2025");
+  for (const [key, records] of Object.entries(extra || {})) {
+    addCityIndexRecords(index, records, key);
+  }
+  return index;
+}
+
 function matches(record, query) {
   if (query.region && !record.normalisedRegion.startsWith(query.region)) return false;
   if (query.province && !record.normalisedProvince.includes(query.province)) return false;
@@ -41,16 +81,20 @@ function getResult(results, record) {
   return result;
 }
 
-export function searchRecords(general, pi1g, extra, query) {
+export function searchRecords(general, pi1g, extra, query, cityIndex = null) {
   const results = new Map();
+  const indexedCity = query.city ? cityIndex?.get(query.city) : null;
+  const generalRecords = indexedCity ? indexedCity.general : general;
+  const pi1gRecords = indexedCity ? indexedCity.pi1g : pi1g;
+  const extraRecords = indexedCity ? indexedCity.extra : extra;
 
-  for (const record of general) {
+  for (const record of generalRecords) {
     if (matches(record, query)) getResult(results, record).general = record;
   }
-  for (const record of pi1g) {
+  for (const record of pi1gRecords) {
     if (matches(record, query)) getResult(results, record).pi1g = record;
   }
-  for (const [key, records] of Object.entries(extra || {})) {
+  for (const [key, records] of Object.entries(extraRecords || {})) {
     for (const record of records) {
       if (!matches(record, query)) continue;
       const result = getResult(results, record);
@@ -72,9 +116,21 @@ export function collectRecords(general, pi1g, extra) {
   return records;
 }
 
-export function cityIsKnown(general, pi1g, extra, city, region = "") {
+export function cityIsKnown(general, pi1g, extra, city, region = "", cityIndex = null) {
   const query = normalise(city);
   const selectedRegion = normalise(region);
+  const indexedCity = cityIndex?.get(query);
+  if (indexedCity) {
+    let found = false;
+    forEachRecord(getCityBucketGroups(indexedCity), (record) => {
+      if (!selectedRegion || record.normalisedRegion.startsWith(selectedRegion)) {
+        found = true;
+        return false;
+      }
+      return true;
+    });
+    return found;
+  }
   const lists = [general, pi1g];
   for (const records of Object.values(extra || {})) lists.push(records);
 
@@ -101,7 +157,7 @@ function sortSuggestionValues(values) {
   });
 }
 
-export function getSuggestions(field, search, state, records, cache = null) {
+export function getSuggestions(field, search, state, records, cache = null, cityIndex = null) {
   const query = normalise(search);
   const fieldNames = { province: "province", city: "city", street: "street" };
   const selected = {
@@ -117,7 +173,9 @@ export function getSuggestions(field, search, state, records, cache = null) {
   let candidates = cache?.get(cacheKey);
   if (!candidates) {
     const values = new Set();
-    forEachRecord(records, (record) => {
+    const indexedCity = selected.city ? cityIndex?.get(selected.city) : null;
+    const candidateRecords = indexedCity ? getCityBucketGroups(indexedCity) : records;
+    forEachRecord(candidateRecords, (record) => {
       if (selected.region && !record.normalisedRegion.startsWith(selected.region)) return;
       if (selected.province && !record.normalisedProvince.includes(selected.province)) return;
       if (selected.city && !record.normalisedCity.includes(selected.city)) return;

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { clearArchiveCache, decodeBuffer, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, REGIONS, searchRecords, cityIsKnown, getSuggestions } from "../JS/data.js";
+import { clearArchiveCache, decodeBuffer, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, REGIONS, searchRecords, cityIsKnown, getSuggestions, buildCityIndex } from "../JS/data.js";
 import { getArchiveBytes } from "../JS/data/archive-cache.js";
 import { parseDatasetStream } from "../JS/data/csv-parser.js";
 
@@ -683,4 +683,38 @@ test("streaming parser handles small CSVs and CR-only rows", async () => {
   const parsed = await parseDatasetStream(stream, "stream.csv", "general2025");
   assert.equal(parsed.records.length, 1);
   assert.equal(parsed.records[0].street, "VIA ROMA");
+});
+
+
+test("city index keeps dataset provenance and produces the same indexed search results", () => {
+  const record = (id, datasetId, city, street) => ({
+    id, datasetId, key: "EGON:" + id,
+    normalisedRegion: "SICILIA",
+    normalisedProvince: "AGRIGENTO",
+    normalisedCity: city,
+    normalisedStreet: street,
+    normalisedFullAddress: street + " 1",
+    normalisedNumber: "1",
+    normalisedFullNumber: "1",
+    normalisedSuffix: "",
+    street, fullAddress: street + " 1", number: "1", suffix: ""
+  });
+  const generalRecord = record("1", "general2025", "PORTO EMPEDOCLE", "VIA ROMA");
+  const pi1gRecord = record("1", "pi1g2025", "PORTO EMPEDOCLE", "VIA ROMA");
+  const extraRecord = record("1", "proximity2025", "PORTO EMPEDOCLE", "VIA ROMA");
+  const general = [generalRecord];
+  const pi1g = [pi1gRecord];
+  const extra = { proximity2025: [extraRecord] };
+  const index = buildCityIndex(general, pi1g, extra);
+  const query = {
+    region: "SICILIA", province: "AGRIGENTO",
+    city: "PORTO EMPEDOCLE", street: "VIA ROMA", number: "1"
+  };
+
+  assert.deepEqual(searchRecords(general, pi1g, extra, query, index), searchRecords(general, pi1g, extra, query));
+  assert.equal(cityIsKnown(general, pi1g, extra, "PORTO EMPEDOCLE", "SICILIA", index), true);
+  assert.equal(getSuggestions(
+    "street", "", { region: "SICILIA", province: "AGRIGENTO", city: "PORTO EMPEDOCLE" },
+    [general, pi1g, Object.values(extra)[0]], null, index
+  )[0], "VIA ROMA");
 });

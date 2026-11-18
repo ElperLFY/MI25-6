@@ -1,6 +1,8 @@
 import "../../vendor/jszip.min.js";
 import { nowMs, recordTiming } from "../data/diagnostics.js";
 import {
+  addCityIndexRecords,
+  buildCityIndex,
   cityIsKnown,
   clearArchiveCache,
   getSuggestions,
@@ -19,7 +21,8 @@ const store = {
   manual: { general: [], pi1g: [], extra: emptyExtra() },
   readerDataset: "",
   readerRecords: [],
-  suggestionCache: new Map()
+  suggestionCache: new Map(),
+  cityIndex: null
 };
 
 function mergedDatasets() {
@@ -47,6 +50,13 @@ function findInRecordGroups(groups, predicate) {
     }
   }
   return null;
+}
+
+function rebuildCityIndex() {
+  const startedAt = nowMs();
+  const data = mergedDatasets();
+  store.cityIndex = buildCityIndex(data.general, data.pi1g, data.extra);
+  return nowMs() - startedAt;
 }
 
 function getCounts() {
@@ -184,6 +194,8 @@ async function dispatch(type, payload = {}) {
         };
         store.readerDataset = "";
         store.readerRecords = [];
+        store.cityIndex = null;
+        store.suggestionCache.clear();
       }
 
       const loaded = await loadRegionalData(region, {
@@ -199,8 +211,21 @@ async function dispatch(type, payload = {}) {
       }
       const countStartedAt = nowMs();
       store.suggestionCache.clear();
+      const indexStartedAt = nowMs();
+      const additional2021Only = payload.options?.loadGeneral === false
+        && payload.options?.loadPi1g === false
+        && payload.options?.loadExtras?.length === 1
+        && payload.options.loadExtras[0] === "fixedSurvey2021"
+        && store.cityIndex instanceof Map;
+      if (additional2021Only) {
+        addCityIndexRecords(store.cityIndex, store.automatic.extra.fixedSurvey2021 || [], "fixedSurvey2021");
+      } else {
+        rebuildCityIndex();
+      }
+      const indexDuration = nowMs() - indexStartedAt;
       const counts = getCounts();
       if (loaded.timings) {
+        recordTiming({ timings: loaded.timings.stages, datasetKey: "worker" }, "Indice città", indexStartedAt, { records: counts.general + counts.pi1g + Object.values(counts.extra).reduce((sum, count) => sum + count, 0) });
         recordTiming({ timings: loaded.timings.stages, datasetKey: "worker" }, "Aggiornamento stato e conteggi", countStartedAt);
         loaded.timings.totalMs = nowMs() - workerLoadStartedAt;
       }
@@ -216,23 +241,26 @@ async function dispatch(type, payload = {}) {
 
     case "SEARCH": {
       const data = mergedDatasets();
-      return searchRecords(data.general, data.pi1g, data.extra, payload.query || {});
+      return searchRecords(data.general, data.pi1g, data.extra, payload.query || {}, store.cityIndex);
     }
 
     case "GET_SUGGESTIONS": {
       const data = mergedDatasets();
-      return getSuggestions(payload.field, payload.search, payload.state || {}, getRecordGroups(data), store.suggestionCache);
+      return getSuggestions(payload.field, payload.search, payload.state || {}, getRecordGroups(data), store.suggestionCache, store.cityIndex);
     }
 
     case "FIND_CITY": {
       const city = normalise(payload.city);
       const data = mergedDatasets();
-      return findInRecordGroups(getRecordGroups(data), (record) => record.normalisedCity === city);
+      const bucket = store.cityIndex?.get(city);
+      return bucket
+        ? findInRecordGroups([bucket.general, bucket.pi1g, ...Object.values(bucket.extra)], () => true)
+        : findInRecordGroups(getRecordGroups(data), (record) => record.normalisedCity === city);
     }
 
     case "CITY_IS_KNOWN": {
       const data = mergedDatasets();
-      return cityIsKnown(data.general, data.pi1g, data.extra, payload.city, payload.region || "");
+      return cityIsKnown(data.general, data.pi1g, data.extra, payload.city, payload.region || "", store.cityIndex);
     }
 
     case "PARSE_UPLOAD": {
@@ -243,6 +271,7 @@ async function dispatch(type, payload = {}) {
         else if (EXTRA_DATASET_KEYS.includes(key)) store.manual.extra[key].push(...records);
       }
       store.suggestionCache.clear();
+      rebuildCityIndex();
       const counts = Object.fromEntries(Object.entries(imported.datasets).map(([key, records]) => [key, records.length]));
       return { messages: imported.messages, counts, summary: getCounts() };
     }
@@ -252,6 +281,7 @@ async function dispatch(type, payload = {}) {
       store.readerDataset = "";
       store.readerRecords = [];
       store.suggestionCache.clear();
+      rebuildCityIndex();
       return getCounts();
     }
 
