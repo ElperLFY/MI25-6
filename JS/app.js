@@ -286,7 +286,8 @@ const loadSelectedRegion = regionData.loadSelectedRegion;
 const refreshAutomaticArchives = regionData.refreshAutomaticArchives;
 const searchController = createSearchController({
   $, state, searchRecords, cityIsKnown, parseUploadedFiles, clearManualDatasets,
-  renderResults, setAutomaticStatus, setFileMessages, scheduleSuggestions, loadSelectedRegion, loadCsvReaderDataset
+  renderResults, setAutomaticStatus, setFileMessages, scheduleSuggestions,
+  suggestionValues, loadSelectedRegion, loadCsvReaderDataset
 });
 const runSearch = searchController.runSearch;
 const clearSearch = searchController.clearSearch;

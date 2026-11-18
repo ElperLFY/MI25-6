@@ -2,7 +2,8 @@ import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS, normalise } from "../data/inde
 
 export function createSearchController({
   $, state, searchRecords, cityIsKnown, parseUploadedFiles, clearManualDatasets,
-  renderResults, setAutomaticStatus, setFileMessages, scheduleSuggestions, loadSelectedRegion, loadCsvReaderDataset
+  renderResults, setAutomaticStatus, setFileMessages, scheduleSuggestions,
+  suggestionValues, loadSelectedRegion, loadCsvReaderDataset
 }) {
 function hasRecords() {
   if (state.generalCount || state.pi1gCount) return true;
