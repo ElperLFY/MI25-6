@@ -305,7 +305,7 @@
       <span aria-hidden="true">·</span>
       <a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a>
     </nav>
-    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Patch 1.2:006</button>
+    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Patch 1.2:007</button>
   </footer>
 
   <dialog class="info-dialog" id="info-dialog" aria-labelledby="dialog-title">
@@ -371,8 +371,9 @@
         </details>
       </div>
       <div id="changelog-content" hidden>
-        <p class="hint">Patch 1.2:006 · ripristino dello stato indirizzo per l’autocomplete standard</p>
+        <p class="hint">Patch 1.2:007 · legenda limitata ai codici caratteristica presenti nei CSV</p>
         <ul>
+          <li>La legenda riconosce soltanto PA, A, B e C, i quattro codici effettivi del campo caratteristica nei CSV; B1, B2, B3 e BW non vengono più presentati come classi autonome.</li>
           <li>Ripristinata la funzione currentSearchState() rimossa accidentalmente durante la rimozione del renderer datalist: l’autocomplete standard riceve nuovamente Regione, Provincia, Comune, Via e Civico.</li>
           <li>Uniformato l’autocomplete Legacy al combobox personalizzato della ricerca standard: rimossi i datalist nativi di Chrome e aggiunto un popup tematico con navigazione da tastiera.</li>
           <li>Rinominata l’azione in «Aggiorna archivi» e precisato il suo ambito: cache ZIP e dataset parsati di MI25-6, con ricaricamento della Regione selezionata; i file manuali restano invariati.</li>
@@ -397,6 +398,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="./JS/app.js?v=1.2.006"></script>
+  <script type="module" src="./JS/app.js?v=1.2.007"></script>
 </body>
 </html>
