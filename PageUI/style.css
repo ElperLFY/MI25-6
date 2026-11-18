@@ -762,9 +762,9 @@ input[type="file"]::file-selector-button:hover {
 
 /* Build 27: collapsible panels and the optional blue colour system. */
 :root {
-  --gradient-start: #4a0715;
+  --gradient-start: #73071d;
   --gradient-end: #b3203f;
-  --background-glow: #fff7f9;
+  --background-glow: #e8d1d7;
   --background-edge: #edcbd4;
   --field-note: #b3123d;
   --dialog-backdrop: rgb(30 4 10 / 65%);
@@ -774,8 +774,8 @@ input[type="file"]::file-selector-button:hover {
   :root {
     --gradient-start: #26060d;
     --gradient-end: #c9304f;
-    --background-glow: #3a101c;
-    --background-edge: #140208;
+    --background-glow: #541d2c;
+    --background-edge: #2b0713;
     --field-note: #ff829e;
   }
 }
