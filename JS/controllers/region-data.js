@@ -84,10 +84,12 @@ async function loadSelectedRegion() {
     for (const key of automaticExtras) state.checkedExtras.add(key);
     state.loadedRegion = region;
     setAutomaticStatus(region, state.pi1gAvailable, state.extraAvailability);
-    $("region-hint").textContent = region + " · dataset caricati; suggerimenti e ricerca sono pronti.";
     const errors = Object.entries(loaded.extraErrors || {});
     if (errors.length) {
+      $("region-hint").textContent = region + " · caricamento parziale: alcuni archivi non hanno risposto. Usa «Aggiorna archivi» per riprovare.";
       $("data-status").textContent += " · " + errors.map(([key, message]) => DATASET_DEFINITIONS[key].label + ": " + message).join(" · ");
+    } else {
+      $("region-hint").textContent = region + " · dataset caricati; suggerimenti e ricerca sono pronti.";
     }
     scheduleSuggestions("province");
   } catch (error) {
