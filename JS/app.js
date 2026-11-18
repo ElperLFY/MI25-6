@@ -32,6 +32,8 @@ const state = {
   manualExtras: new Set(),
   loadToken: 0,
   searchToken: 0,
+  loadedRegion: "",
+  readerQuery: "",
   pi1gAvailable: false,
   extraAvailability: {},
   checkedExtras: new Set(),
@@ -309,7 +311,7 @@ async function loadSelectedRegion() {
     return;
   }
 
-  $("region-hint").textContent = "Suggerimenti dai dataset principali; gli archivi aggiuntivi vengono interrogati dopo la ricerca.";
+  $("region-hint").textContent = "Caricamento di tutti i dataset disponibili per suggerimenti e ricerca…";
   const loadGeneral = !state.manualGeneral;
   const loadPi1g = !state.manualPi1g;
 
@@ -317,8 +319,9 @@ async function loadSelectedRegion() {
     if (!state.manualExtras.has(key)) state.extra[key] = [];
   }
 
-  if (!loadGeneral && !loadPi1g) {
-    setAutomaticStatus(region, state.pi1gAvailable);
+  if (state.loadedRegion === region && !loadGeneral && !loadPi1g
+      && EXTRA_DATASET_KEYS.every((key) => state.manualExtras.has(key) || state.extraAvailability[key] === true)) {
+    setAutomaticStatus(region, state.pi1gAvailable, state.extraAvailability);
     if (state.csvReaderMode) await loadCsvReaderDataset();
     return;
   }
@@ -327,16 +330,22 @@ async function loadSelectedRegion() {
   $("data-status").textContent = "Caricamento dei dataset principali di " + region + "…";
 
   try {
+    const automaticExtras = EXTRA_DATASET_KEYS.filter((key) => !state.manualExtras.has(key));
     const loaded = await loadRegionalData(region, {
       loadGeneral,
       loadPi1g,
-      loadExtras: []
+      loadExtras: automaticExtras
     });
     if (token !== state.loadToken) return;
 
     if (loadGeneral) state.general = loaded.general || [];
     if (loadPi1g) state.pi1g = loaded.pi1g || [];
     state.pi1gAvailable = loaded.hasPi1gArchive;
+    for (const key of automaticExtras) {
+      state.extra[key] = loaded.extra[key] || [];
+      state.extraAvailability[key] = loaded.extraAvailable[key] === true;
+    }
+    state.loadedRegion = region;
     setAutomaticStatus(region, loaded.hasPi1gArchive, state.extraAvailability);
 
     const errors = Object.entries(loaded.extraErrors || {});
@@ -348,7 +357,8 @@ async function loadSelectedRegion() {
     if (token !== state.loadToken) return;
     if (loadGeneral) state.general = [];
     if (loadPi1g) state.pi1g = [];
-    $("data-status").textContent = "Impossibile caricare i dataset principali di " + region + ". " + (error.message || "Verifica i file o carica i dataset manualmente.");
+    state.loadedRegion = "";
+    $("data-status").textContent = "Impossibile caricare tutti i dataset di " + region + ". " + (error.message || "Verifica i file o carica i dataset manualmente.");
   } finally {
     if (token === state.loadToken) {
       $("search-button").disabled = false;
@@ -1006,7 +1016,7 @@ async function runSearch(event) {
   }
 
   const region = $("region").value;
-  const requestedExtras = region
+  const requestedExtras = region && state.loadedRegion !== region
     ? EXTRA_DATASET_KEYS.filter((key) => !state.manualExtras.has(key))
     : [];
 
@@ -1032,6 +1042,7 @@ async function runSearch(event) {
         state.extraAvailability[key] = loaded.extraAvailable[key] === true;
         state.checkedExtras.add(key);
       }
+      state.loadedRegion = region;
     }
 
     const results = searchRecords(state.general, state.pi1g, state.extra, query);
