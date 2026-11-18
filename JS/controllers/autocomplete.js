@@ -32,7 +32,6 @@ function updateFieldHint(field, inputValue, values) {
   }
 }
 
-const suggestionRequestTokens = { province: 0, city: 0, street: 0, number: 0 };
 
 async function updateSuggestions(field, token = suggestionRequestTokens[field]) {
   const mapping = {
