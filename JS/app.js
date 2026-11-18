@@ -154,8 +154,42 @@ function populateRegions() {
   for (const region of REGIONS) {
     const option = createElement("option", "", region);
     option.value = region;
-    $("region").appendChild(option);
+    $("region-options").appendChild(option);
   }
+}
+
+function updateRegionHint() {
+  const typed = $("region").value.trim();
+  const hint = $("region-hint");
+  if (!typed) {
+    hint.textContent = "Digita le iniziali della Regione e premi Invio per selezionarla.";
+    return;
+  }
+
+  const query = normalise(typed);
+  const matches = REGIONS.filter((region) => normalise(region).startsWith(query));
+  hint.textContent = matches.length
+    ? matches.slice(0, 4).join(" · ") + (matches.length > 4 ? " · …" : "") + " · premi Invio per selezionare."
+    : "Nessuna Regione corrispondente. Scegli una voce valida dall'elenco.";
+}
+
+function handleRegionEnter(event) {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+
+  const typed = normalise($("region").value);
+  const selected = REGIONS.find((region) => normalise(region) === typed)
+    || REGIONS.find((region) => normalise(region).startsWith(typed));
+  if (!selected) {
+    updateRegionHint();
+    return;
+  }
+
+  const changed = $("region").value !== selected;
+  $("region").value = selected;
+  $("region-hint").textContent = selected + " · Regione selezionata.";
+  if (changed || (!state.general.length && !state.manualGeneral)) loadSelectedRegion();
+  $("province").focus();
 }
 
 function renderLegend() {
@@ -244,6 +278,13 @@ async function loadSelectedRegion() {
   $("search-error").textContent = "";
   state.checkedExtras.clear();
   state.extraAvailability = {};
+
+  if (region && !REGIONS.some((candidate) => normalise(candidate) === normalise(region))) {
+    $("region-hint").textContent = "Seleziona una Regione valida dall'elenco dei suggerimenti.";
+    $("data-status").textContent = "Regione non riconosciuta.";
+    $("search-button").disabled = false;
+    return;
+  }
 
   if (!region) {
     if (!state.manualGeneral) state.general = [];
@@ -1396,6 +1437,8 @@ function openDialog(view) {
 }
 
 function bindEvents() {
+  $("region").addEventListener("input", updateRegionHint);
+  $("region").addEventListener("keydown", handleRegionEnter);
   $("region").addEventListener("change", loadSelectedRegion);
   $("search-form").addEventListener("submit", runSearch);
   $("clear-search").addEventListener("click", clearSearch);
