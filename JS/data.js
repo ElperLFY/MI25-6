@@ -74,6 +74,126 @@ const MAX_ARCHIVE_SIZE = 1024 * 1024 * 1024;
 const HEADER_SCAN_LIMIT = 100;
 const HEADER_SAMPLE_SIZE = 512 * 1024;
 const archiveBytesCache = new Map();
+const ARCHIVE_CACHE_DB_NAME = "mi25-6-archive-cache";
+const ARCHIVE_CACHE_DB_VERSION = 1;
+const ARCHIVE_CACHE_STORE = "archives";
+const ARCHIVE_CACHE_FORMAT_VERSION = 1;
+const ARCHIVE_CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+let archiveCacheDatabasePromise = null;
+let archiveCacheGeneration = 0;
+
+function archiveCacheKey(path) {
+  return "v" + ARCHIVE_CACHE_FORMAT_VERSION + ":" + path;
+}
+
+function openArchiveCacheDatabase() {
+  if (typeof indexedDB === "undefined") return Promise.resolve(null);
+  if (!archiveCacheDatabasePromise) {
+    archiveCacheDatabasePromise = new Promise((resolve) => {
+      let request;
+      try {
+        request = indexedDB.open(ARCHIVE_CACHE_DB_NAME, ARCHIVE_CACHE_DB_VERSION);
+      } catch {
+        resolve(null);
+        return;
+      }
+
+      request.onupgradeneeded = () => {
+        const database = request.result;
+        if (!database.objectStoreNames.contains(ARCHIVE_CACHE_STORE)) {
+          database.createObjectStore(ARCHIVE_CACHE_STORE, { keyPath: "key" });
+        }
+      };
+      request.onsuccess = () => {
+        const database = request.result;
+        database.onversionchange = () => {
+          database.close();
+          archiveCacheDatabasePromise = null;
+        };
+        resolve(database);
+      };
+      request.onerror = () => resolve(null);
+      request.onblocked = () => resolve(null);
+    });
+  }
+  return archiveCacheDatabasePromise;
+}
+
+async function readPersistentArchive(path) {
+  const database = await openArchiveCacheDatabase();
+  if (!database) return null;
+
+  return new Promise((resolve) => {
+    try {
+      const transaction = database.transaction(ARCHIVE_CACHE_STORE, "readonly");
+      const request = transaction.objectStore(ARCHIVE_CACHE_STORE).get(archiveCacheKey(path));
+      request.onsuccess = () => {
+        const entry = request.result;
+        if (!entry || !(entry.buffer instanceof ArrayBuffer)) {
+          resolve(null);
+          return;
+        }
+        if (!Number.isFinite(entry.cachedAt) || Date.now() - entry.cachedAt > ARCHIVE_CACHE_MAX_AGE_MS) {
+          try {
+            database.transaction(ARCHIVE_CACHE_STORE, "readwrite")
+              .objectStore(ARCHIVE_CACHE_STORE)
+              .delete(archiveCacheKey(path));
+          } catch {
+            // A stale entry is ignored even when the browser refuses its deletion.
+          }
+          resolve(null);
+          return;
+        }
+        resolve(entry.buffer);
+      };
+      request.onerror = () => resolve(null);
+      transaction.onabort = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+async function writePersistentArchive(path, buffer, generation) {
+  const database = await openArchiveCacheDatabase();
+  if (!database || generation !== archiveCacheGeneration) return false;
+
+  return new Promise((resolve) => {
+    try {
+      const transaction = database.transaction(ARCHIVE_CACHE_STORE, "readwrite");
+      transaction.objectStore(ARCHIVE_CACHE_STORE).put({
+        key: archiveCacheKey(path),
+        cachedAt: Date.now(),
+        buffer: buffer.slice(0)
+      });
+      transaction.oncomplete = () => resolve(true);
+      transaction.onerror = () => resolve(false);
+      transaction.onabort = () => resolve(false);
+    } catch {
+      // Quota and private-browsing restrictions must never prevent data loading.
+      resolve(false);
+    }
+  });
+}
+
+export async function clearArchiveCache() {
+  archiveCacheGeneration += 1;
+  archiveBytesCache.clear();
+  const database = await openArchiveCacheDatabase();
+  if (!database) return false;
+
+  return new Promise((resolve) => {
+    try {
+      const transaction = database.transaction(ARCHIVE_CACHE_STORE, "readwrite");
+      transaction.objectStore(ARCHIVE_CACHE_STORE).clear();
+      transaction.oncomplete = () => resolve(true);
+      transaction.onerror = () => resolve(false);
+      transaction.onabort = () => resolve(false);
+    } catch {
+      resolve(false);
+    }
+  });
+}
 
 const FIELD_HEADER_KEYS = new Set(Object.values(FIELD_ALIASES).flat());
 
@@ -600,11 +720,19 @@ async function readArchiveBuffer(buffer, name, forcedType = "", region = "", opt
 }
 async function getArchiveBytes(path) {
   if (!archiveBytesCache.has(path)) {
+    const generation = archiveCacheGeneration;
     const task = (async () => {
-      const response = await fetch(path);
+      const cached = await readPersistentArchive(path);
+      if (cached) return cached;
+
+      // Revalidate a missed browser HTTP-cache entry; IndexedDB is the durable cache.
+      const response = await fetch(path, { cache: "no-cache" });
       if (response.status === 404) return null;
       if (!response.ok) throw new Error("HTTP " + response.status + " durante il caricamento di " + path);
-      return response.arrayBuffer();
+
+      const buffer = await response.arrayBuffer();
+      await writePersistentArchive(path, buffer, generation);
+      return buffer;
     })();
     archiveBytesCache.set(path, task);
     task.catch(() => archiveBytesCache.delete(path));
