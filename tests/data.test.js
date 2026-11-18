@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { clearArchiveCache, decodeBuffer, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, searchRecords } from "../JS/data.js";
+import { clearArchiveCache, decodeBuffer, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, REGIONS, searchRecords } from "../JS/data.js";
 
 const proximityHeaders = [
   "cod_egon_civ",
@@ -44,6 +44,13 @@ test("CSV buffer decoder is exported and supports UTF-8 and Windows-1252", () =>
 
   assert.equal(decodeBuffer(utf8), "Città");
   assert.equal(decodeBuffer(windows1252), "Città");
+});
+
+test("region definitions expose all 20 Italian regions exactly once", () => {
+  assert.equal(REGIONS.length, 20);
+  assert.equal(new Set(REGIONS).size, 20);
+  assert.ok(REGIONS.includes("Sicilia"));
+  assert.ok(REGIONS.includes("Valle d’Aosta"));
 });
 
 test("dataset type fallback resolves the imported dataset definition", () => {

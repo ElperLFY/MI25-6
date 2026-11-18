@@ -26,6 +26,29 @@ export const DATASET_DEFINITIONS = {
   }
 };
 
+export const REGIONS = Object.freeze([
+  "Abruzzo",
+  "Basilicata",
+  "Calabria",
+  "Campania",
+  "Emilia-Romagna",
+  "Friuli-Venezia Giulia",
+  "Lazio",
+  "Liguria",
+  "Lombardia",
+  "Marche",
+  "Molise",
+  "Piemonte",
+  "Puglia",
+  "Sardegna",
+  "Sicilia",
+  "Toscana",
+  "Trentino-Alto Adige",
+  "Umbria",
+  "Valle d’Aosta",
+  "Veneto"
+]);
+
 export const EXTRA_DATASET_KEYS = [
   "fixedSurvey2021",
   "proximity2025",
