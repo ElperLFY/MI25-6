@@ -139,13 +139,11 @@ export function decodeFixedSurvey2021Speed(value, hasColorColumn = true) {
     : "Codice velocità non documentato (" + code + ")";
 }
 
+// Only characteristic values assigned to individual civics in the CSV are recognised here.
+// B1, B2, B3 and BW are aggregate components of B in the Infratel report, not CSV characteristic codes.
 export const DOTS = {
   PA: ["#ff7fd0", "sede Pubblica Amministrazione in piani pubblici (scuole/sanità)"],
   A: ["#8a8a8a", "civico con scarsa qualità della coordinata"],
-  B1: ["#ffa41c", "entro 50 m da civici del Piano BUL fibra ottica"],
-  B2: ["#3fd62a", "entro 50 m da civici del Piano Italia a 1 Giga"],
-  B3: ["#1f6fe5", "entro 50 m da civici dei privati fibra ottica realizzati al 2024"],
-  BW: ["#ffee00", "entro 50 m da civici del Piano BUL FWA realizzato"],
-  C: ["#e8231f", "oltre 50 m da reti con velocità di picco superiore a 300 Mbit/s"],
-  B: ["#5b7fa6", "entro 50 m da reti con velocità di picco superiore a 300 Mbit/s"]
+  B: ["#5b7fa6", "entro 50 m da reti con velocità di picco superiore a 300 Mbit/s"],
+  C: ["#e8231f", "oltre 50 m da reti con velocità di picco superiore a 300 Mbit/s"]
 };
