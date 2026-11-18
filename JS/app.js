@@ -283,7 +283,6 @@ async function loadSelectedRegion() {
   $("results-card").hidden = true;
   $("search-error").textContent = "";
   state.checkedExtras.clear();
-  state.extraAvailability = {};
 
   if (region && !REGIONS.some((candidate) => normalise(candidate) === normalise(region))) {
     $("region-hint").textContent = "Seleziona una Regione valida dall'elenco dei suggerimenti.";
@@ -293,6 +292,8 @@ async function loadSelectedRegion() {
   }
 
   if (!region) {
+    state.loadedRegion = "";
+    state.extraAvailability = {};
     if (!state.manualGeneral) state.general = [];
     if (!state.manualPi1g) state.pi1g = [];
     for (const key of EXTRA_DATASET_KEYS) {
@@ -315,18 +316,19 @@ async function loadSelectedRegion() {
   const loadGeneral = !state.manualGeneral;
   const loadPi1g = !state.manualPi1g;
 
-  for (const key of EXTRA_DATASET_KEYS) {
-    if (!state.manualExtras.has(key)) state.extra[key] = [];
-  }
-
   if (state.loadedRegion === region && !loadGeneral && !loadPi1g) {
     setAutomaticStatus(region, state.pi1gAvailable, state.extraAvailability);
     if (state.csvReaderMode) await loadCsvReaderDataset();
     return;
   }
 
+  state.extraAvailability = {};
+  for (const key of EXTRA_DATASET_KEYS) {
+    if (!state.manualExtras.has(key)) state.extra[key] = [];
+  }
+
   $("search-button").disabled = true;
-  $("data-status").textContent = "Caricamento dei dataset principali di " + region + "…";
+  $("data-status").textContent = "Caricamento di tutti i dataset disponibili di " + region + "…";
 
   try {
     const automaticExtras = EXTRA_DATASET_KEYS.filter((key) => !state.manualExtras.has(key));
