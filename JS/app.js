@@ -369,7 +369,6 @@ function bindEvents() {
       if (autocomplete.handleSuggestionKeydown(field, event)) return;
       void handleAutocompleteEnter(field, event);
     });
-    if (field === "number") $(inputId).addEventListener("focus", () => scheduleSuggestions(field));
   }
 
   $("city").addEventListener("change", async () => {

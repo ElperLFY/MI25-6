@@ -285,6 +285,11 @@ export function createAutocompleteController({
         else if (suggestionValues[field]?.length) renderSuggestionOptions(field, suggestionValues[field], true);
         else scheduleSuggestions(field);
       });
+      trigger.addEventListener("blur", () => {
+        window.setTimeout(() => {
+          if (document.activeElement !== input) closeSuggestions(field);
+        }, 100);
+      });
     }
   }
 
