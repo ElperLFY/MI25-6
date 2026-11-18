@@ -1,5 +1,6 @@
 import { DATASET_DEFINITIONS, FIELD_ALIASES } from "../datasets.js";
 import { normalise } from "./normalization.js";
+import { nowMs, recordTiming } from "./diagnostics.js";
 
 const FIELD_HEADER_KEYS = new Set(Object.values(FIELD_ALIASES).flat());
 
@@ -343,10 +344,15 @@ function makeRecord(row, originalHeaders, headers, columns, recordFieldColumns, 
 }
 
 export function parseDataset(text, name = "dataset", forcedType = "", options = {}) {
-  const cleanText = String(text ?? "").replace(/^\uFEFF/, "");
+  const cleanText = String(text ?? "").replace(/^\\uFEFF/, "");
   const headerInfo = findHeader(cleanText);
   if (!headerInfo) return null;
+  const collector = createDatasetRowCollector(name, forcedType, options, headerInfo);
+  parseDelimitedRows(cleanText, headerInfo.delimiter, collector.onRow);
+  return collector.finish();
+}
 
+function createDatasetRowCollector(name, forcedType, options, headerInfo) {
   let originalHeaders = [];
   let headers = [];
   let columns = null;
@@ -361,14 +367,14 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
   const intern = createStringInterner();
   const cachedNormalise = createNormaliseCache();
 
-  parseDelimitedRows(cleanText, headerInfo.delimiter, (row) => {
+  function onRow(row) {
     if (rowIndex < headerInfo.headerRowIndex) {
       rowIndex += 1;
       return;
     }
 
     if (!headerFound) {
-      originalHeaders = row.map((value) => String(value ?? "").replace(/^\uFEFF/, "").trim());
+      originalHeaders = row.map((value) => String(value ?? "").replace(/^\\uFEFF/, "").trim());
       headers = originalHeaders.map(headerKey);
       columns = getColumns(headers);
       if (!columns) return;
@@ -394,8 +400,6 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
       return;
     }
     if (options.readerMode) {
-      // Keep the original row and one shared header array; avoid building the
-      // normalized 50-field record model for millions of rows in CSV Reader.
       if (!readerHeaders) {
         const egonIndex = fields.findIndex(isEgonValue);
         readerOffset = egonIndex >= 0 ? Math.max(0, egonIndex - columns.id) : 0;
@@ -441,10 +445,270 @@ export function parseDataset(text, name = "dataset", forcedType = "", options = 
     );
     if (record) records.push(record);
     rowIndex += 1;
-  });
+  }
 
-  if (!headerFound) return null;
-  return { id: datasetId, records, name };
+  return {
+    onRow,
+    finish() {
+      return headerFound ? { id: datasetId, records, name } : null;
+    }
+  };
 }
 
+function createChunkDelimitedParser(delimiter, onRow, initialText = "") {
+  let mode = initialText.includes('"') ? "quoted" : "plain";
+  let plainBuffer = "";
+  let quotedBuffer = "";
+  let row = [];
+  let value = "";
+  let quoted = false;
+  let finished = false;
+
+  function emitRow() {
+    row.push(value);
+    let hasContent = false;
+    for (let index = 0; index < row.length; index += 1) {
+      if (row[index].trim() !== "") {
+        hasContent = true;
+        break;
+      }
+    }
+    if (hasContent && onRow(row) === false) finished = true;
+    row = [];
+    value = "";
+  }
+
+  function processQuoted(text, final = false) {
+    const combined = quotedBuffer + text;
+    let index = 0;
+    while (index < combined.length && !finished) {
+      const character = combined[index];
+      if (quoted) {
+        if (character === '"') {
+          if (index + 1 >= combined.length && !final) break;
+          if (combined[index + 1] === '"') {
+            value += '"';
+            index += 2;
+          } else {
+            quoted = false;
+            index += 1;
+          }
+        } else {
+          value += character;
+          index += 1;
+        }
+        continue;
+      }
+
+      if (character === '"' && value.trim() === "") {
+        quoted = true;
+        index += 1;
+      } else if (character === delimiter) {
+        row.push(value);
+        value = "";
+        index += 1;
+      } else if (character === "\n" || character === "\r") {
+        if (character === "\r" && combined[index + 1] === "\n") index += 1;
+        emitRow();
+        index += 1;
+      } else {
+        value += character;
+        index += 1;
+      }
+    }
+
+    quotedBuffer = combined.slice(index);
+  }
+
+  function processPlain() {
+    const quoteIndex = plainBuffer.indexOf('"');
+    if (quoteIndex >= 0) {
+      const previousLineFeed = plainBuffer.lastIndexOf("\n", quoteIndex - 1);
+      const previousCarriageReturn = plainBuffer.lastIndexOf("\r", quoteIndex - 1);
+      const completeEnd = Math.max(previousLineFeed, previousCarriageReturn) + 1;
+      const completeRows = plainBuffer.slice(0, completeEnd);
+      const remainder = plainBuffer.slice(completeEnd);
+      if (completeRows) parsePlainDelimitedRows(completeRows, delimiter, onRow);
+      plainBuffer = "";
+      mode = "quoted";
+      processQuoted(remainder);
+      return;
+    }
+
+    const lastLineFeed = plainBuffer.lastIndexOf("\n");
+    const lastCarriageReturn = plainBuffer.lastIndexOf("\r");
+    const completeEnd = Math.max(lastLineFeed, lastCarriageReturn) + 1;
+    if (completeEnd > 0) {
+      const completeRows = plainBuffer.slice(0, completeEnd);
+      plainBuffer = plainBuffer.slice(completeEnd);
+      parsePlainDelimitedRows(completeRows, delimiter, onRow);
+    }
+  }
+
+  return {
+    push(text) {
+      if (finished || !text) return;
+      if (mode === "plain") {
+        plainBuffer += text;
+        processPlain();
+      } else {
+        processQuoted(text);
+      }
+    },
+    finish() {
+      if (finished) return;
+      if (mode === "plain") {
+        if (plainBuffer) parsePlainDelimitedRows(plainBuffer, delimiter, onRow);
+        plainBuffer = "";
+      } else {
+        processQuoted("", true);
+        if (!finished && (value.length || row.length)) emitRow();
+        quotedBuffer = "";
+      }
+      finished = true;
+    }
+  };
+}
+
+function createStreamingDatasetParser(name, forcedType, options = {}) {
+  let sample = "";
+  let rowParser = null;
+  let collector = null;
+  let invalidHeader = false;
+
+  function initialise() {
+    const headerInfo = findHeader(sample);
+    if (!headerInfo) {
+      invalidHeader = true;
+      sample = "";
+      return;
+    }
+    collector = createDatasetRowCollector(name, forcedType, options, headerInfo);
+    rowParser = createChunkDelimitedParser(headerInfo.delimiter, collector.onRow, sample);
+    rowParser.push(sample);
+    sample = "";
+  }
+
+  return {
+    push(text) {
+      if (invalidHeader || !text) return;
+      if (!rowParser) {
+        sample += text;
+        if (sample.length >= HEADER_SAMPLE_SIZE) initialise();
+      } else {
+        rowParser.push(text);
+      }
+    },
+    finish() {
+      if (!rowParser && !invalidHeader) initialise();
+      if (rowParser) rowParser.finish();
+      return collector ? collector.finish() : null;
+    }
+  };
+}
+
+export function parseDatasetStream(streamHelper, name = "dataset", forcedType = "", options = {}) {
+  return new Promise((resolve, reject) => {
+    let decoder = null;
+    let sampleChunks = [];
+    let sampleBytes = 0;
+    let parser = null;
+    let decodeDuration = 0;
+    let parseDuration = 0;
+    let settled = false;
+
+    const fail = (error) => {
+      if (settled) return;
+      settled = true;
+      reject(error instanceof Error ? error : new Error(String(error)));
+    };
+
+    const feedText = (text) => {
+      if (!text || !parser) return;
+      const startedAt = nowMs();
+      parser.push(text);
+      parseDuration += nowMs() - startedAt;
+    };
+
+    const initialiseDecoder = () => {
+      const sample = new Uint8Array(sampleBytes);
+      let offset = 0;
+      for (const chunk of sampleChunks) {
+        sample.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+
+      const decodeStartedAt = nowMs();
+      try {
+        const utf8 = new TextDecoder("utf-8", { fatal: true });
+        const decoded = utf8.decode(sample);
+        decoder = new TextDecoder("utf-8");
+        decodeDuration += nowMs() - decodeStartedAt;
+        parser = createStreamingDatasetParser(name, forcedType, options);
+        feedText(decoded);
+      } catch {
+        decoder = new TextDecoder("windows-1252");
+        const decoded = decoder.decode(sample);
+        decodeDuration += nowMs() - decodeStartedAt;
+        parser = createStreamingDatasetParser(name, forcedType, options);
+        feedText(decoded);
+      }
+      sampleChunks = [];
+      sampleBytes = 0;
+    };
+
+    streamHelper
+      .on("data", (rawChunk) => {
+        try {
+          const chunk = rawChunk instanceof Uint8Array ? rawChunk : new Uint8Array(rawChunk);
+          if (!decoder) {
+            sampleChunks.push(chunk.slice());
+            sampleBytes += chunk.byteLength;
+            if (sampleBytes >= HEADER_SAMPLE_SIZE) initialiseDecoder();
+            return;
+          }
+
+          const decodeStartedAt = nowMs();
+          const decoded = decoder.decode(chunk, { stream: true });
+          decodeDuration += nowMs() - decodeStartedAt;
+          feedText(decoded);
+        } catch (error) {
+          fail(error);
+        }
+      })
+      .on("error", fail)
+      .on("end", () => {
+        if (settled) return;
+        try {
+          if (!decoder) initialiseDecoder();
+          else {
+            const decodeStartedAt = nowMs();
+            const tail = decoder.decode();
+            decodeDuration += nowMs() - decodeStartedAt;
+            feedText(tail);
+          }
+
+          const result = parser ? parser.finish() : null;
+          if (Array.isArray(options.timings)) {
+            recordTiming({ timings: options.timings, datasetKey: options.datasetKey }, "Decodifica CSV streaming", nowMs() - decodeDuration, { entry: name });
+            recordTiming({ timings: options.timings, datasetKey: options.datasetKey }, "Parsing CSV streaming", nowMs() - parseDuration, { entry: name });
+          }
+          settled = true;
+          resolve(result);
+        } catch (error) {
+          fail(error);
+        }
+      });
+
+    try {
+      streamHelper.resume();
+    } catch (error) {
+      fail(error);
+    }
+  });
+}
+
+
 export { decodeBuffer, headerKey };
+
+// Streamed CSV parsing retains only a small header sample and one unfinished row.

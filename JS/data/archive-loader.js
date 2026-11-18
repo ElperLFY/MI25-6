@@ -1,6 +1,6 @@
 import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS } from "../datasets.js";
 import { normalise } from "./normalization.js";
-import { decodeBuffer, headerKey, parseDataset } from "./csv-parser.js";
+import { decodeBuffer, headerKey, parseDataset, parseDatasetStream } from "./csv-parser.js";
 import {
   getArchiveBytes,
   getParsedDatasetCache,
@@ -143,9 +143,19 @@ async function readArchiveEntries(archive, name, forcedType, region, budget, dep
       continue;
     }
 
-    const csvBuffer = await measureAsync(options, "Decompressione CSV", () => entry.async("arraybuffer"), { entry: entry.name });
-    const content = measureSync(options, "Decodifica CSV", () => decodeBuffer(csvBuffer), { entry: entry.name });
-    const dataset = measureSync(options, "Parsing CSV", () => parseDataset(content, entry.name || name, archiveType, options), { entry: entry.name });
+    let dataset;
+    if (typeof entry.internalStream === "function") {
+      dataset = await measureAsync(options, "Decompressione CSV streaming", () => parseDatasetStream(
+        entry.internalStream("uint8array"),
+        entry.name || name,
+        archiveType,
+        options
+      ), { entry: entry.name });
+    } else {
+      const csvBuffer = await measureAsync(options, "Decompressione CSV", () => entry.async("arraybuffer"), { entry: entry.name });
+      const content = measureSync(options, "Decodifica CSV", () => decodeBuffer(csvBuffer), { entry: entry.name });
+      dataset = measureSync(options, "Parsing CSV", () => parseDataset(content, entry.name || name, archiveType, options), { entry: entry.name });
+    }
     if (dataset) {
       parsed.push(dataset);
       void putParsedDatasetCache(cachePath, region, dataset.id, entry.name, dataset, options).catch(() => {});

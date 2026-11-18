@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { clearArchiveCache, decodeBuffer, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, loadRegionalData, parseDataset, parseUploadedFiles, REGIONS, searchRecords, cityIsKnown, getSuggestions } from "../JS/data.js";
 import { getArchiveBytes } from "../JS/data/archive-cache.js";
+import { parseDatasetStream } from "../JS/data/csv-parser.js";
 
 const proximityHeaders = [
   "cod_egon_civ",
@@ -628,4 +629,57 @@ test("cityIsKnown accepts the regular independent dataset arrays", () => {
   });
   assert.equal(cityIsKnown([createRecord("PORTO EMPEDOCLE")], [createRecord("AGRIGENTO")], {}, "PORTO EMPEDOCLE", "SICILIA"), true);
   assert.equal(cityIsKnown([createRecord("PORTO EMPEDOCLE")], [], {}, "SCIACCA", "SICILIA"), false);
+});
+
+
+test("streaming parser matches the full parser when chunks split quoted fields and line endings", async () => {
+  const header = "id_egon;regione;provincia;nome_com;strada;civico";
+  const rows = [header];
+  for (let index = 0; index < 9000; index += 1) {
+    rows.push(`${380100000000000 + index};SICILIA;AGRIGENTO;PORTO EMPEDOCLE;VIA TEST ${index};${index + 1}`);
+  }
+  rows.push('380100000009001;SICILIA;AGRIGENTO;PORTO EMPEDOCLE;"VIA " + "TEST ""SPECIALE""" + "\nSECONDA RIGA";9002');
+  const csv = rows.join("\r\n");
+  const bytes = new TextEncoder().encode(csv);
+  const quoteIndex = csv.indexOf('"');
+  const splitAt = new TextEncoder().encode(csv.slice(0, quoteIndex + 1)).length;
+  const chunkSizes = [520 * 1024, splitAt - 520 * 1024, 1, 17, 64 * 1024];
+  const chunks = [];
+  let offset = 0;
+  let sizeIndex = 0;
+  while (offset < bytes.length) {
+    const size = chunkSizes[sizeIndex % chunkSizes.length];
+    chunks.push(bytes.slice(offset, Math.min(bytes.length, offset + size)));
+    offset += size;
+    sizeIndex += 1;
+  }
+
+  const handlers = {};
+  const stream = {
+    on(event, callback) { handlers[event] = callback; return this; },
+    resume() {
+      for (const chunk of chunks) handlers.data(chunk);
+      handlers.end();
+      return this;
+    }
+  };
+
+  const streamed = await parseDatasetStream(stream, "streamed.csv", "general2025");
+  const parsed = parseDataset(csv, "streamed.csv", "general2025");
+  assert.equal(streamed.records.length, parsed.records.length);
+  assert.deepEqual(streamed.records.at(-1), parsed.records.at(-1));
+  assert.equal(streamed.records.at(-1).street, 'VIA TEST "SPECIALE"\nSECONDA RIGA');
+});
+
+test("streaming parser handles small CSVs and CR-only rows", async () => {
+  const csv = "id_egon;regione;provincia;nome_com;strada;civico\r123456789;SICILIA;AGRIGENTO;AGRIGENTO;VIA ROMA;1";
+  const bytes = new TextEncoder().encode(csv);
+  const handlers = {};
+  const stream = {
+    on(event, callback) { handlers[event] = callback; return this; },
+    resume() { handlers.data(bytes.slice(0, 13)); handlers.data(bytes.slice(13)); handlers.end(); return this; }
+  };
+  const parsed = await parseDatasetStream(stream, "stream.csv", "general2025");
+  assert.equal(parsed.records.length, 1);
+  assert.equal(parsed.records[0].street, "VIA ROMA");
 });
