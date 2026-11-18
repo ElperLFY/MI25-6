@@ -197,17 +197,7 @@ function openDialog(view) {
   if (!dialog.open) dialog.showModal();
 }
 
-const legacy = createLegacyController({
-  $, state, normalise, createElement, renderOptions, copyText,
-  setCsvReaderMode, legacyClient
-});
-const legacyInput = legacy.legacyInput;
-const legacySetNumberSelection = legacy.legacySetNumberSelection;
-const legacyHandleNumberInput = legacy.legacyHandleNumberInput;
-const bindLegacyLevel = legacy.bindLegacyLevel;
-const runLegacySearch = legacy.runLegacySearch;
-const clearLegacySearch = legacy.clearLegacySearch;
-const setLegacyMode = legacy.setLegacyMode;
+
 
 const autocomplete = createAutocompleteController({
   $, getSuggestions, findCityRecord, normalise, currentSearchState, renderOptions, suggestionValues
@@ -231,6 +221,18 @@ const csvReader = createCsvReaderController({
 const renderCsvReaderPage = csvReader.renderCsvReaderPage;
 const loadCsvReaderDataset = csvReader.loadCsvReaderDataset;
 const setCsvReaderMode = csvReader.setCsvReaderMode;
+
+const legacy = createLegacyController({
+  $, state, normalise, createElement, renderOptions, copyText,
+  setCsvReaderMode, legacyClient
+});
+const legacyInput = legacy.legacyInput;
+const legacySetNumberSelection = legacy.legacySetNumberSelection;
+const legacyHandleNumberInput = legacy.legacyHandleNumberInput;
+const bindLegacyLevel = legacy.bindLegacyLevel;
+const runLegacySearch = legacy.runLegacySearch;
+const clearLegacySearch = legacy.clearLegacySearch;
+const setLegacyMode = legacy.setLegacyMode;
 
 const regionData = createRegionDataController({
   $, state, loadRegionalData, clearArchiveCache,
