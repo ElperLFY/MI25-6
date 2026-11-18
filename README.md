@@ -4,18 +4,30 @@ MI25-6 è un'applicazione statica per consultare le mappature delle infrastruttu
 
 ## Struttura
 
-- `index.html` contiene la pagina e i controlli.
-- `PageUI/style.css` contiene lo stile dell'interfaccia.
-- `JS/app.js` gestisce interfaccia, ricerca, risultati e caricamenti.
-- `JS/data.js` riconosce le intestazioni, legge CSV e ZIP e gestisce la ricerca locale.
-- `JS/datasets.js` contiene definizioni dei dataset, alias delle colonne e legenda.
-- `JS/legacy.js` gestisce l'API storica Handymenny.
-- `data/fixed-2025/` contiene gli ZIP regionali della mappatura generale.
-- `data/pi1g-2025/` contiene gli ZIP regionali dell'Allegato A PI1G.
-- `data/fixed-2021/` contiene gli ZIP regionali disponibili della mappatura reti fisse 2021; viene scaricato soltanto l'archivio della Regione selezionata.
-- `data/proximity-2025/` contiene `Italia.zip` per i civici di prossimità 2025.
-- `data/fibercop-proximity-2025/` contiene `Italia.zip` per i civici di prossimità FiberCop 2025.
-- `vendor/jszip.min.js` contiene la libreria JSZip già utilizzata dal progetto.
+La logica è organizzata per responsabilità: `JS/app.js` è soltanto l'entry point che collega i controller e inizializza la pagina. Non contiene il motore di parsing o di ricerca.
+
+- `index.html`: struttura della pagina e controlli.
+- `PageUI/style.css`: stile dell'interfaccia.
+- `JS/app.js`: bootstrap della UI e registrazione degli eventi.
+- `JS/controllers/autocomplete.js`: suggerimenti, debounce e navigazione tra i campi.
+- `JS/controllers/region-data.js`: caricamento completo dei dataset regionali e aggiornamento della cache.
+- `JS/controllers/search.js`: ricerca indirizzi, import manuale e ripristino dei dati automatici.
+- `JS/controllers/csv-reader.js`: selezione dataset, ricerca testuale e paginazione del CSV Reader.
+- `JS/controllers/legacy-controller.js`: flusso della modalità storica Handymenny.
+- `JS/ui/results.js`: composizione dei risultati, confronto storico e report copiabili.
+- `JS/services/data-client.js`: comunicazione asincrona tra UI e Web Worker.
+- `JS/workers/data.worker.js`: motore dati isolato dal main thread; mantiene i record in memoria e gestisce i comandi.
+- `JS/data/`: moduli specializzati per parser CSV, normalizzazione, caricamento ZIP, cache IndexedDB e ricerca.
+- `JS/data.js`: re-export di compatibilità del modulo dati.
+- `JS/datasets.js`: definizioni dei dataset, alias delle colonne e legenda.
+- `JS/legacy.js`: client e funzioni di formattazione dell'API storica.
+- `data/fixed-2025/`, `data/pi1g-2025/`, `data/fixed-2021/`, `data/proximity-2025/`, `data/fibercop-proximity-2025/`: archivi ZIP pubblicati.
+
+### Thread e persistenza
+
+Il browser esegue parsing CSV, decompressione ZIP, aggregazione dei record, autocomplete, ricerca indirizzi e filtraggio/paginazione del CSV Reader nel Web Worker. Il main thread resta dedicato alla UI e riceve soltanto conteggi, suggerimenti, risultati e la pagina corrente del Reader.
+
+Gli ZIP scaricati vengono memorizzati in IndexedDB per 30 giorni e riutilizzati tra visite e ricaricamenti della pagina. La cache in memoria evita richieste duplicate nella stessa sessione. Il pulsante **Aggiorna archivi** svuota la cache persistente e quella in memoria, così da recuperare le versioni pubblicate più recenti. Se IndexedDB non è disponibile o lo spazio è esaurito, il loader continua usando la cache in memoria e la rete come fallback.
 
 ## Dataset aggiuntivi
 
