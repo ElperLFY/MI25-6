@@ -105,6 +105,7 @@ test("initial regional load defers the 2021 survey and loads it only on explicit
 test("deferred 2021 button remains disabled until a region has completed loading", () => {
   const button = { value: "", textContent: "", disabled: false, title: "" };
   const status = { textContent: "" };
+  const regionInput = { value: "" };
   const state = {
     loadedRegion: "",
     manualExtras: new Set(),
@@ -114,7 +115,7 @@ test("deferred 2021 button remains disabled until a region has completed loading
   const $ = (id) => {
     if (id === "load-2021-dataset") return button;
     if (id === "load-2021-dataset-status") return status;
-    if (id === "region") return { value: "" };
+    if (id === "region") return regionInput;
     throw new Error("Unexpected element: " + id);
   };
   const { syncDeferredDatasetControl } = createRegionDataController({
@@ -131,7 +132,7 @@ test("deferred 2021 button remains disabled until a region has completed loading
   assert.equal(button.disabled, true);
   assert.equal(status.textContent, "Seleziona una Regione per abilitare il caricamento della mappatura 2021.");
 
-  $("region").value = "Sicilia";
+  regionInput.value = "Sicilia";
   syncDeferredDatasetControl();
   assert.equal(button.disabled, true);
   assert.equal(status.textContent, "Caricamento della Regione in corso: la mappatura 2021 sarà disponibile al termine.");
