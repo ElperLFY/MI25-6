@@ -1,4 +1,4 @@
-import { DATASET_DEFINITIONS, DOTS, EXTRA_DATASET_KEYS, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, normalise } from "../data/index.js";
+import { DATASET_DEFINITIONS, DOTS, EXTRA_DATASET_KEYS, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, normalise } from "../data/index.js?v=1.2.007";
 import { legacyReport, legacySections } from "../legacy.js";
 
 export function createResultsRenderer({ $, createElement, state, legacyClient, getGeneralAbsenceMessage, copyText }) {
