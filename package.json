@@ -1,0 +1,8 @@
+{
+  "name": "mi25-6",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

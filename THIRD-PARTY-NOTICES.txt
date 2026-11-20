@@ -1,0 +1,10 @@
+MI25-6 reuses the public API contract and historical field definitions from:
+https://github.com/handymenny/mappaturaInfratel
+https://github.com/handymenny/mappatura-backend
+
+Copyright 2021 Edoardo Ranghieri.
+BSD 3-Clause License.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the copyright notice, conditions, and disclaimer are retained in source and binary redistributions. Neither the name of the copyright holder nor contributor names may be used to endorse derived products without prior written permission. The software is provided "AS IS", without warranties or liability.
+
+The existing vendor/jszip.min.js dependency is JSZip 3.10.1, dual licensed under MIT or GPLv3. JSZip uses pako, released under the MIT license. The dependency remains in the repository and is not replaced by this change.
