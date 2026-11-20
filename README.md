@@ -1,72 +1,170 @@
 # MI25-6
 
-MI25-6 è un'applicazione statica per consultare le mappature delle infrastrutture di rete fissa pubblicate da Infratel e confrontare i civici con gli esiti PI1G e con dataset territoriali aggiuntivi.
+**MI25-6** è uno strumento web statico, in lingua italiana, per consultare gli esiti della mappatura delle infrastrutture di rete fissa pubblicati da Infratel e confrontare i civici con altri dataset territoriali.
 
-## Struttura
+**Sito:** <https://elperlfy.github.io/MI25-6/>
 
-La logica è organizzata per responsabilità: `JS/app.js` è soltanto l'entry point che collega i controller e inizializza la pagina. Non contiene il motore di parsing o di ricerca.
+Il progetto è indipendente e non è un servizio ufficiale di Infratel, AGCOM o degli operatori di telecomunicazioni.
 
-- `index.html`: struttura della pagina e controlli.
-- `PageUI/style.css`: stile dell'interfaccia.
-- `JS/app.js`: bootstrap della UI e registrazione degli eventi.
-- `JS/controllers/autocomplete.js`: suggerimenti, debounce e navigazione tra i campi.
-- `JS/controllers/region-data.js`: caricamento completo dei dataset regionali e aggiornamento della cache.
-- `JS/controllers/search.js`: ricerca indirizzi, import manuale e ripristino dei dati automatici.
-- `JS/controllers/csv-reader.js`: selezione dataset, ricerca testuale e paginazione del CSV Reader.
-- `JS/controllers/legacy-controller.js`: flusso della modalità storica Handymenny.
-- `JS/ui/results.js`: composizione dei risultati, confronto storico e report copiabili.
-- `JS/services/data-client.js`: comunicazione asincrona tra UI e Web Worker.
-- `JS/workers/data.worker.js`: motore dati isolato dal main thread; mantiene i record in memoria e gestisce i comandi.
-- `JS/data/`: moduli specializzati per parser CSV, normalizzazione, caricamento ZIP, cache IndexedDB e ricerca.
+## Funzioni principali
+
+- Ricerca per Regione, Provincia, Comune, Via e Civico, con suggerimenti contestuali.
+- Consultazione della mappatura generale delle reti fisse 2025 e degli esiti PI1G 2025.
+- Consultazione degli archivi di prossimità 2025 e degli archivi FiberCop.
+- Caricamento facoltativo e differito della mappatura reti fisse 2021.
+- Importazione manuale di file CSV e ZIP riconosciuti dal parser.
+- CSV Reader per ispezionare le righe e le colonne originali dei dataset.
+- Legacy Mode per consultare separatamente l'archivio storico 2017–2021 tramite l'API esterna di Handymenny.
+
+L'assenza di un civico nei risultati non dimostra che l'indirizzo sia privo di copertura: indica soltanto che non è stata trovata una corrispondenza nei dataset consultati.
+
+## Classificazione della mappatura 2025
+
+La legenda della mappatura generale riconosce i quattro valori effettivi del campo `caratteristica` presente nei CSV:
+
+| Codice | Significato |
+| --- | --- |
+| **PA** | Sede della Pubblica Amministrazione interessata da piani pubblici (ad esempio scuole e sanità). |
+| **A** | Civico con coordinate di scarsa qualità. |
+| **B** | Civico entro 50 metri da reti con velocità di picco superiore a 300 Mbit/s. |
+| **C** | Civico oltre 50 metri da quelle reti. |
+
+I colori della legenda sono una scelta grafica di MI25-6. Le sottocomponenti statistiche di B (B1, B2, B3 e BW) non sono valori autonomi del campo `caratteristica` e non vengono riconosciute come categorie individuali del civico.
+
+## Dataset consultati
+
+I dataset automatici sono organizzati nella cartella `data/`:
+
+| Dataset | Percorso | Modalità di caricamento |
+| --- | --- | --- |
+| Mappatura reti fisse 2025 | `data/fixed-2025/` | Caricata selezionando la Regione. |
+| Esiti PI1G 2025 · Allegato A | `data/pi1g-2025/` | Caricati quando è disponibile l'archivio della Regione. |
+| Civici di prossimità 2025 | `data/proximity-2025/Italia.zip` | Archivio nazionale con archivi regionali interni; viene consultata la Regione selezionata. |
+| Civici di prossimità FiberCop 2025 | `data/fibercop-proximity-2025/Italia.zip` | Archivio nazionale con archivi regionali interni; viene consultata la Regione selezionata. |
+| Mappatura reti fisse 2021 | `data/fixed-2021/` | Caricamento su richiesta, limitato alla Regione selezionata. |
+
+La selezione di una Regione carica la mappatura generale 2025, l'Allegato A PI1G (se disponibile) e i due dataset di prossimità. **La mappatura 2021 è esclusa dal caricamento iniziale** perché può richiedere risorse considerevoli: si aggiunge alla ricerca solo quando viene premuto il pulsante «Carica mappatura 2021» nelle Opzioni Avanzate Dati.
+
+Gli archivi 2021 attualmente presenti nel repository sono distribuiti in ZIP regionali distinti. Non tutte le Regioni dispongono di un archivio 2021 nel progetto; il pulsante segnala quando la fonte regionale non è disponibile. I nomi dei file non sempre coincidono con gli slug usati nell'indirizzo web: il loader associa esplicitamente le Regioni ai file pubblicati.
+
+### Struttura dei CSV
+
+Il parser riconosce le intestazioni tramite nomi normalizzati: maiuscole/minuscole, spazi, accenti, underscore e altri separatori non cambiano il nome logico della colonna. Le colonne possono essere riordinate e alcuni campi possono mancare. Le colonne non riconosciute vengono conservate come campi aggiuntivi nei risultati.
+
+Tra i campi aggiuntivi interpretati dall'interfaccia:
+
+- **Prossimità 2025:** copertura privata dichiarata nella mappatura 2024, stato di copertura a giugno 2025, ammissibilità e causa di esclusione.
+- **FiberCop:** ammissibilità e cause di esclusione.
+- **Mappatura 2021:** colore del civico e classi di velocità, oltre ai campi disponibili su operatore, tecnologia e anno di copertura.
+
+Per la mappatura 2021, i codici del colore vengono interpretati come segue: `g` = Grigio, `n` = Nero, `b` o valore vuoto = Bianco (quando la colonna colore è presente). I campi di velocità contengono codici o soglie da decodificare, non necessariamente valori in Mbit/s da leggere alla lettera. La decodifica tiene conto anche della presenza o meno della colonna colore.
+
+## Modalità e strumenti
+
+### Ricerca indirizzo
+
+La ricerca standard richiede almeno Comune e Via; il Civico è facoltativo. Regione, Provincia, Comune, Via e Civico dispongono di suggerimenti contestuali. La ricerca consulta i dataset già caricati per la Regione e non avvia un nuovo download a ogni invio.
+
+I record dei dataset disponibili vengono mantenuti nel Web Worker. Il risultato può quindi mostrare informazioni provenienti da più fonti per lo stesso civico, quando gli identificativi o i dati dell'indirizzo consentono di associarle.
+
+### Caricamento manuale
+
+È possibile importare uno o più file CSV, TXT o ZIP. I file riconosciuti vengono analizzati nel Web Worker. Quando viene importato un dataset manuale, questo prevale sui dati automatici della stessa tipologia; le altre categorie non vengono sostituite. Il comando «Torna ai dati automatici» rimuove i dataset manuali e ripristina quelli automatici.
+
+I dati caricati manualmente restano nella memoria della sessione del browser e non vengono salvati come archivi permanenti nel repository.
+
+### Mappatura reti fisse 2021
+
+La mappatura 2021 è un dataset storico separato dalla classificazione 2025. Il comando dedicato scarica e analizza soltanto l'archivio della Regione selezionata, quindi aggiunge i record alla ricerca. Non scarica in blocco gli archivi di tutte le Regioni, non modifica la classificazione PA/A/B/C e non utilizza l'API Legacy.
+
+### CSV Reader
+
+CSV Reader permette di scegliere un dataset e leggere il relativo CSV originale per la Regione selezionata. Conserva intestazioni, valori grezzi, colonne e ordine delle righe. È possibile filtrare il contenuto cercando tra i campi originali e visualizzare 50, 100 o 250 righe per pagina.
+
+Il caricamento completo, il filtraggio e la paginazione sono eseguiti nel Web Worker: la pagina riceve soltanto le righe della pagina corrente. CSV Reader è una modalità facoltativa e può richiedere tempo e memoria, soprattutto con archivi molto grandi.
+
+### Legacy Mode
+
+Legacy Mode consulta separatamente l'archivio storico della mappatura Infratel 2017–2021 tramite il servizio API di Handymenny. Non utilizza i CSV automatici di MI25-6 e non descrive la copertura attuale.
+
+Quando è attiva, i dati dell'indirizzo e gli identificativi necessari vengono inviati al servizio esterno. Anche il comando di confronto storico trasmette l'ID EGON del risultato selezionato. Il servizio è gestito da terzi e può applicare limiti alle richieste.
+
+- [API storica Handymenny](https://mappatura2024.amennillo.eu)
+- [Progetto originale Handymenny](https://github.com/handymenny/mappaturaInfratel)
+
+### Aggiorna archivi
+
+Il comando «Aggiorna archivi» svuota le cache gestite da MI25-6: gli ZIP salvati in IndexedDB, i dataset parsati conservati in IndexedDB e i byte ZIP nella memoria del Web Worker. Se una Regione è selezionata, i dataset automatici vengono caricati nuovamente. I file manuali non vengono cancellati.
+
+L'operazione non svuota la cache generale del browser, non elimina cookie o dati di altri siti e non modifica l'archivio dell'API Legacy.
+
+## Architettura tecnica
+
+MI25-6 è un'applicazione statica: non richiede un backend applicativo dedicato. Il browser scarica gli archivi dalla cartella `data/` del sito.
+
+L'elaborazione dei dati è distribuita in moduli specializzati:
+
+- `index.html`: struttura della pagina, controlli e contenuti informativi.
+- `PageUI/style.css`: stile e temi dell'interfaccia.
+- `JS/app.js`: inizializzazione dell'interfaccia e collegamento degli eventi.
+- `JS/controllers/`: controller distinti per autocomplete, ricerca, caricamento regionale, CSV Reader e modalità Legacy.
+- `JS/ui/results.js`: composizione dei risultati, confronto storico e report.
+- `JS/services/data-client.js`: comunicazione asincrona tra interfaccia e Web Worker.
+- `JS/workers/data.worker.js`: motore dati, memoria dei record, indicizzazione, ricerca e gestione dei comandi.
+- `JS/data/`: parser CSV, normalizzazione, caricamento degli archivi, cache, diagnostica e ricerca.
 - `JS/data.js`: re-export di compatibilità del modulo dati.
-- `JS/datasets.js`: definizioni dei dataset, alias delle colonne e legenda.
-- `JS/legacy.js`: client e funzioni di formattazione dell'API storica.
-- `data/fixed-2025/`, `data/pi1g-2025/`, `data/fixed-2021/`, `data/proximity-2025/`, `data/fibercop-proximity-2025/`: archivi ZIP pubblicati.
+- `JS/datasets.js`: definizioni dei dataset, alias delle intestazioni, Regione e legenda.
+- `JS/legacy.js`: client e funzioni di formattazione per l'API storica.
+- `data/`: archivi ZIP regionali e nazionali consultati dall'applicazione.
+- `tests/`: test automatici dei moduli, dei parser, dei controller e del Worker.
 
-### Thread e persistenza
+Decompressione ZIP, parsing CSV, indicizzazione, suggerimenti, ricerca indirizzi e filtraggio/paginazione del CSV Reader vengono eseguiti nel Web Worker, per ridurre il lavoro sul main thread e mantenere l'interfaccia reattiva.
 
-Il browser esegue parsing CSV, decompressione ZIP, aggregazione dei record, autocomplete, ricerca indirizzi e filtraggio/paginazione del CSV Reader nel Web Worker. Il main thread resta dedicato alla UI e riceve soltanto conteggi, suggerimenti, risultati e la pagina corrente del Reader.
+### Cache e persistenza
 
-Gli ZIP scaricati vengono memorizzati in IndexedDB per 30 giorni e riutilizzati tra visite e ricaricamenti della pagina. La cache in memoria evita richieste duplicate nella stessa sessione. Il pulsante **Aggiorna archivi** svuota la cache persistente e quella in memoria, così da recuperare le versioni pubblicate più recenti. Se IndexedDB non è disponibile o lo spazio è esaurito, il loader continua usando la cache in memoria e la rete come fallback.
+Gli ZIP scaricati vengono conservati in IndexedDB per un massimo di 30 giorni. Una cache in memoria nel Worker evita di ripetere richieste duplicate nella stessa sessione. Anche alcuni dataset già parsati possono essere salvati in IndexedDB, entro limiti di dimensione e numero di record, per evitare di ripetere parsing e decompressione nelle visite successive.
 
-## Dataset aggiuntivi
+Se IndexedDB non è disponibile o la scrittura persistente non riesce, il caricamento può proseguire usando la rete e la cache in memoria. «Aggiorna archivi» invalida entrambe le cache persistenti e quella ZIP in memoria.
 
-Gli archivi di prossimità 2025 sono pubblicati come `Italia.zip` e contengono gli ZIP regionali in maiuscolo; il loader accetta questa capitalizzazione e legge solo la Regione selezionata. La mappatura fissa 2021 è invece pubblicata come ZIP regionali indipendenti direttamente in `data/fixed-2021/` (ad esempio `SICILIA.zip`, `ABRUZZO.zip`). I nomi originali non sempre coincidono con lo slug web della Regione: il loader usa una tabella esplicita per i file effettivamente presenti. Non viene creato un archivio nazionale unico: gli ZIP regionali disponibili occupano complessivamente circa 151 MiB, oltre il limite massimo di 100 MiB per un singolo file GitHub. I CSV possono avere colonne riordinate e campi opzionali mancanti, inclusa la colonna `barrato`.
+## Esecuzione locale
 
-Il riconoscimento utilizza intestazioni normalizzate: maiuscole/minuscole, spazi, accenti, underscore e altri separatori non cambiano il nome logico della colonna. Le colonne non conosciute vengono comunque conservate nel risultato come campi aggiuntivi.
+È necessario un browser moderno con supporto per moduli JavaScript, Web Worker e API Fetch. IndexedDB migliora la persistenza, ma non è indispensabile per il caricamento di base.
 
-Per i civici di prossimità 2025 sono supportati i campi relativi alla copertura privata dichiarata nella mappatura 2024 e al campo `Coperto a giugno 2025`. Per FiberCop sono supportati `Ammissibile (SI/NO)` e `Cause esclusione`. Per la mappatura fissa 2021 sono supportati `colore_26`, `peak_vel_down_26` e `vel_max_down_26`. L'interfaccia interpreta i codici invece di mostrarli grezzi: `g` = Grigio, `n` = Nero, `b` o valore vuoto = Bianco. I valori di velocità sono classi/soglie, non Mbit/s da leggere letteralmente: con il campo colore presente, ad esempio `2` = almeno 300 Mbit/s e `1000` = almeno 1.000 Mbit/s. Se il campo colore è assente, si applica la diversa codifica prevista per le aree bianche.
-
-L'interpretazione delle classi 2026 riprende la legenda dell'interfaccia storica di riferimento: [Handymenny · InfoDisplay.tsx](https://github.com/handymenny/mappaturaInfratel/blob/main/components/layout/InfoDisplay.tsx).
-
-## Modalità di consultazione
-
-La modalità standard carica tutti i dataset regionali disponibili quando viene selezionata la Regione: mappatura generale 2025, PI1G 2025, mappatura fissa 2021, prossimità 2025 e FiberCop. I record completi vengono mantenuti in memoria e alimentano tutti i suggerimenti e la ricerca indirizzo; l'invio della ricerca non scarica né rilegge gli stessi archivi.
-
-Gli ZIP automatici scaricati vengono salvati in IndexedDB, con una scadenza di 30 giorni, e riutilizzati tra visite e ricaricamenti della pagina. La cache persistente conserva i byte compressi degli archivi, non una seconda copia dei record già espansi: alla riapertura il browser evita il download ma deve comunque decomprimere gli ZIP e analizzare i CSV per ricostruire i record in memoria. Il pulsante **Aggiorna archivi** svuota la cache IndexedDB e richiede nuovamente i file pubblicati; se IndexedDB non è disponibile o la quota locale è esaurita, il caricamento continua con la sola cache in memoria. In un sito statico il primo caricamento di una Regione deve comunque scaricare e scandire i relativi CSV.
-
-CSV Reader è una modalità separata e volontaria. Permette di scegliere una sola fonte per volta e leggere tutte le righe del relativo CSV, mantenendo intestazioni, valori e ordine originale. Include una ricerca testuale client-side su tutte le colonne, con filtro e paginazione da 50, 100 o 250 righe. La ricerca non modifica i dati originali e mantiene l'ordine sorgente dei risultati. La lettura completa può richiedere tempo e memoria, soprattutto per la mappatura 2021. Per uscire, disattivare CSV Reader o tornare alla Ricerca indirizzo.
-
-Nel campo Regione e nei campi Provincia, Città, Via e Civico, Invio seleziona il primo suggerimento corrispondente e porta al campo successivo; dopo il Civico avvia la ricerca. Comune e Via sono richiesti, il Civico è facoltativo. Gli hint cremisi mostrano le Regioni corrispondenti o il numero di suggerimenti e consentono di continuare con un valore digitato manualmente.
-
-## Esecuzione
-
-Servire la cartella radice con un server HTTP statico e aprire l'indirizzo locale. Ad esempio:
+Per avviare un server HTTP statico dalla cartella principale del progetto:
 
 ```bash
 python -m http.server 8000
 ```
 
-Aprire quindi `http://localhost:8000/`. Non aprire direttamente il file HTML dal filesystem: il caricamento ZIP utilizza `fetch`.
+Aprire quindi <http://localhost:8000/>.
 
-## Test
+Non aprire direttamente `index.html` dal filesystem: il caricamento degli archivi utilizza richieste HTTP tramite `fetch`.
 
-Con Node.js 22 o successivo:
+## Test automatici
+
+Per eseguire la suite è necessario Node.js 22 o successivo:
 
 ```bash
 npm test
 ```
 
-I 13 test coprono i formati CSV forniti, le intestazioni facoltative e riordinate, gli archivi nazionali con ZIP regionali annidati in maiuscolo, i dataset esistenti, il filtraggio per Comune/Via/Civico, la conservazione delle colonne CSV originali e un caricamento da 150.000 record. Il parser non applica un limite al numero di righe; restano solo limiti di dimensione dei file e degli archivi per evitare caricamenti binari eccessivi.
+La suite copre, tra gli altri aspetti:
 
-MI25-6 non è un verificatore commerciale in tempo reale e non certifica che un servizio sia attivabile presso un indirizzo.
+- riconoscimento dei quattro codici caratteristica della legenda;
+- parsing CSV con intestazioni variabili, colonne mancanti e campi aggiuntivi;
+- archivi ZIP nazionali e regionali, anche con nomi in maiuscolo;
+- mappatura 2021 e decodifica dei campi di colore e velocità;
+- caricamento differito dei dataset;
+- ricerca, suggerimenti e indicizzazione dei Comuni;
+- CSV Reader e conservazione dei campi originali;
+- comportamento della cache e ricaricamento degli archivi;
+- elaborazione di CSV con 150.000 righe;
+- avvio e comunicazione del Web Worker.
+
+La pipeline GitHub Actions esegue anche il controllo sintattico dei file JavaScript e la suite `npm test`.
+
+## Fonti e limiti
+
+Le fonti dei dati sono i dataset pubblicati da Infratel e i relativi archivi territoriali indicati nel progetto. Le interpretazioni delle codifiche specifiche della mappatura 2021 seguono la legenda del progetto storico di riferimento: [Handymenny · InfoDisplay.tsx](https://github.com/handymenny/mappaturaInfratel/blob/main/components/layout/InfoDisplay.tsx).
+
+MI25-6 non interroga i sistemi commerciali degli operatori, non certifica la vendibilità di un indirizzo e non fornisce una verifica della copertura in tempo reale. Gli esiti mostrati dipendono dai dataset caricati e dalla loro data di pubblicazione.
