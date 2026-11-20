@@ -12,7 +12,7 @@ import {
   searchRecords,
   DATASET_DEFINITIONS,
   EXTRA_DATASET_KEYS
-} from "../data/index.js?v=1.2.008";
+} from "../data/index.js?v=1.2.009";
 
 const emptyExtra = () => Object.fromEntries(EXTRA_DATASET_KEYS.map((key) => [key, []]));
 const store = {

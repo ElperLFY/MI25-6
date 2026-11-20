@@ -1,4 +1,4 @@
-import { DATASET_DEFINITIONS, DOTS, EXTRA_DATASET_KEYS, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, normalise } from "../data/index.js?v=1.2.007";
+import { DATASET_DEFINITIONS, DOTS, EXTRA_DATASET_KEYS, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, normalise } from "../data/index.js?v=1.2.009";
 import { legacyReport, legacySections } from "../legacy.js";
 
 export function createResultsRenderer({ $, createElement, state, legacyClient, getGeneralAbsenceMessage, copyText }) {
@@ -60,7 +60,7 @@ function getDatasetDisplayRows(key, record) {
     add("Cause di esclusione", record.exclusionReason);
   }
 
-  if (key === "fiberCopProximity2025") {
+  if (key === "privateProximity2025") {
     add("Ammissibile", record.eligibility);
     add("Cause di esclusione", record.exclusionReason);
   }
@@ -351,6 +351,10 @@ function renderResults(results, query, knownCity = false) {
     if (result.pi1g) {
       addLine(item, "Esito PI1G", "Presente nell’Allegato A degli esiti 2025: civico non coperto entro il 2030 oppure tecnologia con velocità di picco non superiore a 300 Mbit/s");
       addLine(item, "Consultazione PI1G", "Pubblicazione Infratel · 16/02/2026");
+    } else if (state.pi1gAvailable || state.manualPi1g) {
+      addLine(item, "Esito PI1G", "Nessun record corrispondente nell’Allegato A caricato per questa Regione. L’assenza dall’Allegato A non certifica la copertura commerciale.");
+    } else {
+      addLine(item, "Esito PI1G", "Archivio regionale non caricato o non verificato.");
     }
 
     renderExtraDatasets(item, result, primaryExtraKey);

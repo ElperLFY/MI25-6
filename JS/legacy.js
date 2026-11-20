@@ -33,7 +33,7 @@ const SPEED_RANGES_2017 = {
 
 const WINNERS = {
   1: "Open Fiber",
-  2: "FiberCop",
+  2: "Operatore beneficiario",
   3: "Open Fiber",
   4: "Open Fiber"
 };

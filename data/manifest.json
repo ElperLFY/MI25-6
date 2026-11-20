@@ -1,0 +1,26 @@
+{
+  "manifestVersion": 1,
+  "note": "Incrementare dataVersion del solo dataset modificato ogni volta che viene sostituito o aggiornato un archivio. Le versioni fanno parte delle chiavi delle cache persistenti e in memoria.",
+  "datasets": {
+    "general2025": {
+      "dataVersion": "2026-11-20.1",
+      "sourcePublicationDate": "2026-02-13"
+    },
+    "pi1g2025": {
+      "dataVersion": "2026-11-20.1",
+      "sourcePublicationDate": "2026-02-16"
+    },
+    "fixedSurvey2021": {
+      "dataVersion": "2026-11-20.1",
+      "sourcePublicationDate": "2021-08-06"
+    },
+    "proximity2025": {
+      "dataVersion": "2026-11-20.1",
+      "sourcePublicationDate": "2025-11-12"
+    },
+    "privateProximity2025": {
+      "dataVersion": "2026-11-20.1",
+      "sourcePublicationDate": "2025-09-12"
+    }
+  }
+}

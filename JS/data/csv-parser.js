@@ -184,13 +184,12 @@ function inferDatasetType(headers, name, forcedType = "") {
   if (has2021Coverage || filename.includes("mappatura2021") || filename.includes("fiss2021") || filename.includes("wiredregioni")) {
     return "fixedSurvey2021";
   }
-  if (filename.includes("fibercop") || filename.includes("fcop") || forcedType === "fiberCopProximity2025") {
-    return "fiberCopProximity2025";
-  }
   if (privateCoverageHeader || hasJuneCoverage || forcedType === "proximity2025") {
     return "proximity2025";
   }
-  if (hasEligibility && hasExclusion) return "fiberCopProximity2025";
+  if ((hasEligibility && hasExclusion) || forcedType === "privateProximity2025"
+    || filename.includes("privateproximity") || filename.includes("prossimitaprivati")
+    || filename.includes("consultazioneprossimita")) return "privateProximity2025";
   if (filename.includes("pi1g") || filename.includes("mapp707k") || forcedType === "pi1g2025") {
     return "pi1g2025";
   }

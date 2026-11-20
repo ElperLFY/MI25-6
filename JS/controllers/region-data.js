@@ -20,7 +20,7 @@ function renderLoadDiagnostics(diagnostics) {
     pi1g2025: "Allegato A PI1G 2025",
     fixedSurvey2021: "Mappatura reti fisse 2021",
     proximity2025: "Civici di prossimità 2025",
-    fiberCopProximity2025: "Civici di prossimità FiberCop 2025"
+    privateProximity2025: "Civici di prossimità – consultazione 2025"
   };
   const formatTime = (milliseconds) => (Math.max(0, milliseconds) / 1000).toLocaleString("it-IT", {
     minimumFractionDigits: 2,
@@ -93,7 +93,7 @@ function syncDeferredDatasetControl() {
   } else if (state.checkedExtras.has("fixedSurvey2021") && state.extraAvailability.fixedSurvey2021 === false) {
     button.disabled = true;
     button.textContent = "Archivio 2021 non disponibile";
-    status.textContent = "La fonte non pubblica un archivio 2021 per questa Regione.";
+    status.textContent = "L’archivio 2021 di questa Regione non è incluso nel pacchetto MI25-6.";
   } else if (state.checkedExtras.has("fixedSurvey2021")) {
     button.disabled = true;
     button.textContent = "Mappatura 2021 caricata";
@@ -156,7 +156,7 @@ async function loadAdditionalDataset() {
       status.textContent = DATASET_DEFINITIONS[key].label + " · errore: " + loaded.extraErrors[key] + ". Puoi riprovare.";
       state.checkedExtras.delete(key);
     } else if (!state.extraAvailability[key] || state.extraCounts[key] === 0) {
-      status.textContent = "L'archivio della mappatura 2021 non risulta disponibile per " + region + ".";
+      status.textContent = "MI25-6 non include attualmente un archivio 2021 per " + region + ". Consulta le FAQ per le Regioni disponibili.";
     } else {
       status.textContent = DATASET_DEFINITIONS[key].label + " · " + state.extraCounts[key].toLocaleString("it-IT") + " record aggiunti alla ricerca.";
     }
@@ -174,13 +174,15 @@ function setAutomaticStatus(region, pi1gAvailable, extraAvailable = state.extraA
   const messages = [
     "Mappatura generale: " + state.generalCount.toLocaleString("it-IT") + " record",
     pi1gAvailable
-      ? "Allegato A PI1G: " + state.pi1gCount.toLocaleString("it-IT") + " record"
-      : "Allegato A PI1G: archivio regionale non disponibile"
+      ? (state.pi1gCount
+        ? "Allegato A PI1G: " + state.pi1gCount.toLocaleString("it-IT") + " record"
+        : "Allegato A PI1G: nessun civico nell’Allegato A per questa Regione")
+      : "Allegato A PI1G: archivio non caricato o non verificato"
   ];
   for (const key of EXTRA_DATASET_KEYS) {
     const count = state.extraCounts[key] || 0;
     if (state.manualExtras.has(key)) messages.push(DATASET_DEFINITIONS[key].label + ": file manuale · " + count.toLocaleString("it-IT") + " record");
-    else if (key === "fixedSurvey2021" && state.checkedExtras.has(key) && extraAvailable[key] === false) messages.push(DATASET_DEFINITIONS[key].label + ": archivio regionale non disponibile");
+    else if (key === "fixedSurvey2021" && state.checkedExtras.has(key) && extraAvailable[key] === false) messages.push(DATASET_DEFINITIONS[key].label + ": archivio non incluso nel pacchetto MI25-6");
     else if (state.checkedExtras.has(key)) messages.push(DATASET_DEFINITIONS[key].label + ": " + count.toLocaleString("it-IT") + " record disponibili per la Regione");
     else if (extraAvailable[key] === false) messages.push(DATASET_DEFINITIONS[key].label + ": archivio regionale non disponibile");
     else if (key === "fixedSurvey2021") messages.push(DATASET_DEFINITIONS[key].label + ": caricamento su richiesta");

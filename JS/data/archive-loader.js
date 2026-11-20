@@ -5,8 +5,37 @@ import {
   getArchiveBytes,
   getParsedDatasetCache,
   putParsedDatasetCache
-} from "./archive-cache.js?v=1.2.008";
+} from "./archive-cache.js?v=1.2.009";
 import { measureAsync, measureSync, nowMs } from "./diagnostics.js";
+
+const DATA_MANIFEST_URL = "data/manifest.json?v=1.2.009";
+let dataManifestPromise = null;
+
+async function getDatasetVersion(datasetKey, baseUrl = "") {
+  if (!dataManifestPromise) {
+    const manifestUrl = baseUrl ? new URL(DATA_MANIFEST_URL, baseUrl).href : DATA_MANIFEST_URL;
+    dataManifestPromise = fetch(manifestUrl, { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Impossibile leggere il manifest dei dataset (HTTP " + response.status + ").");
+        const manifest = await response.json();
+        if (!manifest || typeof manifest.datasets !== "object") {
+          throw new Error("Il manifest dei dataset non ha una struttura valida.");
+        }
+        return manifest;
+      })
+      .catch((error) => {
+        dataManifestPromise = null;
+        throw error;
+      });
+  }
+
+  const manifest = await dataManifestPromise;
+  const version = manifest.datasets[datasetKey]?.dataVersion;
+  if (typeof version !== "string" || !version.trim()) {
+    throw new Error("Versione del dataset mancante nel manifest: " + datasetKey + ".");
+  }
+  return version.trim();
+}
 
 const PI1G_FILES = {
   Campania: "campania.zip",
@@ -176,21 +205,24 @@ async function readArchiveBuffer(buffer, name, forcedType = "", region = "", opt
   return parsed;
 }
 async function fetchArchive(paths, forcedType = "", region = "", options = {}) {
+  const dataVersion = await getDatasetVersion(forcedType, options.baseUrl);
+  const versionedOptions = { ...options, dataVersion };
   let lastError = null;
   for (const path of paths) {
     try {
-      const buffer = await measureAsync(options, "Lettura archivio (cache/rete)", () => getArchiveBytes(path, options.baseUrl, options), { path });
-      if (!buffer) {
-
-        continue;
-      }
+      const buffer = await measureAsync(
+        versionedOptions,
+        "Lettura archivio (cache/rete)",
+        () => getArchiveBytes(path, versionedOptions.baseUrl, versionedOptions),
+        { path, dataVersion }
+      );
+      if (!buffer) continue;
       return await readArchiveBuffer(buffer, path, forcedType, region, {
-        ...options,
+        ...versionedOptions,
         cacheArchivePath: path
       });
     } catch (error) {
       lastError = error;
-
     }
   }
 
@@ -255,7 +287,9 @@ async function readGeneralRegion(region, options = {}) {
 
 async function readPi1gRegion(region, options = {}) {
   const filename = PI1G_FILES[region];
-  if (!filename) return { records: [], available: false };
+  // Gli archivi regionali disponibili contengono tutti i 437.951 record dell'Allegato A.
+  // Per le altre Regioni l'assenza del file corrisponde a zero record nell'Allegato A pubblicato.
+  if (!filename) return { records: [], available: true };
 
   const paths = [
     "data/pi1g-2025/" + filename,
@@ -327,8 +361,8 @@ export async function loadRegionalData(region, options = {}) {
 
 function datasetHintFromFilename(filename) {
   const key = headerKey(filename);
-  if (key.includes("fibercop") || key.includes("fcop")) return "fiberCopProximity2025";
-  if (key.includes("prossimita") || key.includes("proximity") || key.includes("openfiber") || key.includes("giugno") || key.includes("june2025")) return "proximity2025";
+  if (key.includes("privateproximity") || key.includes("prossimitaprivati") || key.includes("consultazioneprossimita")) return "privateProximity2025";
+  if (key.includes("prossimita") || key.includes("proximity") || key.includes("giugno") || key.includes("june2025")) return "proximity2025";
   if (key.includes("mappatura2021") || key.includes("fiss2021") || key.includes("wiredregioni")) return "fixedSurvey2021";
   if (key.includes("pi1g") || key.includes("mapp707k")) return "pi1g2025";
   return "";

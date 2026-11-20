@@ -19,9 +19,9 @@ export const DATASET_DEFINITIONS = {
     folder: "proximity-2025",
     archiveName: "italia.zip"
   },
-  fiberCopProximity2025: {
-    label: "Civici di prossimità FiberCop 2025",
-    folder: "fibercop-proximity-2025",
+  privateProximity2025: {
+    label: "Civici di prossimità – consultazione 2025",
+    folder: "private-proximity-2025",
     archiveName: "italia.zip"
   }
 };
@@ -52,7 +52,7 @@ export const REGIONS = Object.freeze([
 export const EXTRA_DATASET_KEYS = [
   "fixedSurvey2021",
   "proximity2025",
-  "fiberCopProximity2025"
+  "privateProximity2025"
 ];
 
 export const FIELD_ALIASES = {

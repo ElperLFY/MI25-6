@@ -30,8 +30,8 @@ function recordCacheTiming(options, stage, startedAt, details = {}) {
 let archiveCacheDatabasePromise = null;
 let archiveCacheGeneration = 0;
 
-function archiveCacheKey(path) {
-  return "v" + ARCHIVE_CACHE_FORMAT_VERSION + ":" + path;
+function archiveCacheKey(path, dataVersion = "unversioned") {
+  return "v" + ARCHIVE_CACHE_FORMAT_VERSION + ":" + String(dataVersion) + ":" + path;
 }
 
 function openArchiveCacheDatabase() {
@@ -58,18 +58,18 @@ function openArchiveCacheDatabase() {
   return archiveCacheDatabasePromise;
 }
 
-async function readPersistentArchive(path) {
+async function readPersistentArchive(path, dataVersion) {
   const database = await openArchiveCacheDatabase();
   if (!database) return null;
   return new Promise((resolve) => {
     try {
       const transaction = database.transaction(ARCHIVE_CACHE_STORE, "readonly");
-      const request = transaction.objectStore(ARCHIVE_CACHE_STORE).get(archiveCacheKey(path));
+      const request = transaction.objectStore(ARCHIVE_CACHE_STORE).get(archiveCacheKey(path, dataVersion));
       request.onsuccess = () => {
         const entry = request.result;
         if (!entry || !(entry.buffer instanceof ArrayBuffer)) { resolve(null); return; }
         if (!Number.isFinite(entry.cachedAt) || Date.now() - entry.cachedAt > ARCHIVE_CACHE_MAX_AGE_MS) {
-          try { database.transaction(ARCHIVE_CACHE_STORE, "readwrite").objectStore(ARCHIVE_CACHE_STORE).delete(archiveCacheKey(path)); } catch {}
+          try { database.transaction(ARCHIVE_CACHE_STORE, "readwrite").objectStore(ARCHIVE_CACHE_STORE).delete(archiveCacheKey(path, dataVersion)); } catch {}
           resolve(null);
           return;
         }
@@ -81,13 +81,13 @@ async function readPersistentArchive(path) {
   });
 }
 
-async function writePersistentArchive(path, buffer, generation) {
+async function writePersistentArchive(path, buffer, generation, dataVersion) {
   const database = await openArchiveCacheDatabase();
   if (!database || generation !== archiveCacheGeneration) return false;
   return new Promise((resolve) => {
     try {
       const transaction = database.transaction(ARCHIVE_CACHE_STORE, "readwrite");
-      transaction.objectStore(ARCHIVE_CACHE_STORE).put({ key: archiveCacheKey(path), cachedAt: Date.now(), buffer: buffer.slice(0) });
+      transaction.objectStore(ARCHIVE_CACHE_STORE).put({ key: archiveCacheKey(path, dataVersion), cachedAt: Date.now(), buffer: buffer.slice(0) });
       transaction.oncomplete = () => resolve(true);
       transaction.onerror = () => resolve(false);
       transaction.onabort = () => resolve(false);
@@ -95,14 +95,14 @@ async function writePersistentArchive(path, buffer, generation) {
   });
 }
 
-function parsedDatasetCacheKey(path, region, dataset, entryName) {
-  return "v" + PARSED_DATASET_CACHE_VERSION + ":"
+function parsedDatasetCacheKey(path, region, dataset, entryName, dataVersion = "unversioned") {
+  return "v" + PARSED_DATASET_CACHE_VERSION + ":" + String(dataVersion) + ":"
     + [path, region, dataset, entryName].map((part) => String(part ?? "")).join("|");
 }
 
 export async function getParsedDatasetCache(path, region, dataset, entryName, options = {}) {
   if (options.readerMode || options.includeSourceFields || options.query) return null;
-  const key = parsedDatasetCacheKey(path, region, dataset, entryName);
+  const key = parsedDatasetCacheKey(path, region, dataset, entryName, options.dataVersion);
   const startedAt = nowMs();
   const database = await openArchiveCacheDatabase();
   if (!database) {
@@ -157,7 +157,7 @@ export async function putParsedDatasetCache(path, region, dataset, entryName, pa
     return false;
   }
 
-  const key = parsedDatasetCacheKey(path, region, dataset, entryName);
+  const key = parsedDatasetCacheKey(path, region, dataset, entryName, options.dataVersion);
   const generation = parsedDatasetCacheGeneration;
   const database = await openArchiveCacheDatabase();
   if (!database || generation !== parsedDatasetCacheGeneration) return false;
@@ -211,15 +211,18 @@ const DEFAULT_ARCHIVE_IDLE_TIMEOUT_MS = 30_000;
 
 export async function getArchiveBytes(path, baseUrl = "", options = {}) {
   const requestUrl = baseUrl ? new URL(path, baseUrl).href : path;
-  if (archiveBytesCache.has(requestUrl)) {
+  const dataVersion = String(options.dataVersion || "unversioned");
+  const memoryKey = dataVersion + ":" + requestUrl;
+
+  if (archiveBytesCache.has(memoryKey)) {
     recordCacheTiming(options, "Fonte ZIP", nowMs(), { source: "memoria Worker" });
   }
-  if (!archiveBytesCache.has(requestUrl)) {
+  if (!archiveBytesCache.has(memoryKey)) {
     const generation = archiveCacheGeneration;
     const idleTimeoutMs = Math.max(1_000, Number(options.idleTimeoutMs) || DEFAULT_ARCHIVE_IDLE_TIMEOUT_MS);
     const task = (async () => {
       const cacheReadStartedAt = nowMs();
-      const cached = await readPersistentArchive(requestUrl);
+      const cached = await readPersistentArchive(requestUrl, dataVersion);
       recordCacheTiming(options, "Lettura IndexedDB", cacheReadStartedAt, { hit: Boolean(cached) });
       if (cached) {
         recordCacheTiming(options, "Fonte ZIP", nowMs(), { source: "IndexedDB" });
@@ -280,7 +283,7 @@ export async function getArchiveBytes(path, baseUrl = "", options = {}) {
         recordCacheTiming(options, "Fonte ZIP", nowMs(), { source: "rete" });
 
         const cacheWriteStartedAt = nowMs();
-        await writePersistentArchive(requestUrl, buffer, generation);
+        await writePersistentArchive(requestUrl, buffer, generation, dataVersion);
         recordCacheTiming(options, "Scrittura IndexedDB", cacheWriteStartedAt);
         return buffer;
       } catch (error) {
@@ -297,10 +300,10 @@ export async function getArchiveBytes(path, baseUrl = "", options = {}) {
         clearTimeout(timeoutId);
       }
     })();
-    archiveBytesCache.set(requestUrl, task);
-    task.catch(() => archiveBytesCache.delete(requestUrl));
+    archiveBytesCache.set(memoryKey, task);
+    task.catch(() => archiveBytesCache.delete(memoryKey));
   }
-  return archiveBytesCache.get(requestUrl);
+  return archiveBytesCache.get(memoryKey);
 }
 
 export async function clearArchiveCache() {

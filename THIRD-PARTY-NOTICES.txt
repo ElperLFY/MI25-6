@@ -138,3 +138,25 @@ Acknowledgement of the original MI25-6 project and the creators
 whose work contributed to it is greatly appreciated.
 
 PERSONAL NOTE: Best to credit the Creators up here for their excellent work; without them, MI25-6 would never have existed.
+
+4. Source datasets and external data
+------------------------------------
+
+The MIT License in the root LICENSE file applies to the original MI25-6
+source code. It does not automatically license Infratel CSV/ZIP datasets,
+official reports, third-party APIs, or other material reproduced by the
+application.
+
+No separate open-data license specifically covering the Infratel CSV
+archives used by MI25-6 was identified in the sources reviewed for this
+release. Infratel's legal notices state that copyright in texts and other
+published material belongs to Infratel and/or the respective authors and
+prohibit reproduction without prior written authorization, subject to the
+limited quotation cases described there:
+
+  https://www.infratelitalia.it/note-legali
+
+The availability of a dataset for download should not be read as a general
+permission to redistribute it. Users and downstream distributors should
+check the terms of the original source and obtain any authorization that
+may be required. The MI25-6 MIT License does not alter those data rights.

@@ -1,18 +1,18 @@
 import {
   DOTS, EXTRA_DATASET_KEYS, REGIONS, normalise
-} from "./data/index.js?v=1.2.008";
+} from "./data/index.js?v=1.2.009";
 import {
   cityIsKnown, clearArchiveCache, clearManualDatasets, findCityRecord,
   getCsvReaderPage, getSuggestions, loadCsvReaderDataset as requestCsvReaderDataset,
   loadRegionalData, parseUploadedFiles, releaseCsvReader, searchRecords
-} from "./services/data-client.js?v=1.2.008";
-import { createResultsRenderer } from "./ui/results.js?v=1.2.007";
+} from "./services/data-client.js?v=1.2.009";
+import { createResultsRenderer } from "./ui/results.js?v=1.2.009";
 import { createCsvReaderController } from "./controllers/csv-reader.js";
 
 import { LegacyClient } from "./legacy.js";
-import { createLegacyController } from "./controllers/legacy-controller.js?v=1.2.005";
+import { createLegacyController } from "./controllers/legacy-controller.js?v=1.2.009";
 import { createAutocompleteController } from "./controllers/autocomplete.js";
-import { createRegionDataController } from "./controllers/region-data.js?v=1.2.005";
+import { createRegionDataController } from "./controllers/region-data.js?v=1.2.009";
 import { createSearchController } from "./controllers/search.js";
 
 const $ = (id) => document.getElementById(id);
@@ -144,15 +144,25 @@ function renderLegend() {
   const legend = $("legend-list");
   legend.textContent = "";
 
-  for (const [code, details] of Object.entries(DOTS)) {
+  const addEntry = (code, description, color, outlined = false) => {
     const row = createElement("div", "legend-entry");
     const dot = createElement("span", "dot");
-    dot.style.borderColor = details[0];
+    dot.style.borderColor = color;
+    if (outlined) dot.style.boxShadow = "0 0 0 1px var(--line)";
     row.appendChild(dot);
     row.appendChild(createElement("span", "legend-code", code + ": "));
-    row.appendChild(document.createTextNode(details[1]));
+    row.appendChild(document.createTextNode(description));
     legend.appendChild(row);
+  };
+
+  for (const [code, details] of Object.entries(DOTS)) {
+    addEntry(code, details[1], details[0]);
   }
+
+  legend.appendChild(createElement("div", "legend-heading", "Colori delle aree · mappatura 2021"));
+  addEntry("BIANCO", "nessuna rete ultraveloce presente o credibilmente pianificata nell’orizzonte di riferimento", "#ffffff", true);
+  addEntry("GRIGIO", "una sola rete ultraveloce presente o credibilmente pianificata", "#858585");
+  addEntry("NERO", "almeno due reti ultraveloci presenti o credibilmente pianificate", "#20242b");
 }
 
 function currentSearchState() {

@@ -7,7 +7,7 @@ function getDataWorker() {
     throw new Error("Questo browser non supporta Web Worker. Aggiorna il browser per elaborare gli archivi senza bloccare l'interfaccia.");
   }
   if (!dataWorker) {
-    dataWorker = new Worker(new URL("../workers/data.worker.js?v=1.2.008", import.meta.url), {
+    dataWorker = new Worker(new URL("../workers/data.worker.js?v=1.2.009", import.meta.url), {
       type: "module",
       name: "MI25-6 data engine"
     });

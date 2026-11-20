@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
   <link rel="manifest" href="./site.webmanifest">
-  <link rel="stylesheet" href="./PageUI/style.css?v=1.2.005">
+  <link rel="stylesheet" href="./PageUI/style.css?v=1.2.009">
   <title>Esiti mappatura infrastrutture di rete fissa 2025-26</title>
 </head>
 <body>
@@ -189,7 +189,7 @@
             <option value="pi1g2025">Allegato A PI1G 2025</option>
             <option value="fixedSurvey2021">Mappatura reti fisse 2021</option>
             <option value="proximity2025">Civici di prossimità 2025</option>
-            <option value="fiberCopProximity2025">Civici di prossimità FiberCop 2025</option>
+            <option value="privateProximity2025">Civici di prossimità – consultazione 2025</option>
           </select>
         </div>
         <div class="field">
@@ -309,7 +309,7 @@
       <span aria-hidden="true">·</span>
       <a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a>
     </nav>
-    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Patch 1.2:008</button>
+    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Patch 1.2:009</button>
   </footer>
 
   <dialog class="info-dialog" id="info-dialog" aria-labelledby="dialog-title">
@@ -321,61 +321,107 @@
       <div id="faq-content" hidden>
         <details>
           <summary>Come vengono caricati i dati della mia Regione?</summary>
-          <p>Selezionando una Regione vengono caricati la mappatura generale 2025, l’Allegato A PI1G e gli archivi di prossimità 2025. La mappatura 2021, più pesante, è esclusa dal caricamento iniziale: puoi aggiungerla alla ricerca con il comando dedicato nelle Opzioni Avanzate Dati.</p>
-          <p>Gli archivi ZIP vengono conservati in IndexedDB per 30 giorni. Anche i dataset parsati di dimensione contenuta possono essere riutilizzati nelle visite successive, evitando di ripetere decompressione e parsing; i dataset troppo grandi non vengono copiati nella cache dei record per contenere lo spazio occupato. “Aggiorna archivi” elimina le cache ZIP e dei dataset parsati gestite da MI25-6, poi ricarica i dataset automatici della Regione selezionata. Se IndexedDB non è disponibile o lo spazio locale è esaurito, il caricamento prosegue senza cache persistente.</p>
+          <p>Selezionando una Regione vengono caricati la mappatura generale 2025, l’Allegato A PI1G (quando contiene record per quella Regione) e i due archivi di prossimità. La mappatura 2021 è più pesante e viene aggiunta soltanto quando premi «Carica mappatura 2021» nelle Opzioni Avanzate.</p>
+          <p>Gli archivi automatici sono memorizzati localmente per ridurre download e parsing ripetuti. Quando cambia la versione dichiarata nel manifest dei dataset, MI25-6 usa una nuova chiave di cache e recupera l’archivio aggiornato; non è necessario attendere i 30 giorni né premere «Aggiorna archivi». I dettagli tecnici sono nel README.</p>
         </details>
         <details>
-          <summary>Posso caricare manualmente i miei file CSV o ZIP?</summary>
-          <p>Sì. Puoi selezionare uno o più file CSV oppure archivi ZIP con i dataset Infratel supportati. La presenza della colonna <code>caratteristica</code> identifica la mappatura generale; gli altri file riconosciuti vengono trattati come Allegato A PI1G.</p>
-          <p>I file manuali sostituiscono i dati automatici della rispettiva categoria. Usa file integri e coerenti con la struttura originale.</p>
+          <summary>Per quali Regioni ci sono i dati PI1G e il 2021?</summary>
+          <p><strong>Allegato A PI1G 2025:</strong> gli archivi con record sono disponibili per Campania, Emilia-Romagna, Friuli-Venezia Giulia, Lazio, Lombardia, Puglia, Sicilia, Toscana e Veneto. I nove archivi contengono complessivamente 437.951 record, pari al totale pubblicato da Infratel. Per Abruzzo, Basilicata, Calabria, Liguria, Marche, Molise, Piemonte, Sardegna, Trentino-Alto Adige, Umbria e Valle d’Aosta non risultano civici nell’Allegato A pubblicato: non è un archivio regionale mancante da scaricare.</p>
+          <p><strong>Mappatura reti fisse 2021:</strong> in MI25-6 sono inclusi archivi per Abruzzo, Basilicata, Calabria, Campania, Emilia-Romagna, Friuli-Venezia Giulia, Lazio, Liguria, Marche, Molise, Puglia, Sardegna, Sicilia, Toscana, Trentino-Alto Adige e Valle d’Aosta. Gli archivi di Lombardia, Piemonte, Umbria e Veneto non sono inclusi nell’attuale pacchetto MI25-6. Questo non dimostra che non siano mai stati pubblicati da Infratel: significa soltanto che non sono presenti nel repository.</p>
+          <p><a href="https://www.infratelitalia.it/archivio-documenti/documenti/esiti-mappatura-2025-delle-reti-fisse-civici-non-collegabili-italia-1" target="_blank" rel="noopener noreferrer">Fonte PI1G: Infratel · Allegato A</a> · <a href="https://www.infratelitalia.it/archivio-news/notizie/esiti-mappatura-reti-fisse-2021_news" target="_blank" rel="noopener noreferrer">Fonte mappatura 2021</a></p>
         </details>
         <details>
-          <summary>Come posso cercare un indirizzo?</summary>
-          <p>Seleziona la Regione, poi inserisci almeno Comune e Via. Il civico è facoltativo. I suggerimenti cremisi aiutano a completare i campi; premendo Invio viene selezionato il primo suggerimento corrispondente e il cursore passa al campo successivo. La ricerca utilizza i record di tutti i dataset regionali già caricati; non avvia un secondo download degli stessi archivi.</p>
+          <summary>A quando risalgono i dati?</summary>
+          <ul>
+            <li><strong>Mappatura generale reti fisse 2025:</strong> ultima versione pubblicata il 13/02/2026.</li>
+            <li><strong>Esiti PI1G · Allegato A:</strong> pubblicati il 16/02/2026.</li>
+            <li><strong>Civici di prossimità 2024:</strong> verifica dello stato di copertura a giugno 2025, con esito pubblicato il 12/11/2025.</li>
+            <li><strong>Civici di prossimità · consultazione 2025:</strong> avviso pubblicato il 12/09/2025.</li>
+            <li><strong>Mappatura reti fisse 2021:</strong> pubblicata il 06/08/2021.</li>
+          </ul>
+          <p>La data di pubblicazione non coincide necessariamente con la data in cui la rete è stata costruita o con quella di attivazione commerciale. Controlla sempre la fonte e il periodo di rilevazione.</p>
+          <p><a href="https://www.infratelitalia.it/archivio-documenti/documenti/esiti-mappatura-delle-reti-fisse-2025-conclusa-lanalisi-dei-dati" target="_blank" rel="noopener noreferrer">Mappatura 2025</a> · <a href="https://www.infratelitalia.it/archivio-documenti/documenti/esiti-mappatura-2025-delle-reti-fisse-civici-non-collegabili-italia-1" target="_blank" rel="noopener noreferrer">Allegato A PI1G</a> · <a href="https://www.infratelitalia.it/archivio-documenti/documenti/piano-italia-1-giga-esito-della-verifica-degli-impegni-di-copertura" target="_blank" rel="noopener noreferrer">Verifica prossimità 2024</a> · <a href="https://www.infratelitalia.it/archivio-documenti/documenti/piano-italia-1-giga-esito-mappatura-e-consultazione-2025-delle-reti" target="_blank" rel="noopener noreferrer">Consultazione prossimità 2025</a></p>
         </details>
         <details>
-          <summary>Che cos’è CSV Reader?</summary>
-          <p>È una modalità facoltativa per leggere l’intero CSV di una Regione e di un dataset. Mantiene le intestazioni e i valori originali, l’ordine delle righe e mostra 100 righe per pagina (modificabile). Carica il dataset completo soltanto quando attivi CSV Reader e scegli la fonte: con archivi molto grandi può richiedere più memoria e tempo.</p>
+          <summary>Cosa sono i civici di prossimità e il dataset di consultazione 2025?</summary>
+          <p>I <strong>civici di prossimità</strong> sono indirizzi non presenti nella mappatura originaria del Piano Italia a 1 Giga, individuati durante le verifiche tecniche sul territorio vicino ai civici base del Piano. Una norma ha consentito agli operatori beneficiari di collegare, in determinate condizioni, anche questi indirizzi per favorire una copertura territoriale più omogenea.</p>
+          <p>MI25-6 distingue due archivi: la verifica dei civici di prossimità individuati nel 2024, con dichiarazioni private aggiornate a giugno 2025; e la consultazione pubblica 2025 relativa a un ulteriore insieme di civici di prossimità. Nel secondo archivio i campi «Ammissibile» e «Cause di esclusione» descrivono l’esito della valutazione. Si tratta di procedimenti specifici, non di un controllo della vendibilità commerciale.</p>
+          <p>La vicinanza è stata valutata, tra l’altro, rispetto a reti con le caratteristiche richieste dal Piano o a civici base collegati o pianificati. Una distanza inferiore a 50 metri può far considerare il civico già coperto ai fini della specifica valutazione di ammissibilità: non significa che ogni indirizzo vicino sia già attivabile commercialmente.</p>
+          <p><a href="https://www.infratelitalia.it/archivio-documenti/documenti/piano-italia-1-giga-esito-della-verifica-degli-impegni-di-copertura" target="_blank" rel="noopener noreferrer">Esito verifica prossimità 2024</a> · <a href="https://www.infratelitalia.it/archivio-documenti/documenti/piano-italia-1-giga-esito-mappatura-e-consultazione-2025-delle-reti" target="_blank" rel="noopener noreferrer">Consultazione prossimità 2025</a></p>
+        </details>
+        <details>
+          <summary>Come leggo velocità massima e velocità nelle ore di punta?</summary>
+          <p>La <strong>velocità massima</strong> è la classe della velocità che la rete può raggiungere in determinate condizioni, anche in una parte della giornata. La <strong>velocità di picco</strong> rappresenta invece la prestazione dichiarata durante l’intero periodo di maggior utilizzo della rete, quando il traffico è più intenso. Non sono misurazioni effettuate sul tuo modem e non corrispondono necessariamente alla velocità del contratto vendibile al civico.</p>
+          <p>I simboli indicano soglie matematiche: <code>&lt;</code> significa «minore di»; <code>&gt;</code> «maggiore di»; <code>≤</code> «minore o uguale a»; <code>≥</code> «maggiore o uguale a»; <code>=</code> «esattamente uguale a». Per esempio, <code>≥ 300 Mbit/s</code> comprende 300 e tutti i valori superiori, mentre <code>&gt; 300 Mbit/s</code> esclude il valore esatto di 300.</p>
+          <p>Quando il dato è espresso come intervallo (per esempio 100–200 Mbit/s), si tratta di una fascia classificatoria. Le velocità sono riferite ai dati di mappatura, non a uno speed test.</p>
+        </details>
+        <details>
+          <summary>Cosa significano GRIGIO, NERO e BIANCO nella mappatura 2021?</summary>
+          <p>Sono classi territoriali usate negli orientamenti europei sugli aiuti di Stato per descrivere quante reti ultraveloci sono presenti o credibilmente pianificate nell’area, nell’orizzonte temporale considerato:</p>
+          <ul>
+            <li><strong>BIANCO:</strong> nessuna rete ultraveloce presente o credibilmente pianificata.</li>
+            <li><strong>GRIGIO:</strong> una sola rete ultraveloce presente o credibilmente pianificata.</li>
+            <li><strong>NERO:</strong> almeno due reti ultraveloci presenti o credibilmente pianificate.</li>
+          </ul>
+          <p>Questi colori non sono le categorie PA/A/B/C della mappatura 2025 e non garantiscono da soli la vendibilità di un’offerta al singolo civico.</p>
+          <p><a href="https://eur-lex.europa.eu/legal-content/IT/TXT/?uri=CELEX:52023XC0131(01)" target="_blank" rel="noopener noreferrer">Orientamenti UE sugli aiuti di Stato per le reti a banda larga</a></p>
         </details>
         <details>
           <summary>Perché il mio civico non compare nei risultati?</summary>
-          <p>Il civico potrebbe non essere presente nei dataset caricati oppure potrebbe essere registrato con una denominazione diversa, una frazione, una numerazione barrata o la dicitura SNC.</p>
-          <p>L’assenza di una corrispondenza non dimostra che il civico sia coperto, né consente di attribuirgli una velocità. Significa soltanto che non è stata trovata una corrispondenza nei file consultati.</p>
+          <p>Il civico potrebbe non essere presente nel dataset o essere registrato con una denominazione diversa: nome ufficiale della strada, vecchio toponimo, frazione, località, numero barrato (per esempio 8/A) oppure dicitura SNC. Anche differenze di abbreviazione o formattazione possono impedire l’associazione.</p>
+          <p>Prova a verificare il nome della strada e la numerazione su <a href="https://maps.google.com/" target="_blank" rel="noopener noreferrer">Google Maps</a> o <a href="https://earth.google.com/" target="_blank" rel="noopener noreferrer">Google Earth</a>, quindi ripeti la ricerca con la denominazione alternativa o senza civico. L’assenza di una corrispondenza non dimostra che l’indirizzo sia scoperto o coperto.</p>
         </details>
         <details>
-          <summary>Che cosa indica l’elenco PI1G dei 707.092 civici?</summary>
-          <p>La mappatura Infratel 2025 è stata avviata su 707.092 civici dichiarati non collegabili da Open Fiber entro il 30 giugno 2026. L’Allegato A degli esiti pubblicati contiene 437.951 civici non coperti entro il 2030 oppure coperti da tecnologie che non consentono una velocità di picco superiore a 300 Mbit/s.</p>
-          <p>707.092 è la popolazione inizialmente oggetto della mappatura; 437.951 è il numero di record nell’Allegato A degli esiti.</p>
-          <p><a href="https://www.infratelitalia.it/archivio-documenti/documenti/esiti-mappatura-2025-delle-reti-fisse-civici-non-collegabili-italia-1" target="_blank" rel="noopener noreferrer">Fonte ufficiale: Infratel Italia – Esiti mappatura 2025</a></p>
+          <summary>Che cosa indica l’Allegato A PI1G dei 437.951 civici?</summary>
+          <p>La mappatura speciale pubblicata il 16/02/2026 ha riguardato 707.092 civici che erano stati dichiarati non collegabili entro il 30/06/2026 dal beneficiario del Piano Italia a 1 Giga. L’Allegato A contiene 437.951 civici che, secondo gli esiti, non risultavano coperti entro il 2030 oppure risultavano coperti da tecnologie con velocità di picco non superiore a 300 Mbit/s.</p>
+          <p>L’Allegato A non è l’elenco completo dei civici del Piano Italia a 1 Giga e non è un elenco di indirizzi già attivabili. La presenza indica un esito specifico di quella consultazione; l’assenza dall’Allegato A non certifica da sola la copertura commerciale.</p>
+          <p><a href="https://www.infratelitalia.it/archivio-documenti/documenti/esiti-mappatura-2025-delle-reti-fisse-civici-non-collegabili-italia-1" target="_blank" rel="noopener noreferrer">Fonte ufficiale: Infratel · Esiti PI1G</a></p>
         </details>
         <details>
           <summary>Che cos’è il Piano Italia a 1 Giga?</summary>
-          <p>È un intervento pubblico finanziato attraverso il PNRR per estendere reti a banda ultralarga nelle aree individuate dalle mappature. La presenza di un civico in un elenco di pianificazione non dimostra che il collegamento sia già realizzato e attivabile.</p>
-          <p><a href="https://www.infratelitalia.it/infratel-italia-per-il-pnrr/piano-italia-a-1-giga" target="_blank" rel="noopener noreferrer">Fonte ufficiale: Infratel Italia – Piano Italia a 1 Giga</a></p>
+          <p>È un intervento del PNRR per favorire la realizzazione di reti fisse capaci di almeno 1 Gbit/s in download e 200 Mbit/s in upload nelle unità immobiliari individuate dalle mappature. Infratel cura le attività di mappatura e l’attuazione del programma. Per il cittadino, la misura può tradursi in nuove infrastrutture e possibilità di accesso tramite gli operatori, ma un civico presente in un piano non è per questo già attivabile.</p>
+          <p><a href="https://www.infratelitalia.it/infratel-italia-per-il-pnrr/piano-italia-a-1-giga" target="_blank" rel="noopener noreferrer">Fonte ufficiale: Infratel · Piano Italia a 1 Giga</a></p>
         </details>
         <details>
-          <summary>Che cos’è il Fondo Nazionale Connettività?</summary>
-          <p>È uno strumento pubblico volto a sostenere investimenti in infrastrutture di rete a banda ultralarga. FNC e PI1G sono strumenti distinti: la presenza di un civico nell’Allegato A PI1G non permette di stabilire se sia destinatario di un intervento FNC.</p>
-          <p><a href="https://innovazione.gov.it/notizie/avvisi-pubblici/fondo-nazionale-connettivita-bando-per-investimenti-privati-nelle-infrastrutture-per-la-rete-bul/" target="_blank" rel="noopener noreferrer">Fonte: Dipartimento per la Trasformazione Digitale</a></p>
+          <summary>Che cos’è il Fondo Nazionale Connettività (FNC)?</summary>
+          <p>È una misura distinta dal Piano Italia a 1 Giga, nell'ambito della Missione 1 – Componente 2 – Investimento 7 del PNRR. È promossa dal Dipartimento per la Trasformazione Digitale e gestita da Invitalia come Implementing Partner. Mette a disposizione oltre 700 milioni di euro per sostenere investimenti privati nelle infrastrutture di rete fissa; l'assegnazione pubblicata nel luglio 2026 arriva fino a 712,5 milioni e riguarda oltre 477.000 civici in sette lotti, con obiettivo di realizzazione entro il 2030.</p>
+          <p>Per un cittadino non è un bonus o uno sconto da richiedere: finanzia la costruzione di infrastrutture. Se un intervento raggiunge l'indirizzo, potrà creare nuove possibilità di connettività, ma non garantisce un'attivazione immediata o una specifica offerta commerciale. FNC e PI1G sono misure diverse.</p>
+          <p><a href="https://innovazione.gov.it/notizie/avvisi-pubblici/fondo-nazionale-connettivita-bando-per-investimenti-privati-nelle-infrastrutture-per-la-rete-bul/" target="_blank" rel="noopener noreferrer">Fonte: Dipartimento per la Trasformazione Digitale · FNC</a> · <a href="https://innovazione.gov.it/notizie/comunicati-stampa/reti-ultraveloci-assegnato-il-fondo-nazionale-per-la-connettivita-per-coprire-olt/" target="_blank" rel="noopener noreferrer">Aggiornamento su assegnazione e civici interessati</a></p>
+        </details>
+        <details>
+          <summary>I CSV Infratel hanno una licenza?</summary>
+          <p>La licenza MIT nel file <code>LICENSE</code> riguarda il codice originale di MI25-6: non concede automaticamente diritti sui CSV, sugli archivi ZIP, sulle relazioni o sugli altri materiali di Infratel. Nelle fonti consultate non ho individuato una licenza open-data specifica associata a questi archivi.</p>
+          <p>Le <a href="https://www.infratelitalia.it/note-legali" target="_blank" rel="noopener noreferrer">Note legali di Infratel</a> dichiarano che i diritti sui testi e sugli altri materiali pubblicati appartengono a Infratel e/o ai rispettivi autori e vietano la riproduzione senza preventiva autorizzazione scritta, salvo le citazioni parziali nei casi indicati. La disponibilità di un file per il download non equivale, da sola, a una licenza generale di ridistribuzione. Per riutilizzare o ripubblicare gli archivi è opportuno verificare le condizioni con Infratel.</p>
+        </details>
+        <details>
+          <summary>Posso caricare manualmente i miei file CSV o ZIP?</summary>
+          <p>Sì. Puoi selezionare uno o più file CSV, TXT o ZIP compatibili con il parser. I file manuali sostituiscono i dati automatici della rispettiva categoria per la sessione corrente; le altre categorie restano disponibili. Il comando «Torna ai dati automatici» rimuove i dataset manuali.</p>
+        </details>
+        <details>
+          <summary>Che cos’è CSV Reader?</summary>
+          <p>È una modalità facoltativa per leggere il CSV originale di una Regione e di un dataset. Mantiene intestazioni, valori, colonne e ordine delle righe; puoi filtrare il contenuto e scegliere il numero di righe per pagina. Con archivi molto grandi può richiedere tempo e memoria.</p>
+        </details>
+        <details>
+          <summary>Come segnalo un errore o un dato anomalo?</summary>
+          <p>Apri una <a href="https://github.com/ElperLFY/MI25-6/issues" target="_blank" rel="noopener noreferrer">segnalazione su GitHub Issues</a>. Indica Regione, Comune, Via, Civico, dataset consultato e cosa ti aspettavi di trovare. Evita di inserire dati personali non necessari; se possibile allega il nome del file e la riga CSV, senza pubblicare informazioni private.</p>
         </details>
         <details>
           <summary>Perché è nato MI25-6?</summary>
-          <p>MI25-6 è un progetto personale e indipendente, pensato per rendere più semplice la consultazione delle mappature delle infrastrutture di rete fissa senza dover scaricare e consultare manualmente numerosi CSV. Il progetto non è un servizio ufficiale di Infratel, AGCOM o degli operatori di telecomunicazioni.</p>
+          <p>MI25-6 è un progetto personale e indipendente, pensato per rendere più semplice la consultazione delle mappature delle infrastrutture di rete fissa senza dover scaricare e consultare manualmente numerosi CSV. Non è un servizio ufficiale di Infratel, AGCOM o degli operatori di telecomunicazioni.</p>
         </details>
         <details>
-          <summary>Che cos’è il confronto storico Handymenny?</summary>
-          <p>Legacy mode interroga l’archivio storico della mappatura Infratel 2017-2021 tramite l’API pubblicata da Handymenny. È indipendente dai CSV MI25-6: recupera gli elenchi di indirizzi e poi richiede il record storico associato all’ID EGON.</p>
-          <p>Quando Legacy mode è attiva, i campi dell’indirizzo vengono inviati al servizio API esterno. Anche il pulsante «Confronta con Legacy» trasmette l’ID EGON del risultato selezionato.</p>
+          <summary>Che cos’è il confronto storico Legacy?</summary>
+          <p>Legacy mode consulta separatamente l’archivio storico della mappatura Infratel 2017–2021 tramite un’API esterna. È indipendente dai CSV MI25-6: recupera gli elenchi di indirizzi e poi richiede il record storico associato all’ID EGON. Quando è attiva, i campi dell’indirizzo e l’ID EGON del risultato selezionato vengono inviati al servizio esterno.</p>
           <p>I risultati descrivono dati storici e non costituiscono una verifica della copertura commerciale o attuale. Il servizio è gestito da terzi e può applicare limiti alle richieste.</p>
-          <p><a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a> · <a href="https://github.com/handymenny/mappaturaInfratel" target="_blank" rel="noopener noreferrer">Progetto originale</a></p>
+          <p><a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica</a> · <a href="https://github.com/handymenny/mappaturaInfratel" target="_blank" rel="noopener noreferrer">Progetto originale</a></p>
         </details>
         <details>
           <summary>MI25-6 verifica la copertura commerciale in tempo reale?</summary>
-          <p>No. MI25-6 consulta dataset pubblicati da Infratel e ArcGIS. Non interroga i sistemi commerciali degli operatori e non certifica la vendibilità di un indirizzo. I risultati rappresentano le informazioni disponibili nei dataset consultati.</p>
+          <p>No. MI25-6 consulta dataset pubblicati in momenti diversi. Non interroga i sistemi commerciali degli operatori e non certifica la vendibilità di un indirizzo. I risultati dipendono dai file disponibili e dai rispettivi periodi di rilevazione.</p>
         </details>
       </div>
       <div id="changelog-content" hidden>
-        <p class="hint">Patch 1.2:008 · correzione della cache e descrizione della mappatura 2021</p>
+        <p class="hint">Patch 1.2:009 · FAQ, disponibilità regionale, legenda 2021 e cache versionata</p>
         <ul>
           <li>Corretta la pulizia della cache: la transazione IndexedDB include sia gli archivi ZIP sia i dataset parsati.</li>
            <li>Allineate le versioni dei moduli di caricamento e pulizia: entrambe le operazioni condividono la stessa cache in memoria.</li>
@@ -401,10 +447,19 @@
           <li>Autocomplete per Regione, Provincia, Comune, Via e Civico con suggerimenti e hint cremisi; Invio seleziona il suggerimento e avanza al campo successivo.</li>
           <li>Legacy mode, risultati, caricamento manuale e confronto storico restano disponibili.</li>
         </ul>
+          <li>Introdotto un manifest dei dataset con una versione esplicita per ciascun archivio; le chiavi delle cache ZIP, dei dati parsati e della memoria Worker includono tale versione.</li>
+          <li>Le visite successive rilevano le nuove versioni dei dati senza attendere 30 giorni e senza richiedere il comando manuale «Aggiorna archivi».</li>
+          <li>Distinta l’assenza di record nell’Allegato A PI1G dall’indisponibilità di un archivio regionale; documentate le Regioni con record e quelle senza civici nell’elenco.</li>
+          <li>Documentati i 16 archivi regionali 2021 disponibili nel repository e le quattro Regioni non incluse nel pacchetto attuale.</li>
+          <li>Aggiunta alla legenda una sezione separata per le classi territoriali 2021 BIANCO, GRIGIO e NERO, distinta dalle categorie PA/A/B/C.</li>
+          <li>Rinominato in modo neutro il dataset della consultazione di prossimità 2025 e aggiornati parser, loader, risultati e CSV Reader.</li>
+          <li>Ampliate le FAQ: date e copertura dei dataset, civici di prossimità, velocità massima e di picco, PI1G, FNC, diritti sui CSV e segnalazione errori.</li>
+          <li>Rimosso il riferimento a test GitHub non più configurati; il repository non contiene attualmente una suite di test automatizzati né workflow CI.</li>
+        </ul>
       </div>
     </div>
   </dialog>
 
-  <script type="module" src="./JS/app.js?v=1.2.008"></script>
+  <script type="module" src="./JS/app.js?v=1.2.009"></script>
 </body>
 </html>
