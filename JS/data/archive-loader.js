@@ -1,6 +1,6 @@
-import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS } from "../datasets.js";
+import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS } from "../datasets.js?v=1.2.009";
 import { normalise } from "./normalization.js";
-import { decodeBuffer, headerKey, parseDataset, parseDatasetStream } from "./csv-parser.js";
+import { decodeBuffer, headerKey, parseDataset, parseDatasetStream } from "./csv-parser.js?v=1.2.009";
 import {
   getArchiveBytes,
   getParsedDatasetCache,

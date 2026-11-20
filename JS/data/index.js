@@ -1,5 +1,5 @@
 export { normalise } from "./normalization.js";
-export { parseDataset, decodeBuffer } from "./csv-parser.js";
+export { parseDataset, decodeBuffer } from "./csv-parser.js?v=1.2.009";
 export { clearArchiveCache } from "./archive-cache.js?v=1.2.009";
 export { loadRegionalData, parseUploadedFiles } from "./archive-loader.js?v=1.2.009";
 export { searchRecords, collectRecords, cityIsKnown, getSuggestions, buildCityIndex, addCityIndexRecords } from "./search.js";
