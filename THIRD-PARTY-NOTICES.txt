@@ -3,7 +3,7 @@ THIRD-PARTY NOTICES
 
 This file records third-party software and project references used by MI25-6.
 It does not define the license of MI25-6's own source code. No license for
-MI25-6's original code is declared by this file.
+This file does not declare a license for MI25-6's original code, leaving it for open use.
 
 1. JSZip 3.10.1
 ---------------
@@ -121,6 +121,5 @@ official product of, or is maintained by, the upstream author.
 ---------------------------
 
 The notices above apply to the third-party components and references
-identified in this file. They do not grant permission to reuse MI25-6's
-original source code. The license for MI25-6 itself must be specified
-separately by its copyright holder in a root-level LICENSE file.
+identified in this file. Reusing MI25-6 source code is not recommended.
+Although it is approved to be used. Best for you to credit the Creators up here, not me.
