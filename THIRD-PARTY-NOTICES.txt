@@ -120,6 +120,21 @@ official product of, or is maintained by, the upstream author.
 3. MI25-6 project licensing
 ---------------------------
 
-The notices above apply to the third-party components and references identified in this file.
-Reusing MI25-6 source code is recommended as long as you don't copy and commercialize it claiming it as yours.
-Although it is approved to be used. Best for you to credit the Creators up here for their excellent work; without them, MI25-6 wouldn't have existed.
+The original MI25-6 source code is licensed under the MIT License.
+See the LICENSE file for the complete license terms.
+
+You are free to use, copy, modify, redistribute and commercialize
+MI25-6, including in proprietary projects, without being required
+to publish your modifications.
+
+The original copyright and permission notices must be retained
+in copies or substantial portions of the Software, as required
+by the MIT License.
+
+The third-party components and references identified above
+remain subject to their respective licenses and terms.
+
+Acknowledgement of the original MI25-6 project and the creators
+whose work contributed to it is greatly appreciated.
+
+PERSONAL NOTE: Best to credit the Creators up here for their excellent work; without them, MI25-6 would never have existed.
