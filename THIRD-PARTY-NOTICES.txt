@@ -2,8 +2,8 @@ THIRD-PARTY NOTICES
 ===================
 
 This file records third-party software and project references used by MI25-6.
-It does not define the license of MI25-6's own source code. No license for
-This file does not declare a license for MI25-6's original code, leaving it for open use.
+It does not define the license of MI25-6's own source code. 
+What defines the license is the ***LICENSE*** file.
 
 1. JSZip 3.10.1
 ---------------
