@@ -120,6 +120,6 @@ official product of, or is maintained by, the upstream author.
 3. MI25-6 project licensing
 ---------------------------
 
-The notices above apply to the third-party components and references
-identified in this file. Reusing MI25-6 source code is not recommended.
-Although it is approved to be used. Best for you to credit the Creators up here, not me.
+The notices above apply to the third-party components and references identified in this file.
+Reusing MI25-6 source code is recommended as long as you don't copy and commercialize it claiming it as yours.
+Although it is approved to be used. Best for you to credit the Creators up here for their excellent work; without them, MI25-6 wouldn't have existed.
