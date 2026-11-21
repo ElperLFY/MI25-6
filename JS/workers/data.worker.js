@@ -1,6 +1,6 @@
 import "../../vendor/jszip.min.js";
 import { nowMs, recordTiming } from "../data/diagnostics.js";
-import { getReaderPage } from "../data/reader-table.js?v=1.3.000";
+import { getReaderPage } from "../data/reader-table.js?v=1.3.1";
 import {
   addCityIndexRecords,
   buildCityIndex,
@@ -13,7 +13,7 @@ import {
   searchRecords,
   DATASET_DEFINITIONS,
   EXTRA_DATASET_KEYS
-} from "../data/index.js?v=1.3.000";
+} from "../data/index.js?v=1.3.1";
 
 const emptyExtra = () => Object.fromEntries(EXTRA_DATASET_KEYS.map((key) => [key, []]));
 const store = {

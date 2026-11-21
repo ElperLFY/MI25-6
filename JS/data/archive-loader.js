@@ -1,14 +1,14 @@
-import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS } from "../datasets.js?v=1.3.000";
+import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS } from "../datasets.js?v=1.3.1";
 import { normalise } from "./normalization.js";
-import { decodeBuffer, headerKey, parseDataset, parseDatasetStream } from "./csv-parser.js?v=1.3.000";
+import { decodeBuffer, headerKey, parseDataset, parseDatasetStream } from "./csv-parser.js?v=1.3.1";
 import {
   getArchiveBytes,
   getParsedDatasetCache,
   putParsedDatasetCache
-} from "./archive-cache.js?v=1.3.000";
+} from "./archive-cache.js?v=1.3.1";
 import { measureAsync, measureSync, nowMs } from "./diagnostics.js";
 
-const DATA_MANIFEST_URL = "data/manifest.json?v=1.3.000";
+const DATA_MANIFEST_URL = "data/manifest.json?v=1.3.1";
 let dataManifestPromise = null;
 
 async function getDatasetVersion(datasetKey, baseUrl = "") {

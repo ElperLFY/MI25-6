@@ -1,18 +1,18 @@
 import {
   DOTS, EXTRA_DATASET_KEYS, REGIONS, normalise
-} from "./data/index.js?v=1.3.001";
+} from "./data/index.js?v=1.3.1";
 import {
   cityIsKnown, clearArchiveCache, clearManualDatasets, findCityRecord,
   getCsvReaderPage, getSuggestions, loadCsvReaderDataset as requestCsvReaderDataset,
   loadRegionalData, parseUploadedFiles, releaseCsvReader, searchRecords
-} from "./services/data-client.js?v=1.3.001";
-import { createResultsRenderer } from "./ui/results.js?v=1.3.001";
-import { createCsvReaderController } from "./controllers/csv-reader.js?v=1.3.001";
+} from "./services/data-client.js?v=1.3.1";
+import { createResultsRenderer } from "./ui/results.js?v=1.3.1";
+import { createCsvReaderController } from "./controllers/csv-reader.js?v=1.3.1";
 
-import { LegacyClient } from "./legacy.js?v=1.3.001";
-import { createLegacyController } from "./controllers/legacy-controller.js?v=1.3.001";
+import { LegacyClient } from "./legacy.js?v=1.3.1";
+import { createLegacyController } from "./controllers/legacy-controller.js?v=1.3.1";
 import { createAutocompleteController } from "./controllers/autocomplete.js";
-import { createRegionDataController } from "./controllers/region-data.js?v=1.3.001";
+import { createRegionDataController } from "./controllers/region-data.js?v=1.3.1";
 import { createSearchController } from "./controllers/search.js";
 
 const $ = (id) => document.getElementById(id);

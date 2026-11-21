@@ -8,9 +8,23 @@
 
 Il progetto è personale, non è un servizio ufficiale di Infratel, AGCOM o di un operatore e non verifica la vendibilità commerciale in tempo reale. È sviluppato da un singolo maintainer con il supporto di strumenti di IA.
 
-## Optimization Overhaul 1.3
+## Versione corrente · 1.3.1 (Patch)
+
+Rifinitura dell'interfaccia: linguaggio più diretto, FAQ organizzate per argomento, dettagli tecnici nascosti nella modalità sviluppatore, finestra FAQ con scorrimento corretto e indicatori cromatici per Bianco, Grigio e Nero.
+
+## Release precedente · 1.3.0 (Update)
 
 Revisione architetturale del Data Engine dedicata alla gestione della memoria: cache ZIP limitata alle richieste in corso, caricamenti regionali serializzati, CSV Reader con righe compatte, paginazione senza array di risultati intermedi e invalidazione dei caricamenti obsoleti. La compatibilità dell’interfaccia e dei risultati di ricerca resta l’obiettivo della revisione.
+
+## Versionamento
+
+MI25-6 usa il formato **MAJOR.MINOR.PATCH**:
+
+- **Patch** (PATCH): correzioni e rifiniture compatibili, senza cambiare il comportamento pubblico previsto.
+- **Update** (MINOR): nuove funzionalità e miglioramenti compatibili con le versioni precedenti.
+- **Big Update** (MAJOR): cambiamenti importanti che possono interrompere la compatibilità o modificare in modo sostanziale l'utilizzo.
+
+Lo storico delle release nel changelog dell'applicazione riporta sempre sia il numero SemVer sia il tipo di rilascio.
 
 ## Funzionalità
 
