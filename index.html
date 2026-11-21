@@ -404,7 +404,7 @@
   <details>
             <summary>Che cos’è il Fondo Nazionale Connettività (FNC)?</summary>
             <p>È una misura distinta dal Piano Italia a 1 Giga, nell'ambito della Missione 1 – Componente 2 – Investimento 7 del PNRR. È promossa dal Dipartimento per la Trasformazione Digitale e gestita da Invitalia come Implementing Partner. Mette a disposizione oltre 700 milioni di euro per sostenere investimenti privati nelle infrastrutture di rete fissa; l'assegnazione pubblicata nel luglio 2026 arriva fino a 712,5 milioni e riguarda oltre 477.000 civici in sette lotti, con obiettivo di realizzazione entro il 2030.</p>
-            <p>Per un cittadino non è un bonus o uno sconto da richiedere: finanzia la costruzione di infrastrutture. Se un intervento raggiunge l'indirizzo, potrà creare nuove possibilità di connettività, ma non garantisce un'attivazione immediata o una specifica offerta commerciale. FNC e PI1G sono misure diverse.</p>
+            <p>Finanzia la costruzione di infrastrutture. Se un intervento raggiunge l'indirizzo, potrà creare nuove possibilità di connettività, ma non garantisce un'attivazione immediata o una specifica offerta commerciale (dai 60 ai 90 giorni). FNC e PI1G sono misure diverse.</p>
             <p><a href="https://innovazione.gov.it/notizie/avvisi-pubblici/fondo-nazionale-connettivita-bando-per-investimenti-privati-nelle-infrastrutture-per-la-rete-bul/" target="_blank" rel="noopener noreferrer">Fonte: Dipartimento per la Trasformazione Digitale · FNC</a> · <a href="https://innovazione.gov.it/notizie/comunicati-stampa/reti-ultraveloci-assegnato-il-fondo-nazionale-per-la-connettivita-per-coprire-olt/" target="_blank" rel="noopener noreferrer">Aggiornamento su assegnazione e civici interessati</a></p>
           </details>
         </section>
@@ -445,60 +445,58 @@
       <div id="changelog-content" hidden>
         <p class="hint">Patch 1.3.2 · chiarezza sugli aggiornamenti dei dati</p>
         <ul>
-          <li>Chiarito che MI25-6 non scarica autonomamente i nuovi archivi dal portale Infratel: i file aggiornati devono prima essere pubblicati nel repository del progetto.</li>
-          <li>Precisato che «Aggiorna archivi» cancella la cache locale e riscarica soltanto gli archivi già pubblicati su MI25-6.</li>
-          <li>Corretto il riferimento alla documentazione: le istruzioni tecniche sono nel Tutorial.</li>
+          <li>MI25-6 non scarica autonomamente i nuovi archivi dal portale Infratel; questa specifica non era presente nelle FAQ.</li>
+          <li>Precisato che "Aggiorna archivi" cancella la cache locale e riscarica soltanto gli archivi già pubblicati su MI25-6.</li>
+          <li>Corretto il riferimento alla documentazione: le istruzioni tecniche sono nel Tutorial su Github.</li>
         </ul>
         <p class="hint">Patch 1.3.1 · testi, FAQ e leggibilità</p>
         <ul>
-          <li>Riscritti gli avvisi e le descrizioni in linguaggio diretto, senza esporre dettagli interni agli utenti comuni.</li>
+          <li>Riscritti gli avvisi e le descrizioni.</li>
           <li>Riorganizzate le FAQ in sezioni tematiche e aggiunta una risposta su come aggiornare i dati.</li>
-          <li>Racchiusi i dettagli delle prestazioni in una modalità sviluppatore discreta nel footer.</li>
-          <li>Corretto lo scroll del dialogo FAQ con un contenitore flessibile che non taglia l’ultimo elemento.</li>
-          <li>Resi visibili i colori Bianco, Grigio e Nero sia nella legenda 2021 sia nei risultati 2021 e Legacy.</li>
+          <li>Racchiusi i dettagli delle prestazioni in una modalità sviluppatore discreta.</li>
+          <li>Corretto un bug in cui FAQ tagliava metà della tematica finale.</li>
+          <li>Resi effettivamente visibili i colori Bianco, Grigio e Nero sia nella legenda 2021 sia nei risultati 2021 e Legacy.</li>
         </ul>
-        <p class="hint">Update 1.3.0 · revisione architetturale del Data Engine</p>
+        <p class="hint">Update 1.3.0 · revisione del Data Engine</p>
         <ul>
-          <li>Il CSV Reader conserva i valori automatici in array per colonna e mantiene intestazioni, file sorgente e indice della Regione una sola volta per sorgente, evitando milioni di array-riga e oggetti wrapper.</li>
+          <li>Il CSV Reader conserva i valori automatici in array per colonna e mantiene intestazioni, file sorgente e indice della Regione una sola volta per sorgente.</li>
           <li>La paginazione e il filtro del CSV Reader scorrono i record nel Worker e materializzano soltanto le righe della pagina richiesta; non viene più creato un array completo di tutte le corrispondenze.</li>
           <li>Il rilascio del CSV Reader invalida la generazione attiva e interrompe cooperativamente il parsing/trasferimento dei dati quando il caricamento diventa obsoleto.</li>
           <li>La cache ZIP in memoria deduplica soltanto le richieste in corso e rilascia la Promise completata; gli archivi persistenti restano in IndexedDB. Rimossa anche la copia esplicita dell'ArrayBuffer prima della scrittura.</li>
-          <li>Il caricamento delle famiglie di dataset regionali è serializzato per evitare decompressioni e parsing concorrenti che aumentano il picco RAM.</li>
-          <li>Aggiunti test unitari Node per paginazione, filtro, selezione Regione e compatibilità con i record manuali del CSV Reader.</li>
+          <li>Il caricamento delle famiglie di dataset regionali è serializzato per evitare decompressioni e parsing concorrenti che aumentano il picco di usura della RAM.</li>
+          <li>Aggiunti test unitari Node per paginazione, filtro, selezione Regione e compatibilità con i record manuali del CSV Reader per debugging.</li>
         </ul>
-        <p class="hint">Patch 1.2.9 · FAQ, disponibilità regionale, legenda 2021 e cache versionata</p>
+        <p class="hint">Patch 1.2.0-1.2.9 · FAQ, disponibilità regionale, legenda 2021 e cache versionata</p>
         <ul>
           <li>Corretta la pulizia della cache: la transazione IndexedDB include sia gli archivi ZIP sia i dataset parsati.</li>
-           <li>Allineate le versioni dei moduli di caricamento e pulizia: entrambe le operazioni condividono la stessa cache in memoria.</li>
-           <li>Aggiunta la quarta scheda descrittiva «Mappatura 2021» nelle Opzioni Avanzate, dedicata al caricamento differito del dataset regionale.</li>
-           <li>La legenda è limitata ai quattro valori effettivi del campo caratteristica nei CSV: PA, A, B e C.</li>
+          <li>Allineate le versioni dei moduli di caricamento e pulizia: entrambe le operazioni condividono la stessa cache in memoria.</li>
+          <li>Aggiunta la quarta scheda descrittiva "Mappatura 2021" nelle Opzioni Avanzate, dedicata al caricamento differito del dataset regionale.</li>
           <li>Ripristinata la funzione currentSearchState() rimossa accidentalmente durante la rimozione del renderer datalist: l’autocomplete standard riceve nuovamente Regione, Provincia, Comune, Via e Civico.</li>
           <li>Uniformato l’autocomplete Legacy al combobox personalizzato della ricerca standard: rimossi i datalist nativi di Chrome e aggiunto un popup tematico con navigazione da tastiera.</li>
           <li>Rinominata l’azione in «Aggiorna archivi» e precisato il suo ambito: cache ZIP e dataset parsati di MI25-6, con ricaricamento della Regione selezionata; i file manuali restano invariati.</li>
           <li>Aggiunto il renderer dei risultati Legacy, collegato alle sezioni dati esportate dal modulo storico.</li>
           <li>Corretto l'elemento di descrizione dello stato modalità: ora esiste nell'HTML e viene aggiornato in modo protetto.</li>
           <li>Corretti gli ID dei datalist Legacy: ora il caricamento e la pulizia di Regioni, Province, Comuni, Vie e civici utilizzano gli identificativi effettivamente presenti nell’HTML.</li>
-          <li>Pannelli richiudibili per il caricamento manuale e le opzioni avanzate; descrizioni a schede per CSV Reader, Legacy Mode e Aggiorna archivi.</li>
-          <li>Nuovo Blu mode con palette cromatica alternativa e preferenza salvata nel browser.</li>
+          <li>Pannelli richiudibili per il caricamento manuale e le opzioni avanzate + aggiunta della "DESCRIZIONE".</li>
+          <li>Nuova modalità Blu con palette cromatica alternativa e preferenza salvata nel browser in cache.</li>
           <li>Gli archivi ZIP automatici vengono salvati in IndexedDB per 30 giorni e riutilizzati tra visite e ricaricamenti della pagina.</li>
           <li>Il comando “Aggiorna archivi” svuota le cache locali di MI25-6 e ricarica i dataset automatici della Regione selezionata.</li>
           <li>Il caricamento iniziale esclude la mappatura 2021 più pesante, che può essere aggiunta alla ricerca solo su richiesta.</li>
-          <li>I CSV automatici vengono decompressi e analizzati a blocchi nel Web Worker, senza creare un unico buffer e una stringa completa per ogni archivio.</li>
-          <li>Indice per Comune costruito una volta e riutilizzato da ricerca, verifica dei Comuni e suggerimenti per Via/Civico.</li>
-          <li>Corretto il collegamento del pulsante 2021 e invalidata la cache dei moduli JavaScript per evitare l'esecuzione di versioni precedenti.</li>
+          <li>I CSV automatici vengono decompressi e analizzati a blocchi nel Web Worker, senza più creare un unico buffer e una stringa completa per ogni archivio.</li>
+          <li>Indice per Comune costruito una volta e riutilizzato per la ricerca, la verifica dei Comuni e i suggerimenti per Via/Civico.</li>
+          <li>Corretto un bug che rendeva il pulsante 2021 inutilizzabile e invalidata la cache dei moduli JavaScript per evitare l'esecuzione di versioni precedenti.</li>
           <li>Cache persistente dei risultati già parsati per alcuni dataset regionali di dimensione contenuta.</li>
           <li>CSV Reader opzionale per visualizzare tutte le righe del dataset selezionato, con intestazioni originali, ordine CSV e paginazione.</li>
-          <li>Autocompletamento con Invio per selezionare il suggerimento e passare al campo successivo.</li>
+          <li>Autocomplete con Invio per selezionare il suggerimento e passare al campo successivo.</li>
           <li>Autocomplete per Regione, Provincia, Comune, Via e Civico con suggerimenti e hint cremisi; Invio seleziona il suggerimento e avanza al campo successivo.</li>
           <li>Legacy mode, risultati, caricamento manuale e confronto storico restano disponibili.</li>
-          <li>Introdotto un manifest dei dataset con una versione esplicita per ciascun archivio; le chiavi delle cache ZIP, dei dati parsati e della memoria Worker includono tale versione.</li>
+          <li>Introdotto un manifest dei dataset con una versione esplicita per ciascun archivio; di fatto le chiavi delle cache ZIP, dei dati parsati e della memoria Worker includono tale versione.</li>
           <li>Le visite successive rilevano le nuove versioni dei dati senza attendere 30 giorni e senza richiedere il comando manuale «Aggiorna archivi».</li>
-          <li>Distinta l’assenza di record nell’Allegato A PI1G dall’indisponibilità di un archivio regionale; documentate le Regioni con record e quelle senza civici nell’elenco.</li>
+          <li>Distinta l’assenza di record nell’Allegato A PI1G dall’indisponibilità di un archivio regionale.</li>
           <li>Documentati i 16 archivi regionali 2021 disponibili nel repository e le quattro Regioni non incluse nel pacchetto attuale.</li>
           <li>Aggiunta alla legenda una sezione separata per le classi territoriali 2021 BIANCO, GRIGIO e NERO, distinta dalle categorie PA/A/B/C.</li>
           <li>Rinominato in modo neutro il dataset della consultazione di prossimità 2025 e aggiornati parser, loader, risultati e CSV Reader.</li>
-          <li>Ampliate le FAQ: date e copertura dei dataset, civici di prossimità, velocità massima e di picco, PI1G, FNC, diritti sui CSV e segnalazione errori.</li>
-          <li>Rimosso il riferimento a test GitHub non più configurati; il repository non contiene attualmente una suite di test automatizzati né workflow CI.</li>
+          <li>Ampliate le FAQ: date e copertura dei dataset, civici di prossimità, velocità massima e di picco, PI1G, FNC, diritti sui CSV e possibile segnalazione degli errori.</li>
         </ul>
       </div>
     </div>
