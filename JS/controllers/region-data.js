@@ -4,6 +4,8 @@ export function createRegionDataController({
   $, state, loadRegionalData, clearArchiveCache,
   scheduleSuggestions, renderCsvReaderPage, loadCsvReaderDataset
 }) {
+let diagnosticsAvailable = false;
+
 function renderLoadDiagnostics(diagnostics) {
   const details = $("load-diagnostics");
   const content = $("load-diagnostics-content");
@@ -11,7 +13,9 @@ function renderLoadDiagnostics(diagnostics) {
 
   content.textContent = "";
   if (!diagnostics || !Array.isArray(diagnostics.stages) || !diagnostics.stages.length) {
+    diagnosticsAvailable = false;
     details.hidden = true;
+    details.open = false;
     return;
   }
 
@@ -77,7 +81,24 @@ function renderLoadDiagnostics(diagnostics) {
     section.appendChild(list);
     content.appendChild(section);
   }
-  details.hidden = false;
+  diagnosticsAvailable = true;
+  details.hidden = !document.body.classList.contains("dev-mode-enabled");
+}
+
+function setDeveloperMode(enabled) {
+  const active = Boolean(enabled);
+  document.body.classList.toggle("dev-mode-enabled", active);
+  const button = $("dev-mode-toggle");
+  const details = $("load-diagnostics");
+  if (button) {
+    button.setAttribute("aria-pressed", String(active));
+    button.setAttribute("aria-label", active ? "Disattiva modalità sviluppatore" : "Attiva modalità sviluppatore");
+    button.title = active ? "Disattiva modalità sviluppatore" : "Attiva modalità sviluppatore";
+  }
+  if (details) {
+    details.hidden = !(active && diagnosticsAvailable);
+    if (!active) details.open = false;
+  }
 }
 
 function syncDeferredDatasetControl() {
@@ -89,30 +110,30 @@ function syncDeferredDatasetControl() {
   if (state.manualExtras.has("fixedSurvey2021")) {
     button.disabled = true;
     button.textContent = "Mappatura 2021 manuale attiva";
-    status.textContent = "Il dataset 2021 è già disponibile dal file manuale.";
+    status.textContent = "Hai già caricato un tuo file per la mappatura 2021.";
   } else if (state.checkedExtras.has("fixedSurvey2021") && state.extraAvailability.fixedSurvey2021 === false) {
     button.disabled = true;
     button.textContent = "Archivio 2021 non disponibile";
-    status.textContent = "L’archivio 2021 di questa Regione non è incluso nel pacchetto MI25-6.";
+    status.textContent = "Il pacchetto MI25-6 non contiene il file 2021 per questa Regione.";
   } else if (state.checkedExtras.has("fixedSurvey2021")) {
     button.disabled = true;
     button.textContent = "Mappatura 2021 caricata";
-    status.textContent = "La mappatura 2021 è inclusa nelle ricerche di questa Regione.";
+    status.textContent = "La mappatura 2021 è già stata aggiunta alla ricerca.";
   } else if (!region) {
     button.disabled = true;
     button.textContent = "Carica mappatura 2021";
     button.title = "Seleziona prima una Regione";
-    status.textContent = "Seleziona una Regione per abilitare il caricamento della mappatura 2021.";
+    status.textContent = "Scegli una Regione per abilitare il caricamento.";
   } else if (state.loadedRegion !== region) {
     button.disabled = true;
     button.textContent = "Carica mappatura 2021";
     button.title = "Attendi il caricamento dei dataset principali";
-    status.textContent = "Caricamento della Regione in corso: la mappatura 2021 sarà disponibile al termine.";
+    status.textContent = "Sto preparando i dati della Regione: la mappatura 2021 sarà disponibile tra poco.";
   } else {
     button.disabled = false;
     button.title = "Carica la mappatura storica 2021 per la Regione selezionata";
     button.textContent = "Carica mappatura 2021";
-    status.textContent = "Dataset storico non ancora caricato. Le ricerche ordinarie restano più leggere.";
+    status.textContent = "Archivio opzionale: caricalo soltanto quando ti serve.";
   }
 }
 
@@ -122,7 +143,7 @@ async function loadAdditionalDataset() {
   const key = "fixedSurvey2021";
   const region = $("region").value.trim();
   if (!region || state.loadedRegion !== region) {
-    $("load-2021-dataset-status").textContent = "Seleziona prima una Regione e attendi il caricamento dei dataset principali.";
+    $("load-2021-dataset-status").textContent = "Scegli una Regione e attendi che la ricerca sia pronta."
     return;
   }
   if (state.manualExtras.has(key) || state.checkedExtras.has(key)) {
@@ -135,7 +156,7 @@ async function loadAdditionalDataset() {
   const token = state.loadToken;
   button.disabled = true;
   button.textContent = "Caricamento 2021…";
-  status.textContent = "Download, decompressione e parsing della mappatura 2021 nel Web Worker…";
+  status.textContent = "Sto scaricando e preparando la mappatura 2021 di " + region + "…";
 
   try {
     const loaded = await loadRegionalData(region, {
@@ -156,12 +177,17 @@ async function loadAdditionalDataset() {
       status.textContent = DATASET_DEFINITIONS[key].label + " · errore: " + loaded.extraErrors[key] + ". Puoi riprovare.";
       state.checkedExtras.delete(key);
     } else if (!state.extraAvailability[key] || state.extraCounts[key] === 0) {
-      status.textContent = "MI25-6 non include attualmente un archivio 2021 per " + region + ". Consulta le FAQ per le Regioni disponibili.";
+      status.textContent = "Non ci sono dati 2021 disponibili in MI25-6 per " + region + ". Consulta le FAQ per i dettagli."
     } else {
       status.textContent = DATASET_DEFINITIONS[key].label + " · " + state.extraCounts[key].toLocaleString("it-IT") + " record aggiunti alla ricerca.";
     }
     syncDeferredDatasetControl();
-    if (loaded.timings) $("data-status").textContent += " · Mappatura 2021 caricata su richiesta.";
+    if (loaded.timings) {
+      const note = document.createElement("div");
+      note.className = "file-entry";
+      note.textContent = "Mappatura 2021 aggiunta alla ricerca.";
+      $("data-status").appendChild(note);
+    }
   } catch (error) {
     if (token !== state.loadToken) return;
     status.textContent = error.message || "Impossibile caricare la mappatura 2021.";
@@ -171,26 +197,50 @@ async function loadAdditionalDataset() {
 }
 
 function setAutomaticStatus(region, pi1gAvailable, extraAvailable = state.extraAvailability) {
-  const messages = [
-    "Mappatura generale: " + state.generalCount.toLocaleString("it-IT") + " record",
-    pi1gAvailable
-      ? (state.pi1gCount
-        ? "Allegato A PI1G: " + state.pi1gCount.toLocaleString("it-IT") + " record"
-        : "Allegato A PI1G: nessun civico nell’Allegato A per questa Regione")
-      : "Allegato A PI1G: archivio non caricato o non verificato"
-  ];
-  for (const key of EXTRA_DATASET_KEYS) {
-    const count = state.extraCounts[key] || 0;
-    if (state.manualExtras.has(key)) messages.push(DATASET_DEFINITIONS[key].label + ": file manuale · " + count.toLocaleString("it-IT") + " record");
-    else if (key === "fixedSurvey2021" && state.checkedExtras.has(key) && extraAvailable[key] === false) messages.push(DATASET_DEFINITIONS[key].label + ": archivio non incluso nel pacchetto MI25-6");
-    else if (state.checkedExtras.has(key)) messages.push(DATASET_DEFINITIONS[key].label + ": " + count.toLocaleString("it-IT") + " record disponibili per la Regione");
-    else if (extraAvailable[key] === false) messages.push(DATASET_DEFINITIONS[key].label + ": archivio regionale non disponibile");
-    else if (key === "fixedSurvey2021") messages.push(DATASET_DEFINITIONS[key].label + ": caricamento su richiesta");
-    else messages.push(DATASET_DEFINITIONS[key].label + ": non ancora caricato");
+  const container = $("data-status");
+  container.textContent = "";
+
+  const heading = document.createElement("div");
+  heading.className = "data-status-heading";
+  heading.textContent = "Dati pronti per " + region;
+  container.appendChild(heading);
+
+  const addLine = (message) => {
+    const line = document.createElement("div");
+    line.className = "file-entry";
+    line.textContent = message;
+    container.appendChild(line);
+  };
+  const count = (value) => Number(value || 0).toLocaleString("it-IT");
+
+  addLine("Mappatura generale 2025 · " + count(state.generalCount) + " civici"
+    + (state.manualGeneral ? " · file caricato da te" : ""));
+
+  if (state.manualPi1g) {
+    addLine("Allegato A PI1G · " + count(state.pi1gCount) + " civici · file caricato da te");
+  } else if (pi1gAvailable && state.pi1gCount) {
+    addLine("Allegato A PI1G · " + count(state.pi1gCount) + " civici");
+  } else if (pi1gAvailable) {
+    addLine("Allegato A PI1G · nessun civico pubblicato per questa Regione");
+  } else {
+    addLine("Allegato A PI1G · archivio non disponibile per questa Regione");
   }
-  if (state.manualGeneral) messages[0] = "Mappatura generale: file manuale attivo · " + state.generalCount.toLocaleString("it-IT") + " record";
-  if (state.manualPi1g) messages[1] = "Allegato A PI1G: file manuale attivo · " + state.pi1gCount.toLocaleString("it-IT") + " record";
-  $("data-status").textContent = region + " · " + messages.join(" · ");
+
+  for (const key of EXTRA_DATASET_KEYS) {
+    const label = DATASET_DEFINITIONS[key].label;
+    const records = state.extraCounts[key] || 0;
+    if (state.manualExtras.has(key)) {
+      addLine(label + " · " + count(records) + " record · file caricato da te");
+    } else if (extraAvailable[key] === false) {
+      addLine(label + " · archivio non disponibile per questa Regione");
+    } else if (state.checkedExtras.has(key)) {
+      addLine(label + " · " + count(records) + " record");
+    } else if (key === "fixedSurvey2021") {
+      addLine(label + " · disponibile su richiesta");
+    } else {
+      addLine(label + " · non ancora caricato");
+    }
+  }
 }
 
 
@@ -240,9 +290,9 @@ async function loadSelectedRegion() {
   }
 
   syncDeferredDatasetControl();
-  $("region-hint").textContent = "Caricamento dei dataset principali per suggerimenti e ricerca…";
+  $("region-hint").textContent = "Sto preparando suggerimenti e ricerca…";
   $("search-button").disabled = true;
-  $("data-status").textContent = "Caricamento di tutti i dataset disponibili di " + region + "…";
+  $("data-status").textContent = "Sto caricando i dati di " + region + "…";
   try {
     const automaticExtras = EXTRA_DATASET_KEYS.filter((key) =>
       key !== "fixedSurvey2021" && !state.manualExtras.has(key)
@@ -269,8 +319,11 @@ async function loadSelectedRegion() {
     renderLoadDiagnostics(loaded.timings);
     const errors = Object.entries(loaded.extraErrors || {});
     if (errors.length) {
-      $("region-hint").textContent = region + " · caricamento parziale: alcuni archivi non hanno risposto. Usa «Aggiorna archivi» per riprovare.";
-      $("data-status").textContent += " · " + errors.map(([key, message]) => DATASET_DEFINITIONS[key].label + ": " + message).join(" · ");
+      $("region-hint").textContent = region + " · alcuni archivi non sono disponibili. Puoi riprovare con «Aggiorna archivi».";
+      const warning = document.createElement("div");
+      warning.className = "file-entry";
+      warning.textContent = "Alcuni dati non sono stati caricati: " + errors.map(([key, message]) => DATASET_DEFINITIONS[key].label + " — " + message).join(" · ");
+      $("data-status").appendChild(warning);
     } else {
       $("region-hint").textContent = region + " · dataset caricati; suggerimenti e ricerca sono pronti.";
     }
@@ -279,9 +332,9 @@ async function loadSelectedRegion() {
   } catch (error) {
     if (token !== state.loadToken) return;
     state.loadedRegion = "";
-    $("region-hint").textContent = "Caricamento non riuscito per " + region + ". Verifica lo stato dei dataset.";
+    $("region-hint").textContent = "Non sono riuscito a preparare i dati di " + region + ". Verifica lo stato dei dataset.";
     syncDeferredDatasetControl();
-    $("data-status").textContent = "Impossibile caricare tutti i dataset di " + region + ". " + (error.message || "Verifica i file o carica i dataset manualmente.");
+    $("data-status").textContent = "Non è stato possibile caricare i dati di " + region + ". " + (error.message || "Controlla i file o riprova.");
   } finally {
     if (token === state.loadToken) {
       $("search-button").disabled = false;
@@ -296,7 +349,7 @@ async function refreshAutomaticArchives() {
   const region = $("region").value.trim();
   button.disabled = true;
   button.textContent = "Aggiornamento…";
-  $("data-status").textContent = "Svuotamento delle cache MI25-6 e aggiornamento dei dataset automatici…";
+  $("data-status").textContent = "Rimuovo le copie locali e aggiorno i dati automatici…";
 
   try {
     const cacheResult = await clearArchiveCache();
@@ -308,8 +361,8 @@ async function refreshAutomaticArchives() {
     state.checkedExtras.clear();
     state.extraAvailability = {};
     const cacheMessage = cacheResult?.persistentCleared
-      ? "Cache ZIP e dataset parsati di MI25-6 svuotati."
-      : "Cache in memoria svuotata; IndexedDB non disponibile, quindi non è presente una cache persistente da cancellare.";
+      ? "Le copie locali dei dati MI25-6 sono state rimosse."
+      : "Copie temporanee rimosse; il browser non aveva copie salvate da cancellare.";
 
     if (region) {
       await loadSelectedRegion();
@@ -333,6 +386,7 @@ async function refreshAutomaticArchives() {
 
   return {
     setAutomaticStatus,
+    setDeveloperMode,
     loadSelectedRegion,
     loadAdditionalDataset,
     syncDeferredDatasetControl,

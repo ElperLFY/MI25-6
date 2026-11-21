@@ -1,18 +1,18 @@
 import {
   DOTS, EXTRA_DATASET_KEYS, REGIONS, normalise
-} from "./data/index.js?v=1.3.000";
+} from "./data/index.js?v=1.3.001";
 import {
   cityIsKnown, clearArchiveCache, clearManualDatasets, findCityRecord,
   getCsvReaderPage, getSuggestions, loadCsvReaderDataset as requestCsvReaderDataset,
   loadRegionalData, parseUploadedFiles, releaseCsvReader, searchRecords
-} from "./services/data-client.js?v=1.3.000";
-import { createResultsRenderer } from "./ui/results.js?v=1.3.000";
-import { createCsvReaderController } from "./controllers/csv-reader.js";
+} from "./services/data-client.js?v=1.3.001";
+import { createResultsRenderer } from "./ui/results.js?v=1.3.001";
+import { createCsvReaderController } from "./controllers/csv-reader.js?v=1.3.001";
 
-import { LegacyClient } from "./legacy.js?v=1.3.000";
-import { createLegacyController } from "./controllers/legacy-controller.js?v=1.3.000";
+import { LegacyClient } from "./legacy.js?v=1.3.001";
+import { createLegacyController } from "./controllers/legacy-controller.js?v=1.3.001";
 import { createAutocompleteController } from "./controllers/autocomplete.js";
-import { createRegionDataController } from "./controllers/region-data.js?v=1.3.000";
+import { createRegionDataController } from "./controllers/region-data.js?v=1.3.001";
 import { createSearchController } from "./controllers/search.js";
 
 const $ = (id) => document.getElementById(id);
@@ -144,11 +144,20 @@ function renderLegend() {
   const legend = $("legend-list");
   legend.textContent = "";
 
-  const addEntry = (code, description, color, outlined = false) => {
+  const addEntry = (code, description, color) => {
     const row = createElement("div", "legend-entry");
     const dot = createElement("span", "dot");
     dot.style.borderColor = color;
-    if (outlined) dot.style.boxShadow = "0 0 0 1px var(--line)";
+    row.appendChild(dot);
+    row.appendChild(createElement("span", "legend-code", code + ": "));
+    row.appendChild(document.createTextNode(description));
+    legend.appendChild(row);
+  };
+  const addAreaEntry = (code, description, color) => {
+    const row = createElement("div", "legend-entry legend-area-entry");
+    const dot = createElement("span", "area-color-dot");
+    dot.style.backgroundColor = color;
+    dot.setAttribute("aria-hidden", "true");
     row.appendChild(dot);
     row.appendChild(createElement("span", "legend-code", code + ": "));
     row.appendChild(document.createTextNode(description));
@@ -160,9 +169,9 @@ function renderLegend() {
   }
 
   legend.appendChild(createElement("div", "legend-heading", "Colori delle aree · mappatura 2021"));
-  addEntry("BIANCO", "nessuna rete ultraveloce presente o credibilmente pianificata nell’orizzonte di riferimento", "#ffffff", true);
-  addEntry("GRIGIO", "una sola rete ultraveloce presente o credibilmente pianificata", "#858585");
-  addEntry("NERO", "almeno due reti ultraveloci presenti o credibilmente pianificate", "#20242b");
+  addAreaEntry("BIANCO", "nessuna rete ultraveloce presente o credibilmente pianificata nell’orizzonte di riferimento", "#ffffff");
+  addAreaEntry("GRIGIO", "una sola rete ultraveloce presente o credibilmente pianificata", "#858585");
+  addAreaEntry("NERO", "almeno due reti ultraveloci presenti o credibilmente pianificate", "#20242b");
 }
 
 function currentSearchState() {
@@ -193,6 +202,7 @@ function openDialog(view) {
   $("faq-content").hidden = !isFaq;
   $("changelog-content").hidden = isFaq;
   const dialog = $("info-dialog");
+  $("dialog-content").scrollTop = 0;
   if (!dialog.open) dialog.showModal();
 }
 
@@ -403,6 +413,9 @@ function bindEvents() {
   $("open-faq").addEventListener("click", () => openDialog("faq"));
   $("open-changelog").addEventListener("click", () => openDialog("changelog"));
   $("build-tag").addEventListener("click", () => openDialog("changelog"));
+  $("dev-mode-toggle").addEventListener("click", () => {
+    regionData.setDeveloperMode(!document.body.classList.contains("dev-mode-enabled"));
+  });
   $("close-dialog").addEventListener("click", () => $("info-dialog").close());
   $("info-dialog").addEventListener("click", (event) => {
     if (event.target === $("info-dialog")) $("info-dialog").close();
@@ -417,6 +430,7 @@ function initialise() {
   $("data-status").textContent = "Seleziona una Regione per caricare i dataset.";
   setFileMessages([]);
   initialiseTheme();
+  regionData.setDeveloperMode(false);
   syncDeferredDatasetControl();
   bindEvents();
 }

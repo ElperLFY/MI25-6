@@ -651,6 +651,7 @@ input[type="file"]::file-selector-button:hover {
 .info-dialog {
   width: min(760px, calc(100% - 32px));
   max-width: 760px;
+  height: min(88vh, 900px);
   max-height: min(88vh, 900px);
   padding: 0;
   overflow: hidden;
@@ -660,12 +661,25 @@ input[type="file"]::file-selector-button:hover {
   color: var(--text);
 }
 
+.info-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+@supports (height: 100dvh) {
+  .info-dialog {
+    height: min(88dvh, 900px);
+    max-height: min(88dvh, 900px);
+  }
+}
+
 .info-dialog::backdrop {
   background: rgb(30 4 10 / 65%);
 }
 
 .dialog-header {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -692,9 +706,14 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .dialog-content {
-  max-height: calc(88vh - 65px);
-  padding: 16px 18px;
-  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  padding: 16px 18px max(18px, env(safe-area-inset-bottom, 0px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: 12px;
 }
 
 .dialog-content details {
@@ -705,7 +724,24 @@ input[type="file"]::file-selector-button:hover {
 .dialog-content summary {
   color: var(--deep);
   font-weight: 700;
+  line-height: 1.45;
   cursor: pointer;
+}
+
+.faq-section + .faq-section {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.faq-section > h3 {
+  margin: 0 0 5px;
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.faq-section details {
+  scroll-margin-block: 10px;
 }
 
 .dialog-content p {
@@ -1277,7 +1313,70 @@ body {
 }
 
 
-/* Compact load diagnostics, visible only after a measured regional load. */
+
+.area-color-dot {
+  display: inline-block;
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  margin-right: 5px;
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+  vertical-align: -2px;
+}
+
+.legend-area-entry .area-color-dot {
+  margin-top: 3px;
+}
+
+.data-status-heading {
+  margin-bottom: 3px;
+  color: var(--text);
+  font-weight: 750;
+}
+
+.dev-mode-toggle {
+  position: absolute;
+  right: max(10px, calc((100% - 860px) / 2));
+  bottom: 8px;
+  display: grid;
+  width: 27px;
+  height: 25px;
+  place-items: center;
+  padding: 4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  opacity: 0.28;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, opacity 120ms ease;
+}
+
+.dev-mode-toggle svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dev-mode-toggle:hover,
+.dev-mode-toggle[aria-pressed="true"] {
+  background: var(--soft);
+  color: var(--primary);
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .dev-mode-toggle {
+    opacity: 0.42;
+  }
+}
+
+/* Load diagnostics are available only in developer mode. */
 .load-diagnostics {
   margin-top: 10px;
   padding-top: 8px;

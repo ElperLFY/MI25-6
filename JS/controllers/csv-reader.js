@@ -61,7 +61,7 @@ async function renderCsvReaderPage() {
       "Righe " + (start + 1).toLocaleString("it-IT") + "–" + end.toLocaleString("it-IT")
       + " di " + result.filteredCount.toLocaleString("it-IT")
       + (state.readerQuery ? " filtrate (totale archivio: " + result.totalCount.toLocaleString("it-IT") + ")" : "")
-      + " · ordine originale dei CSV";
+      + " · ordine del file originale";
   } catch (error) {
     if (token === state.readerPageToken) $("csv-reader-page-info").textContent = error.message || "Impossibile aggiornare la tabella CSV.";
   }
@@ -79,7 +79,7 @@ async function loadCsvReaderDatasetUI() {
   if (!READER_DATASET_KEYS.has(dataset)) { $("csv-reader-status").textContent = "Dataset non riconosciuto."; return; }
 
   const label = DATASET_DEFINITIONS[dataset]?.label || "Dataset";
-  $("csv-reader-status").textContent = "Lettura completa di " + label + " per " + region + " nel Web Worker…";
+  $("csv-reader-status").textContent = "Apro " + label + " per " + region + "…";
   $("csv-reader-dataset").disabled = true;
   $("csv-reader-page-size").disabled = true;
   try {
@@ -94,7 +94,7 @@ async function loadCsvReaderDatasetUI() {
     }
     state.readerLoaded = true;
     $("csv-reader-status").textContent = label + " · " + region + " · " + loaded.count.toLocaleString("it-IT")
-      + " righe complete. Filtraggio e paginazione sono eseguiti nel Web Worker.";
+      + " righe disponibili. Cerca un valore oppure sfoglia le pagine qui sotto.";
     await renderCsvReaderPage();
   } catch (error) {
     if (token !== state.readerLoadToken) return;
@@ -114,7 +114,7 @@ function setCsvReaderMode(enabled) {
   $("csv-reader-card").hidden = !state.csvReaderMode;
   $("results-card").hidden = true;
   if (state.csvReaderMode) {
-    $("mode-help").textContent = "CSV Reader ON: il Web Worker legge e filtra tutte le righe del dataset selezionato. La UI riceve soltanto la pagina corrente.";
+    $("mode-help").textContent = "CSV Reader attivo: scegli un dataset, cerca tra le righe e sfoglia le pagine.";
     loadCsvReaderDataset();
   } else {
     state.readerLoadToken += 1;
@@ -124,7 +124,7 @@ function setCsvReaderMode(enabled) {
     $("csv-reader-status").textContent = "CSV Reader disattivato.";
     $("csv-reader-dataset").disabled = false;
     $("csv-reader-page-size").disabled = false;
-    $("mode-help").textContent = "Ricerca indirizzo: tutti i dataset regionali disponibili vengono elaborati nel Web Worker; gli ZIP sono conservati in IndexedDB per 30 giorni. CSV Reader filtra e pagina i CSV nel Worker. Legacy mode consulta l'archivio storico Handymenny.";
+    $("mode-help").textContent = state.legacyMode ? "Archivio storico attivo: stai consultando i dati 2017–2021 di Handymenny." : "CSV Reader disattivato. La ricerca per indirizzo è di nuovo disponibile.";
     void renderCsvReaderPage();
   }
 }

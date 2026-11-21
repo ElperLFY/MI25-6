@@ -370,10 +370,10 @@ function setLegacyMode(enabled) {
   const modeHelp = $("mode-help");
   if (modeHelp) {
     modeHelp.textContent = state.legacyMode
-      ? "Legacy mode ON: ricerca autonoma nell’archivio storico 2017-2021 di Handymenny. I campi dell’indirizzo vengono inviati al servizio API esterno."
+      ? "Archivio storico attivo: stai consultando i dati 2017–2021 di Handymenny. L’indirizzo e l’ID EGON vengono inviati al servizio esterno."
       : state.csvReaderMode
-        ? "CSV Reader ON: carica tutte le righe del dataset selezionato per la Regione scelta. La tabella conserva le intestazioni originali e l'ordine del CSV, mostrando 100 righe per pagina."
-        : "Ricerca indirizzo: carica tutti i dataset regionali disponibili per suggerimenti e ricerca. Gli archivi ZIP restano nella cache IndexedDB del browser per 30 giorni; usa Aggiorna archivi per scaricare le versioni più recenti. CSV Reader apre volontariamente il CSV completo.";
+        ? "CSV Reader attivo: scegli un dataset, cerca tra le righe e sfoglia le pagine."
+        : "Ricerca indirizzo: seleziona una Regione per consultare i dati disponibili. Per conoscere gli altri strumenti, apri DESCRIZIONE.";
   }
 
   if (state.legacyMode && !legacyLists.regions.length) legacyLoadRegions();

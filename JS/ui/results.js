@@ -12,7 +12,7 @@ export function createResultsRenderer({ $, createElement, state, legacyClient, g
   function addCompareValue(container, label, value) {
     const row = createElement("div", "compare-row");
     row.appendChild(createElement("span", "compare-label", label + ": "));
-    row.appendChild(document.createTextNode(String(value)));
+    appendColorAwareValue(row, label, value);
     container.appendChild(row);
   }
   function formatAddress(record) {
@@ -43,6 +43,26 @@ function makeDot(code) {
   const dot = createElement("span", "dot");
   dot.style.borderColor = (DOTS[code] || ["#999999"])[0];
   return dot;
+}
+
+function areaColorHex(value) {
+  const colors = { bianco: "#ffffff", grigio: "#858585", nero: "#20242b" };
+  return colors[String(value ?? "").trim().toLowerCase()] || "";
+}
+
+function appendColorAwareValue(container, label, value) {
+  const color = String(label || "").toLowerCase().includes("colore civico")
+    ? areaColorHex(value)
+    : "";
+  if (!color) {
+    container.appendChild(document.createTextNode(String(value)));
+    return;
+  }
+  const dot = createElement("span", "area-color-dot");
+  dot.style.backgroundColor = color;
+  dot.setAttribute("aria-hidden", "true");
+  container.appendChild(dot);
+  container.appendChild(document.createTextNode(" " + String(value)));
 }
 
 function getDatasetDisplayRows(key, record) {
@@ -173,7 +193,7 @@ function renderLegacySections(container, data) {
     for (const rowData of sectionData.rows) {
       const row = createElement("div", "legacy-row");
       row.appendChild(createElement("span", "legacy-label", rowData.label + ": "));
-      row.appendChild(document.createTextNode(rowData.value));
+      appendColorAwareValue(row, rowData.label, rowData.value);
       section.appendChild(row);
     }
 
@@ -286,7 +306,7 @@ function renderExtraDatasets(item, result, primaryKey = "") {
       for (const rowData of standardRows) {
         const row = createElement("div", "legacy-row");
         row.appendChild(createElement("span", "legacy-label", rowData.label + ": "));
-        row.appendChild(document.createTextNode(rowData.value));
+        appendColorAwareValue(row, rowData.label, rowData.value);
         section.appendChild(row);
       }
 
