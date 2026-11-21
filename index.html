@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
   <link rel="manifest" href="./site.webmanifest">
-  <link rel="stylesheet" href="./PageUI/style.css?v=1.3.1">
+  <link rel="stylesheet" href="./PageUI/style.css?v=1.3.2">
   <title>Esiti mappatura infrastrutture di rete fissa 2025-26</title>
 </head>
 <body>
@@ -83,7 +83,7 @@
                 <p><strong>Legacy Mode</strong> confronta l’indirizzo con l’archivio storico 2017–2021 di Handymenny, separato dai dataset MI25-6. I risultati descrivono una situazione passata e non la copertura attuale. Per il confronto, l’indirizzo e il relativo ID EGON vengono inviati al servizio esterno.</p>
               </div>
               <div class="description-panel" id="description-panel-cache" role="tabpanel" aria-labelledby="description-tab-cache" data-description-panel="cache" hidden>
-                <p><strong>Aggiorna archivi</strong> elimina le copie locali dei dati automatici gestite da MI25-6. Se hai già scelto una Regione, il sito scarica di nuovo i relativi archivi; altrimenti lo farà quando selezionerai la prossima Regione. I file che hai caricato manualmente non vengono toccati. Non cancella la cache generale del browser né i dati del servizio Legacy.</p>
+                <p><strong>Aggiorna archivi</strong> elimina le copie locali dei dati automatici gestite da MI25-6. Se hai già scelto una Regione, il sito scarica di nuovo gli archivi attualmente pubblicati per quella Regione; altrimenti lo farà quando selezionerai la prossima Regione. Non cerca nuovi file sul portale Infratel. I file che hai caricato manualmente non vengono toccati. Non cancella la cache generale del browser né i dati del servizio Legacy.</p>
               </div>
               <div class="description-panel" id="description-panel-2021" role="tabpanel" aria-labelledby="description-tab-2021" data-description-panel="fixed-survey-2021" hidden>
                 <p><strong>Mappatura reti fisse 2021</strong> aggiunge alla ricerca i dati storici della sola Regione selezionata. Il file viene scaricato soltanto quando lo chiedi, così il caricamento iniziale resta più leggero. Quando il civico è presente, nella scheda del risultato puoi trovare operatore, tecnologia, anno di copertura e velocità indicate dalla fonte. Non sostituisce le categorie PA/A/B/C della mappatura 2025 e non usa l’archivio Legacy.</p>
@@ -312,7 +312,7 @@
     <button type="button" class="dev-mode-toggle" id="dev-mode-toggle" title="Attiva modalità sviluppatore" aria-label="Attiva modalità sviluppatore" aria-pressed="false">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"></path><path d="m19.4 13.5 1.1.8-1.2 2.1-1.3-.5a7.8 7.8 0 0 1-1.5.9l-.2 1.4h-2.5l-.3-1.4a7.8 7.8 0 0 1-1.6-.9l-1.3.5-1.2-2.1 1.1-.8a7.3 7.3 0 0 1 0-1.8l-1.1-.8 1.2-2.1 1.3.5a7.8 7.8 0 0 1 1.6-.9l.3-1.4h2.5l.2 1.4a7.8 7.8 0 0 1 1.5.9l1.3-.5 1.2 2.1-1.1.8a7.3 7.3 0 0 1 0 1.8Z"></path></svg>
     </button>
-    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Patch 1.3.1</button>
+    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Patch 1.3.2</button>
   </footer>
 
   <dialog class="info-dialog" id="info-dialog" aria-labelledby="dialog-title">
@@ -327,11 +327,11 @@
   <details>
             <summary>Come vengono caricati i dati della mia Regione?</summary>
             <p>Selezionando una Regione vengono caricati la mappatura generale 2025, l’Allegato A PI1G (quando contiene record per quella Regione) e i due archivi di prossimità. La mappatura 2021 è più pesante e viene aggiunta soltanto quando premi «Carica mappatura 2021» nelle Opzioni Avanzate.</p>
-            <p>Gli archivi automatici sono memorizzati localmente per ridurre download e parsing ripetuti. Quando cambia la versione dichiarata nel manifest dei dataset, MI25-6 usa una nuova chiave di cache e recupera l’archivio aggiornato; non è necessario attendere i 30 giorni né premere «Aggiorna archivi». I dettagli tecnici sono nel README.</p>
+            <p>Gli archivi automatici sono memorizzati localmente per ridurre download e parsing ripetuti. Quando cambia la versione dichiarata nel manifest dei dataset, MI25-6 usa una nuova chiave di cache e recupera l’archivio aggiornato; non è necessario attendere i 30 giorni né premere «Aggiorna archivi». I dettagli tecnici sono descritti nel Tutorial.</p>
           </details>
   <details>
             <summary>Come posso aggiornare i dati sul mio browser?</summary>
-            <p>Di norma non devi fare nulla: quando Infratel pubblica una nuova versione riconosciuta dal sito, MI25-6 scarica automaticamente i file aggiornati. Per forzare un nuovo download, apri «Strumenti aggiuntivi» e premi «Aggiorna archivi». Se hai già scelto una Regione, verrà ricaricata; i file che hai caricato manualmente resteranno intatti.</p>
+            <p>MI25-6 non controlla automaticamente il portale Infratel e non scarica da lì i nuovi archivi appena pubblicati. Per aggiornare i dati distribuiti dal sito, il maintainer deve prima inserire i nuovi file nel repository e pubblicarli insieme alla versione aggiornata del manifest. Dopo la pubblicazione, MI25-6 riconosce la nuova versione e scarica gli archivi aggiornati. Il pulsante «Aggiorna archivi» elimina le copie locali e riscarica i file già pubblicati su MI25-6: non recupera nuove versioni da Infratel. Se carichi file manualmente, questi restano attivi per la sessione e non vengono cancellati.</p>
           </details>
   <details>
             <summary>Per quali Regioni ci sono i dati PI1G e il 2021?</summary>
@@ -443,6 +443,12 @@
         </section>
       </div>
       <div id="changelog-content" hidden>
+        <p class="hint">Patch 1.3.2 · chiarezza sugli aggiornamenti dei dati</p>
+        <ul>
+          <li>Chiarito che MI25-6 non scarica autonomamente i nuovi archivi dal portale Infratel: i file aggiornati devono prima essere pubblicati nel repository del progetto.</li>
+          <li>Precisato che «Aggiorna archivi» cancella la cache locale e riscarica soltanto gli archivi già pubblicati su MI25-6.</li>
+          <li>Corretto il riferimento alla documentazione: le istruzioni tecniche sono nel Tutorial.</li>
+        </ul>
         <p class="hint">Patch 1.3.1 · testi, FAQ e leggibilità</p>
         <ul>
           <li>Riscritti gli avvisi e le descrizioni in linguaggio diretto, senza esporre dettagli interni agli utenti comuni.</li>
@@ -498,6 +504,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="./JS/app.js?v=1.3.1"></script>
+  <script type="module" src="./JS/app.js?v=1.3.2"></script>
 </body>
 </html>

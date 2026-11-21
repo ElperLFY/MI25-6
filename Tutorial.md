@@ -156,7 +156,7 @@ MI25-6 è un'applicazione statica, senza backend applicativo dedicato. La pagina
 
 Gli ZIP e alcuni dataset parsati possono essere memorizzati in IndexedDB. Le cache persistenti hanno una scadenza massima di 30 giorni. La chiave di ogni archivio ZIP, dataset parsato e voce nella cache in memoria include il campo `dataVersion` definito in [data/manifest.json](data/manifest.json).
 
-Quando cambia un archivio, occorre incrementare la `dataVersion` del dataset corrispondente nel manifest. Al successivo caricamento, MI25-6 ignora le vecchie voci di cache per quella versione e scarica/analizza il nuovo archivio senza aspettare la scadenza dei 30 giorni. Il manifest viene richiesto senza cache HTTP. I dati manuali non vengono salvati in IndexedDB.
+MI25-6 non monitora il portale Infratel e non scarica autonomamente gli archivi appena pubblicati. Per aggiornare i dati distribuiti dal sito, il maintainer deve procurarsi i nuovi file, sostituire gli archivi corrispondenti nel repository e pubblicare la modifica. Quando un archivio viene sostituito, occorre incrementare la `dataVersion` del dataset corrispondente nel manifest. Al successivo caricamento, MI25-6 ignora le vecchie voci di cache per quella versione e scarica/analizza la copia aggiornata già pubblicata sul sito, senza aspettare la scadenza dei 30 giorni. Il manifest viene richiesto senza cache HTTP. I dati manuali non vengono salvati in IndexedDB.
 
 La cache ZIP in memoria conserva soltanto le richieste ancora in corso; al completamento rilascia la Promise e il relativo ArrayBuffer, mentre la copia persistente resta in IndexedDB. La scrittura IndexedDB non crea più una copia esplicita aggiuntiva con `ArrayBuffer.slice(0)`. I caricamenti automatici regionali vengono eseguiti in sequenza per contenere il picco di decompressione e parsing, a costo di poter aumentare il tempo complessivo di caricamento.
 
@@ -164,7 +164,7 @@ Il CSV Reader usa una generazione di caricamento: quando viene disattivato o sos
 
 Questi cambiamenti riducono strutture temporanee e wrapper non necessari, ma non costituiscono ancora una garanzia quantitativa sul consumo RAM. Le prestazioni vanno misurate nel browser con gli archivi reali; il CSV Reader mantiene comunque in memoria le celle del dataset attivo.
 
-Il comando «Aggiorna archivi» elimina le cache ZIP e dei dataset parsati gestite da MI25-6 e ricarica i dataset automatici della Regione selezionata. Non cancella la cache generale del browser, i cookie o i dati di altri siti.
+Il comando «Aggiorna archivi» elimina le cache ZIP e dei dataset parsati gestite da MI25-6 e ricarica gli archivi già pubblicati per la Regione selezionata. Non cerca nuove versioni sul portale Infratel e non sostituisce i file nel repository. Non cancella la cache generale del browser, i cookie o i dati di altri siti.
 
 ### Struttura del progetto
 
