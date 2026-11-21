@@ -1,4 +1,4 @@
-import { DATASET_DEFINITIONS, FIELD_ALIASES } from "../datasets.js?v=1.2.009";
+import { DATASET_DEFINITIONS, FIELD_ALIASES } from "../datasets.js?v=1.3.000";
 import { normalise } from "./normalization.js";
 import { nowMs, recordTiming } from "./diagnostics.js";
 
@@ -359,7 +359,11 @@ function createDatasetRowCollector(name, forcedType, options, headerInfo) {
   let rowIndex = 0;
   let headerFound = false;
   let readerHeaders = null;
+  let readerColumns = null;
+  let readerRowCount = 0;
+  let readerAllRowsMatchRegion = true;
   let readerOffset = 0;
+  const requestedReaderRegion = normalise(options.readerRegion || "");
   let extraFieldIndexes = [];
   let recordFieldColumns = [];
   const records = [];
@@ -416,14 +420,25 @@ function createDatasetRowCollector(name, forcedType, options, headerInfo) {
           readerHeaders.push("Colonna aggiuntiva " + (readerHeaders.length + 1));
         }
       }
-      records.push({
-        datasetId,
-        sourceHeaders: readerHeaders,
-        sourceValues: fields,
-        sourceFile: name,
-        sourceRowNumber: rowIndex + 1,
-        normalisedRegion: cachedNormalise(readValue(fields, columns.region + readerOffset))
-      });
+      // Store cells column-by-column. This avoids retaining a separate
+      // JavaScript array for each of millions of CSV rows.
+      while (readerHeaders.length < fields.length) {
+        readerHeaders.push("Colonna aggiuntiva " + (readerHeaders.length + 1));
+      }
+      if (!readerColumns) readerColumns = readerHeaders.map(() => []);
+      while (readerColumns.length < readerHeaders.length) {
+        readerColumns.push(Array(readerRowCount).fill(""));
+      }
+      if (requestedReaderRegion && columns.region >= 0) {
+        const rowRegion = cachedNormalise(fields[columns.region + readerOffset] ?? "");
+        if (rowRegion !== requestedReaderRegion && !rowRegion.startsWith(requestedReaderRegion + " ")) {
+          readerAllRowsMatchRegion = false;
+        }
+      }
+      for (let index = 0; index < readerColumns.length; index += 1) {
+        readerColumns[index].push(fields[index] ?? "");
+      }
+      readerRowCount += 1;
       rowIndex += 1;
       return;
     }
@@ -449,7 +464,18 @@ function createDatasetRowCollector(name, forcedType, options, headerInfo) {
   return {
     onRow,
     finish() {
-      return headerFound ? { id: datasetId, records, name } : null;
+      if (!headerFound) return null;
+      const result = { id: datasetId, records, name };
+      if (options.readerMode) {
+        result.reader = {
+          headers: readerHeaders || originalHeaders.slice(),
+          columns: readerColumns || (readerHeaders || originalHeaders).map(() => []),
+          rowCount: readerRowCount,
+          regionIndex: columns && columns.region >= 0 ? columns.region + readerOffset : -1,
+          regionFilterRequired: Boolean(requestedReaderRegion && columns && columns.region >= 0 && !readerAllRowsMatchRegion)
+        };
+      }
+      return result;
     }
   };
 }
@@ -623,7 +649,12 @@ export function parseDatasetStream(streamHelper, name = "dataset", forcedType = 
     };
 
     const feedText = (text) => {
-      if (!text || !parser) return;
+      if (!text || !parser || settled) return;
+      if (options.shouldCancel?.()) {
+        const error = new Error("Caricamento Reader annullato.");
+        error.name = "AbortError";
+        throw error;
+      }
       const startedAt = nowMs();
       parser.push(text);
       parseDuration += nowMs() - startedAt;
@@ -658,7 +689,15 @@ export function parseDatasetStream(streamHelper, name = "dataset", forcedType = 
 
     streamHelper
       .on("data", (rawChunk) => {
+        if (settled) return;
         try {
+          if (options.shouldCancel?.()) {
+            const error = new Error("Caricamento Reader annullato.");
+            error.name = "AbortError";
+            try { streamHelper.pause?.(); } catch {}
+            fail(error);
+            return;
+          }
           const chunk = rawChunk instanceof Uint8Array ? rawChunk : new Uint8Array(rawChunk);
           if (!decoder) {
             sampleChunks.push(chunk.slice());
@@ -679,6 +718,11 @@ export function parseDatasetStream(streamHelper, name = "dataset", forcedType = 
       .on("end", () => {
         if (settled) return;
         try {
+          if (options.shouldCancel?.()) {
+            const error = new Error("Caricamento Reader annullato.");
+            error.name = "AbortError";
+            throw error;
+          }
           if (!decoder) initialiseDecoder();
           else {
             const decodeStartedAt = nowMs();

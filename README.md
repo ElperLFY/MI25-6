@@ -8,6 +8,10 @@
 
 Il progetto è personale, non è un servizio ufficiale di Infratel, AGCOM o di un operatore e non verifica la vendibilità commerciale in tempo reale. È sviluppato da un singolo maintainer con il supporto di strumenti di IA.
 
+## Optimization Overhaul 1.3
+
+Revisione architetturale del Data Engine dedicata alla gestione della memoria: cache ZIP limitata alle richieste in corso, caricamenti regionali serializzati, CSV Reader con righe compatte, paginazione senza array di risultati intermedi e invalidazione dei caricamenti obsoleti. La compatibilità dell’interfaccia e dei risultati di ricerca resta l’obiettivo della revisione.
+
 ## Funzionalità
 
 - Ricerca per Regione, Provincia, Comune, Via e Civico, con suggerimenti contestuali.
@@ -135,7 +139,7 @@ Il caricamento 2021 è separato dalla classificazione PA/A/B/C. Il pulsante dedi
 
 ### CSV Reader
 
-CSV Reader visualizza il CSV originale per la Regione e il dataset selezionati. Conserva intestazioni, valori grezzi, colonne e ordine delle righe. Il filtro e la paginazione vengono eseguiti nel Web Worker; il caricamento completo può comunque richiedere tempo e memoria con archivi molto grandi.
+CSV Reader visualizza il CSV originale per la Regione e il dataset selezionati. Conserva intestazioni, valori grezzi, colonne e ordine delle righe. Il parser automatico conserva i valori in array per colonna (struttura columnar) e condivide intestazioni e metadati a livello di file, anziché mantenere milioni di array-riga e oggetti wrapper. Filtro e paginazione scorrono i record nel Web Worker senza costruire un array intermedio di tutte le corrispondenze. Il dataset completo resta comunque nella memoria del Worker durante la consultazione: il Reader non è ancora un visualizzatore che legge dal disco una pagina alla volta.
 
 ### Legacy Mode
 
@@ -152,6 +156,12 @@ Gli ZIP e alcuni dataset parsati possono essere memorizzati in IndexedDB. Le cac
 
 Quando cambia un archivio, occorre incrementare la `dataVersion` del dataset corrispondente nel manifest. Al successivo caricamento, MI25-6 ignora le vecchie voci di cache per quella versione e scarica/analizza il nuovo archivio senza aspettare la scadenza dei 30 giorni. Il manifest viene richiesto senza cache HTTP. I dati manuali non vengono salvati in IndexedDB.
 
+La cache ZIP in memoria conserva soltanto le richieste ancora in corso; al completamento rilascia la Promise e il relativo ArrayBuffer, mentre la copia persistente resta in IndexedDB. La scrittura IndexedDB non crea più una copia esplicita aggiuntiva con `ArrayBuffer.slice(0)`. I caricamenti automatici regionali vengono eseguiti in sequenza per contenere il picco di decompressione e parsing, a costo di poter aumentare il tempo complessivo di caricamento.
+
+Il CSV Reader usa una generazione di caricamento: quando viene disattivato o sostituito, il caricamento precedente diventa obsoleto e il parser interrompe cooperativamente il lavoro ai successivi confini di chunk/archivio. I record già completati non vengono riassegnati allo stato del Reader.
+
+Questi cambiamenti riducono strutture temporanee e wrapper non necessari, ma non costituiscono ancora una garanzia quantitativa sul consumo RAM. Le prestazioni vanno misurate nel browser con gli archivi reali; il CSV Reader mantiene comunque in memoria le celle del dataset attivo.
+
 Il comando «Aggiorna archivi» elimina le cache ZIP e dei dataset parsati gestite da MI25-6 e ricarica i dataset automatici della Regione selezionata. Non cancella la cache generale del browser, i cookie o i dati di altri siti.
 
 ### Struttura del progetto
@@ -163,13 +173,13 @@ Il comando «Aggiorna archivi» elimina le cache ZIP e dei dataset parsati gesti
 - `JS/ui/results.js`: composizione dei risultati, confronti e report.
 - `JS/services/data-client.js`: comunicazione con il Web Worker.
 - `JS/workers/data.worker.js`: motore dati, indici, ricerca e stato delle sorgenti.
-- `JS/data/`: parser, loader, normalizzazione, diagnostica e cache.
+- `JS/data/`: parser, loader, normalizzazione, diagnostica, cache e paginazione compatta del CSV Reader (`reader-table.js`).
 - `JS/datasets.js`: definizioni dei dataset, alias, Regioni e legenda.
 - `data/`: archivi ZIP e manifest delle versioni.
 
 ## Test e automazione
 
-Attualmente il repository non contiene una suite di test automatizzati né workflow GitHub Actions per eseguirla. Il vecchio script `node --test` è stato rimosso perché non esistevano più file di test da eseguire. Non ci sono quindi test GitHub che risultino «falliti»: semplicemente, al momento, il progetto non ha una pipeline di test configurata.
+Esegui `npm test` per avviare i test unitari Node del modulo di paginazione del CSV Reader. Questi test coprono la logica di selezione delle pagine e dei filtri, ma non sostituiscono le verifiche end-to-end nel browser né un benchmark RAM sui dataset Infratel reali. Il repository non dispone ancora di un workflow GitHub Actions per eseguirli automaticamente.
 
 ## Segnalazioni
 

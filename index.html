@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
   <link rel="manifest" href="./site.webmanifest">
-  <link rel="stylesheet" href="./PageUI/style.css?v=1.2.009">
+  <link rel="stylesheet" href="./PageUI/style.css?v=1.3.000">
   <title>Esiti mappatura infrastrutture di rete fissa 2025-26</title>
 </head>
 <body>
@@ -309,7 +309,7 @@
       <span aria-hidden="true">·</span>
       <a href="https://mappatura2024.amennillo.eu" target="_blank" rel="noopener noreferrer">API storica Handymenny</a>
     </nav>
-    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Patch 1.2:009</button>
+    <button type="button" class="build-tag" id="build-tag" title="Apri il changelog">Optimization Overhaul 1.3</button>
   </footer>
 
   <dialog class="info-dialog" id="info-dialog" aria-labelledby="dialog-title">
@@ -421,6 +421,15 @@
         </details>
       </div>
       <div id="changelog-content" hidden>
+        <p class="hint">Optimization Overhaul 1.3 · revisione architetturale del Data Engine</p>
+        <ul>
+          <li>Il CSV Reader conserva i valori automatici in array per colonna e mantiene intestazioni, file sorgente e indice della Regione una sola volta per sorgente, evitando milioni di array-riga e oggetti wrapper.</li>
+          <li>La paginazione e il filtro del CSV Reader scorrono i record nel Worker e materializzano soltanto le righe della pagina richiesta; non viene più creato un array completo di tutte le corrispondenze.</li>
+          <li>Il rilascio del CSV Reader invalida la generazione attiva e interrompe cooperativamente il parsing/trasferimento dei dati quando il caricamento diventa obsoleto.</li>
+          <li>La cache ZIP in memoria deduplica soltanto le richieste in corso e rilascia la Promise completata; gli archivi persistenti restano in IndexedDB. Rimossa anche la copia esplicita dell'ArrayBuffer prima della scrittura.</li>
+          <li>Il caricamento delle famiglie di dataset regionali è serializzato per evitare decompressioni e parsing concorrenti che aumentano il picco RAM.</li>
+          <li>Aggiunti test unitari Node per paginazione, filtro, selezione Regione e compatibilità con i record manuali del CSV Reader.</li>
+        </ul>
         <p class="hint">Patch 1.2:009 · FAQ, disponibilità regionale, legenda 2021 e cache versionata</p>
         <ul>
           <li>Corretta la pulizia della cache: la transazione IndexedDB include sia gli archivi ZIP sia i dataset parsati.</li>
@@ -459,6 +468,6 @@
     </div>
   </dialog>
 
-  <script type="module" src="./JS/app.js?v=1.2.009"></script>
+  <script type="module" src="./JS/app.js?v=1.3.000"></script>
 </body>
 </html>

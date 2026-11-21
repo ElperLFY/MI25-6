@@ -1,5 +1,6 @@
 import "../../vendor/jszip.min.js";
 import { nowMs, recordTiming } from "../data/diagnostics.js";
+import { getReaderPage } from "../data/reader-table.js?v=1.3.000";
 import {
   addCityIndexRecords,
   buildCityIndex,
@@ -12,7 +13,7 @@ import {
   searchRecords,
   DATASET_DEFINITIONS,
   EXTRA_DATASET_KEYS
-} from "../data/index.js?v=1.2.009";
+} from "../data/index.js?v=1.3.000";
 
 const emptyExtra = () => Object.fromEntries(EXTRA_DATASET_KEYS.map((key) => [key, []]));
 const store = {
@@ -21,6 +22,8 @@ const store = {
   manual: { general: [], pi1g: [], extra: emptyExtra() },
   readerDataset: "",
   readerRecords: [],
+  readerTable: null,
+  readerGeneration: 0,
   suggestionCache: new Map(),
   cityIndex: null
 };
@@ -77,44 +80,14 @@ function getCounts() {
   };
 }
 
-function readerHeaders(record) {
-  return Array.isArray(record.sourceHeaders)
-    ? record.sourceHeaders
-    : (record.sourceFields || []).map((field) => field.name);
-}
-
-function readerValues(record) {
-  return Array.isArray(record.sourceValues)
-    ? record.sourceValues
-    : (record.sourceFields || []).map((field) => field.value);
-}
-
-function getReaderColumns(records) {
-  const columns = [];
-  const seenColumns = new Set();
-  const seenFiles = new Set();
-  for (const record of records) {
-    const sourceFile = record.sourceFile || "CSV";
-    if (seenFiles.has(sourceFile)) continue;
-    seenFiles.add(sourceFile);
-    const occurrences = new Map();
-    for (const rawName of readerHeaders(record)) {
-      const label = String(rawName ?? "").trim() || "Colonna senza nome";
-      const occurrence = occurrences.get(label) || 0;
-      occurrences.set(label, occurrence + 1);
-      const key = label + "\u0000" + occurrence;
-      if (!seenColumns.has(key)) {
-        seenColumns.add(key);
-        columns.push({ key, label });
-      }
-    }
-  }
-  return columns;
-}
-
 async function loadReaderDataset({ region, dataset, baseUrl }) {
   if (!region) return { count: 0, available: false, error: "Seleziona una Regione prima di aprire il CSV Reader." };
   if (!DATASET_DEFINITIONS[dataset]) return { count: 0, available: false, error: "Dataset non riconosciuto." };
+
+  const generation = ++store.readerGeneration;
+  store.readerDataset = "";
+  store.readerRecords = [];
+  store.readerTable = null;
 
   const manualRecords = dataset === "general2025"
     ? store.manual.general
@@ -124,6 +97,7 @@ async function loadReaderDataset({ region, dataset, baseUrl }) {
 
   if (manualRecords.length) {
     if (manualRecords.every((record) => Array.isArray(record.sourceFields))) {
+      if (generation !== store.readerGeneration) return { count: 0, available: true, cancelled: true };
       store.readerDataset = dataset;
       store.readerRecords = manualRecords;
       return { count: manualRecords.length, available: true, manual: true };
@@ -141,41 +115,34 @@ async function loadReaderDataset({ region, dataset, baseUrl }) {
     loadPi1g: dataset === "pi1g2025",
     loadExtras: EXTRA_DATASET_KEYS.includes(dataset) ? [dataset] : [],
     readerMode: true,
+    shouldCancel: () => generation !== store.readerGeneration,
     baseUrl: baseUrl || self.location.href
   });
 
-  if (dataset === "general2025") store.readerRecords = loaded.general || [];
-  else if (dataset === "pi1g2025") store.readerRecords = loaded.pi1g || [];
-  else store.readerRecords = loaded.extra[dataset] || [];
+  if (generation !== store.readerGeneration) return { count: 0, available: true, cancelled: true };
 
+  const readerData = dataset === "general2025"
+    ? loaded.general
+    : dataset === "pi1g2025"
+      ? loaded.pi1g
+      : loaded.extra[dataset];
+
+  if (readerData?.readerMode === true) {
+    store.readerTable = readerData;
+    store.readerRecords = [];
+  } else {
+    store.readerTable = null;
+    store.readerRecords = Array.isArray(readerData) ? readerData : [];
+  }
   store.readerDataset = dataset;
+
   const available = dataset === "general2025"
     ? true
     : dataset === "pi1g2025"
       ? loaded.hasPi1gArchive
       : loaded.extraAvailable[dataset] === true;
-  return { count: store.readerRecords.length, available };
-}
-
-function getReaderPage({ page = 0, pageSize = 100, query = "" }) {
-  const records = store.readerRecords;
-  const normalizedQuery = normalise(query);
-  const filtered = normalizedQuery
-    ? records.filter((record) => readerValues(record).some((value) => normalise(value).includes(normalizedQuery)))
-    : records;
-  const safePageSize = Math.max(1, Math.min(500, Number(pageSize) || 100));
-  const totalPages = Math.max(1, Math.ceil(filtered.length / safePageSize));
-  const safePage = Math.min(Math.max(0, Number(page) || 0), totalPages - 1);
-  const start = safePage * safePageSize;
-  return {
-    columns: getReaderColumns(records),
-    rows: filtered.slice(start, start + safePageSize),
-    page: safePage,
-    pageSize: safePageSize,
-    totalCount: records.length,
-    filteredCount: filtered.length,
-    totalPages
-  };
+  const count = store.readerTable?.count ?? store.readerRecords.length;
+  return { count, available };
 }
 
 async function dispatch(type, payload = {}) {
@@ -184,6 +151,10 @@ async function dispatch(type, payload = {}) {
       const workerLoadStartedAt = nowMs();
       const region = String(payload.region || "").trim();
       if (store.region !== region) {
+        store.readerGeneration += 1;
+        store.readerDataset = "";
+        store.readerRecords = [];
+        store.readerTable = null;
         store.region = region;
         store.automatic = {
           general: [],
@@ -285,6 +256,10 @@ async function dispatch(type, payload = {}) {
     }
 
     case "CLEAR_MANUAL": {
+      store.readerGeneration += 1;
+      store.readerDataset = "";
+      store.readerRecords = [];
+      store.readerTable = null;
       store.manual = { general: [], pi1g: [], extra: emptyExtra() };
       store.readerDataset = "";
       store.readerRecords = [];
@@ -297,14 +272,24 @@ async function dispatch(type, payload = {}) {
       return loadReaderDataset(payload);
 
     case "GET_READER_PAGE":
-      return getReaderPage(payload);
+      return getReaderPage({
+        ...payload,
+        table: store.readerTable,
+        records: store.readerRecords
+      });
 
     case "RELEASE_READER":
+      store.readerGeneration += 1;
       store.readerDataset = "";
       store.readerRecords = [];
+      store.readerTable = null;
       return true;
 
     case "CLEAR_ARCHIVE_CACHE": {
+      store.readerGeneration += 1;
+      store.readerDataset = "";
+      store.readerRecords = [];
+      store.readerTable = null;
       const result = await clearArchiveCache();
       if (result.persistentAvailable && !result.persistentCleared) return result;
 

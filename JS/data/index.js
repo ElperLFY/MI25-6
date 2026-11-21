@@ -1,6 +1,6 @@
 export { normalise } from "./normalization.js";
-export { parseDataset, decodeBuffer } from "./csv-parser.js?v=1.2.009";
-export { clearArchiveCache } from "./archive-cache.js?v=1.2.009";
-export { loadRegionalData, parseUploadedFiles } from "./archive-loader.js?v=1.2.009";
+export { parseDataset, decodeBuffer } from "./csv-parser.js?v=1.3.000";
+export { clearArchiveCache } from "./archive-cache.js?v=1.3.000";
+export { loadRegionalData, parseUploadedFiles } from "./archive-loader.js?v=1.3.000";
 export { searchRecords, collectRecords, cityIsKnown, getSuggestions, buildCityIndex, addCityIndexRecords } from "./search.js";
-export { DATASET_DEFINITIONS, DOTS, EXTRA_DATASET_KEYS, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, REGIONS } from "../datasets.js?v=1.2.009";
+export { DATASET_DEFINITIONS, DOTS, EXTRA_DATASET_KEYS, decodeFixedSurvey2021Color, decodeFixedSurvey2021Speed, REGIONS } from "../datasets.js?v=1.3.000";

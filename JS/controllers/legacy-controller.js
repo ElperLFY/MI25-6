@@ -1,5 +1,5 @@
 import { legacyReport, legacySections } from "../legacy.js";
-import { createLegacyAutocomplete } from "./legacy-autocomplete.js?v=1.2.009";
+import { createLegacyAutocomplete } from "./legacy-autocomplete.js?v=1.3.000";
 
 export function createLegacyController({
   $, state, normalise, createElement, copyText,

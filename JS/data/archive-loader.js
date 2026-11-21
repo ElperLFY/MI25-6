@@ -1,14 +1,14 @@
-import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS } from "../datasets.js?v=1.2.009";
+import { DATASET_DEFINITIONS, EXTRA_DATASET_KEYS } from "../datasets.js?v=1.3.000";
 import { normalise } from "./normalization.js";
-import { decodeBuffer, headerKey, parseDataset, parseDatasetStream } from "./csv-parser.js?v=1.2.009";
+import { decodeBuffer, headerKey, parseDataset, parseDatasetStream } from "./csv-parser.js?v=1.3.000";
 import {
   getArchiveBytes,
   getParsedDatasetCache,
   putParsedDatasetCache
-} from "./archive-cache.js?v=1.2.009";
+} from "./archive-cache.js?v=1.3.000";
 import { measureAsync, measureSync, nowMs } from "./diagnostics.js";
 
-const DATA_MANIFEST_URL = "data/manifest.json?v=1.2.009";
+const DATA_MANIFEST_URL = "data/manifest.json?v=1.3.000";
 let dataManifestPromise = null;
 
 async function getDatasetVersion(datasetKey, baseUrl = "") {
@@ -104,6 +104,7 @@ function recordsForRegion(records, region) {
 }
 
 async function readArchiveEntries(archive, name, forcedType, region, budget, depth = 0, options = {}) {
+  if (options.shouldCancel?.()) throw new Error("Caricamento Reader annullato.");
   const allEntries = Object.values(archive.files).filter((entry) => !entry.dir);
   let archiveType = forcedType;
   const metadataEntry = allEntries.find((entry) => /(^|\/)dataset\.json$/i.test(entry.name));
@@ -136,6 +137,7 @@ async function readArchiveEntries(archive, name, forcedType, region, budget, dep
 
   const parsed = [];
   for (const entry of nestedArchives) {
+    if (options.shouldCancel?.()) throw new Error("Caricamento Reader annullato.");
     if (depth >= 1) {
       throw new Error("Gli archivi ZIP regionali non devono contenere ulteriori archivi ZIP annidati.");
     }
@@ -158,6 +160,7 @@ async function readArchiveEntries(archive, name, forcedType, region, budget, dep
   }
 
   for (const entry of dataEntries) {
+    if (options.shouldCancel?.()) throw new Error("Caricamento Reader annullato.");
     budget.expandedBytes += entry._data?.uncompressedSize ?? 0;
     if (budget.expandedBytes > MAX_ARCHIVE_SIZE) {
       throw new Error("L’archivio supera il limite di dimensione espansa consentito.");
@@ -195,8 +198,10 @@ async function readArchiveEntries(archive, name, forcedType, region, budget, dep
 }
 
 async function readArchiveBuffer(buffer, name, forcedType = "", region = "", options = {}) {
+  if (options.shouldCancel?.()) throw new Error("Caricamento Reader annullato.");
   if (!globalThis.JSZip) throw new Error("La libreria JSZip non è disponibile.");
   const archive = await measureAsync(options, "Apertura archivio ZIP", () => globalThis.JSZip.loadAsync(buffer), { archive: name });
+  if (options.shouldCancel?.()) throw new Error("Caricamento Reader annullato.");
   const parsed = await readArchiveEntries(archive, name, forcedType, region, { expandedBytes: 0 }, 0, options);
 
   if (!parsed.length) {
@@ -222,6 +227,7 @@ async function fetchArchive(paths, forcedType = "", region = "", options = {}) {
         cacheArchivePath: path
       });
     } catch (error) {
+      if (options.shouldCancel?.() || error?.name === "AbortError") throw error;
       lastError = error;
     }
   }
@@ -230,10 +236,45 @@ async function fetchArchive(paths, forcedType = "", region = "", options = {}) {
   return null;
 }
 
-function collectDatasets(parsed) {
+function emptyReaderTable(region = "") {
+  return {
+    readerMode: true,
+    region: normalise(region),
+    sources: [],
+    count: 0
+  };
+}
+
+function appendReaderTable(target, source) {
+  if (!source || !Array.isArray(source.sources)) return target;
+  for (const entry of source.sources) {
+    target.sources.push(entry);
+    target.count += entry.rowCount;
+  }
+  return target;
+}
+
+function collectDatasets(parsed, options = {}, region = "") {
   const grouped = {};
   for (const dataset of parsed) {
     if (!DATASET_DEFINITIONS[dataset.id]) continue;
+    if (options.readerMode) {
+      if (!grouped[dataset.id]) grouped[dataset.id] = emptyReaderTable(region);
+      const readerColumns = Array.isArray(dataset.reader?.columns) ? dataset.reader.columns : [];
+      const rowCount = Number.isInteger(dataset.reader?.rowCount)
+        ? dataset.reader.rowCount
+        : (readerColumns[0]?.length || 0);
+      grouped[dataset.id].sources.push({
+        headers: dataset.reader?.headers || [],
+        regionIndex: Number.isInteger(dataset.reader?.regionIndex) ? dataset.reader.regionIndex : -1,
+        regionFilterRequired: dataset.reader?.regionFilterRequired === true,
+        sourceFile: dataset.name || "CSV",
+        columns: readerColumns,
+        rowCount
+      });
+      grouped[dataset.id].count += rowCount;
+      continue;
+    }
     if (!grouped[dataset.id]) grouped[dataset.id] = [];
     for (const record of dataset.records) grouped[dataset.id].push(record);
   }
@@ -256,11 +297,15 @@ async function readOptionalRegionalDataset(key, region, options = {}) {
     "data/" + definition.folder + "/" + definition.archiveName
   ].filter(Boolean)));
   const parsed = await fetchArchive(paths, key, region, options);
-  if (!parsed) return { records: [], available: false };
+  if (!parsed) return {
+    records: options.readerMode ? emptyReaderTable(region) : [],
+    available: false
+  };
 
-  const groups = collectDatasets(parsed);
+  const groups = collectDatasets(parsed, options, region);
+  const records = groups[key] || (options.readerMode ? emptyReaderTable(region) : []);
   return {
-    records: recordsForRegion(groups[key] || [], region),
+    records: options.readerMode ? records : recordsForRegion(records, region),
     available: true
   };
 }
@@ -270,6 +315,7 @@ async function readGeneralRegion(region, options = {}) {
     ? ["trentino-alto-adige-bolzano", "trentino-alto-adige-trento"]
     : [regionSlug(region)];
   const records = [];
+  const readerTable = options.readerMode ? emptyReaderTable(region) : null;
 
   for (const slug of slugs) {
     const paths = [
@@ -278,18 +324,22 @@ async function readGeneralRegion(region, options = {}) {
     ];
     const parsed = await fetchArchive(paths, "general2025", region, options);
     if (!parsed) throw new Error("Archivio generale non trovato per " + region + ".");
-    const groups = collectDatasets(parsed);
-    const rows = groups.general2025 || [];
-    for (const record of rows) records.push(record);
+    const groups = collectDatasets(parsed, options, region);
+    const rows = groups.general2025 || (options.readerMode ? emptyReaderTable(region) : []);
+    if (options.readerMode) appendReaderTable(readerTable, rows);
+    else for (const record of rows) records.push(record);
   }
-  return records;
+  return options.readerMode ? readerTable : records;
 }
 
 async function readPi1gRegion(region, options = {}) {
   const filename = PI1G_FILES[region];
   // Gli archivi regionali disponibili contengono tutti i 437.951 record dell'Allegato A.
   // Per le altre Regioni l'assenza del file corrisponde a zero record nell'Allegato A pubblicato.
-  if (!filename) return { records: [], available: true };
+  if (!filename) return {
+    records: options.readerMode ? emptyReaderTable(region) : [],
+    available: true
+  };
 
   const paths = [
     "data/pi1g-2025/" + filename,
@@ -297,8 +347,12 @@ async function readPi1gRegion(region, options = {}) {
   ];
   const parsed = await fetchArchive(paths, "pi1g2025", region, options);
   if (!parsed) return { records: [], available: false };
-  const groups = collectDatasets(parsed);
-  return { records: recordsForRegion(groups.pi1g2025 || [], region), available: true };
+  const groups = collectDatasets(parsed, options, region);
+  const records = groups.pi1g2025 || (options.readerMode ? emptyReaderTable(region) : []);
+  return {
+    records: options.readerMode ? records : recordsForRegion(records, region),
+    available: true
+  };
 }
 
 export async function loadRegionalData(region, options = {}) {
@@ -313,28 +367,29 @@ export async function loadRegionalData(region, options = {}) {
     query: options.query,
     includeSourceFields: options.includeSourceFields === true,
     readerMode: options.readerMode === true,
+    readerRegion: normalise(region),
+    shouldCancel: options.shouldCancel,
     timings
   };
-  const generalPromise = loadGeneral
-    ? measureAsync({ timings, datasetKey: "general2025" }, "Tempo dataset", () => readGeneralRegion(region, { ...parseOptions, datasetKey: "general2025" }))
-    : Promise.resolve(null);
-  const pi1gPromise = loadPi1g
-    ? measureAsync({ timings, datasetKey: "pi1g2025" }, "Tempo dataset", () => readPi1gRegion(region, { ...parseOptions, datasetKey: "pi1g2025" }))
-    : Promise.resolve({ records: null, available: false });
-  const extrasPromise = Promise.all(requestedExtras.map(async (key) => {
+  // Parse one archive family at a time. The old Promise.all pipeline could
+  // decompress and materialise several regional datasets at once, multiplying
+  // peak memory even though the resulting datasets are independent.
+  const general = loadGeneral
+    ? await measureAsync({ timings, datasetKey: "general2025" }, "Tempo dataset", () => readGeneralRegion(region, { ...parseOptions, datasetKey: "general2025" }))
+    : null;
+  const pi1gResult = loadPi1g
+    ? await measureAsync({ timings, datasetKey: "pi1g2025" }, "Tempo dataset", () => readPi1gRegion(region, { ...parseOptions, datasetKey: "pi1g2025" }))
+    : { records: null, available: false };
+  const extraResults = [];
+  for (const key of requestedExtras) {
     const datasetOptions = { ...parseOptions, datasetKey: key };
     try {
-      return [key, await measureAsync(datasetOptions, "Tempo dataset", () => readOptionalRegionalDataset(key, region, datasetOptions))];
+      const value = await measureAsync(datasetOptions, "Tempo dataset", () => readOptionalRegionalDataset(key, region, datasetOptions));
+      extraResults.push([key, value]);
     } catch (error) {
-      return [key, { error: error.message || String(error), records: [] }];
+      extraResults.push([key, { error: error.message || String(error), records: options.readerMode ? emptyReaderTable(region) : [] }]);
     }
-  }));
-
-  const [general, pi1gResult, extraResults] = await Promise.all([
-    generalPromise,
-    pi1gPromise,
-    extrasPromise
-  ]);
+  }
 
   const extra = {};
   const extraErrors = {};

@@ -87,7 +87,7 @@ async function writePersistentArchive(path, buffer, generation, dataVersion) {
   return new Promise((resolve) => {
     try {
       const transaction = database.transaction(ARCHIVE_CACHE_STORE, "readwrite");
-      transaction.objectStore(ARCHIVE_CACHE_STORE).put({ key: archiveCacheKey(path, dataVersion), cachedAt: Date.now(), buffer: buffer.slice(0) });
+      transaction.objectStore(ARCHIVE_CACHE_STORE).put({ key: archiveCacheKey(path, dataVersion), cachedAt: Date.now(), buffer });
       transaction.oncomplete = () => resolve(true);
       transaction.onerror = () => resolve(false);
       transaction.onabort = () => resolve(false);
@@ -221,6 +221,11 @@ export async function getArchiveBytes(path, baseUrl = "", options = {}) {
     const generation = archiveCacheGeneration;
     const idleTimeoutMs = Math.max(1_000, Number(options.idleTimeoutMs) || DEFAULT_ARCHIVE_IDLE_TIMEOUT_MS);
     const task = (async () => {
+      if (options.shouldCancel?.()) {
+        const error = new Error("Caricamento Reader annullato.");
+        error.name = "AbortError";
+        throw error;
+      }
       const cacheReadStartedAt = nowMs();
       const cached = await readPersistentArchive(requestUrl, dataVersion);
       recordCacheTiming(options, "Lettura IndexedDB", cacheReadStartedAt, { hit: Boolean(cached) });
@@ -257,6 +262,12 @@ export async function getArchiveBytes(path, baseUrl = "", options = {}) {
           let totalBytes = 0;
           try {
             while (true) {
+              if (options.shouldCancel?.()) {
+                try { await reader.cancel(); } catch {}
+                const error = new Error("Caricamento Reader annullato.");
+                error.name = "AbortError";
+                throw error;
+              }
               const { done, value } = await reader.read();
               if (done) break;
               if (value?.byteLength) {
@@ -287,6 +298,7 @@ export async function getArchiveBytes(path, baseUrl = "", options = {}) {
         recordCacheTiming(options, "Scrittura IndexedDB", cacheWriteStartedAt);
         return buffer;
       } catch (error) {
+        if (error?.name === "AbortError") throw error;
         if (controller.signal.aborted) {
           throw new Error(
             "Download interrotto: nessun dato ricevuto per "
@@ -301,7 +313,16 @@ export async function getArchiveBytes(path, baseUrl = "", options = {}) {
       }
     })();
     archiveBytesCache.set(memoryKey, task);
-    task.catch(() => archiveBytesCache.delete(memoryKey));
+    // Deduplicate concurrent requests, but never retain a completed ZIP ArrayBuffer
+    // for the lifetime of the Worker. IndexedDB is the persistent archive cache.
+    task.then(
+      () => {
+        if (archiveBytesCache.get(memoryKey) === task) archiveBytesCache.delete(memoryKey);
+      },
+      () => {
+        if (archiveBytesCache.get(memoryKey) === task) archiveBytesCache.delete(memoryKey);
+      }
+    );
   }
   return archiveBytesCache.get(memoryKey);
 }
