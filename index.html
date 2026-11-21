@@ -38,10 +38,10 @@
         <summary id="upload-title"><span>Hai dati più aggiornati? Caricali tu</span></summary>
         <div class="accordion-content">
           <p class="hint">
-            Hai trovato un file Infratel più recente? Carica qui i tuoi CSV o archivi ZIP! Per questa sessione, il file sostituirà soltanto i dati automatici della stessa categoria; tutti gli altri archivi resteranno disponibili.
+            Hai trovato un file Infratel più recente? Carica qui i tuoi CSV o archivi ZIP! Per questa sessione, il file sostituirà soltanto i dati automatici della categoria preferita.
             <a href="https://storymaps.arcgis.com/stories/86240a909c5b49b591ba5649aba7d1dd" target="_blank" rel="noopener noreferrer">Vuoi partire dalla fonte? Apri la mappa ufficiale Infratel</a>.
           </p>
-          <label for="file-input">Scegli i tuoi file CSV o ZIP</label>
+          <label for="file-input">Scegli i tuoi file CSV / ZIP</label>
           <input id="file-input" type="file" accept=".csv,.txt,.zip" multiple>
           <div id="file-list" class="file-list" aria-live="polite" hidden></div>
           <button type="button" class="button button-secondary" id="use-automatic-data">Torna ai dati statici</button>
@@ -58,11 +58,11 @@
             <button type="button" class="button button-secondary mode-toggle" id="legacy-toggle" aria-pressed="false">Legacy mode OFF</button>
             <button type="button" class="button button-secondary mode-toggle" id="refresh-data-cache" title="Svuota le cache locali gestite da MI25-6 e ricarica i dataset automatici della Regione selezionata">Aggiorna archivi</button>
           </div>
-          <p class="mode-help" id="mode-help">Scegli uno strumento. Per capire a cosa serve, apri DESCRIZIONE.</p>
+          <p class="mode-help" id="mode-help">Scegli uno strumento. Per capire a cosa serve, apri la descrizione.</p>
           <div class="deferred-dataset-control">
             <div class="deferred-dataset-copy">
               <strong>Mappatura reti fisse 2021</strong>
-              <p id="load-2021-dataset-status" class="hint">Archivio storico più pesante: aggiungilo alla ricerca soltanto quando ti serve.</p>
+              <p id="load-2021-dataset-status" class="hint">Archivio storico più pesante: aggiungilo alla ricerca solo quando ti serve.</p>
             </div>
             <button type="button" class="button button-secondary" id="load-2021-dataset" disabled>Carica mappatura 2021</button>
           </div>
@@ -80,13 +80,13 @@
                 <p><strong>CSV Reader</strong> mostra il file originale della Regione e del dataset scelti, mantenendo nomi delle colonne, valori e ordine delle righe. Puoi cercare in tutte le colonne e sfogliare il risultato pagina per pagina. I file molto grandi possono richiedere più tempo e memoria.</p>
               </div>
               <div class="description-panel" id="description-panel-legacy" role="tabpanel" aria-labelledby="description-tab-legacy" data-description-panel="legacy" hidden>
-                <p><strong>Legacy Mode</strong> confronta l’indirizzo con l’archivio storico 2017–2021 di Handymenny, separato dai dataset MI25-6. I risultati descrivono una situazione passata e non la copertura attuale. Per il confronto, l’indirizzo e il relativo ID EGON vengono inviati al servizio esterno.</p>
+                <p><strong>Legacy Mode</strong> confronta l’indirizzo con l’archivio storico 2017–2021 di Handymenny, separato dai dataset MI25-6. I risultati descrivono una situazione passata e non la copertura attuale. È possibile effettuare un confronto se si usa il Tool normale.</p>
               </div>
               <div class="description-panel" id="description-panel-cache" role="tabpanel" aria-labelledby="description-tab-cache" data-description-panel="cache" hidden>
-                <p><strong>Aggiorna archivi</strong> elimina le copie locali dei dati automatici gestite da MI25-6. Se hai già scelto una Regione, il sito scarica di nuovo gli archivi attualmente pubblicati per quella Regione; altrimenti lo farà quando selezionerai la prossima Regione. Non cerca nuovi file sul portale Infratel. I file che hai caricato manualmente non vengono toccati. Non cancella la cache generale del browser né i dati del servizio Legacy.</p>
+                <p><strong>Aggiorna archivi</strong> elimina le copie locali dei dati automatici gestite da MI25-6. Se hai scelto una Regione, il sito scarica di nuovo gli archivi attualmente pubblicati per quella Regione, i file che hai caricato manualmente non vengono toccati. Non è in grado di eliminare la cache generale del browser né i dati del servizio Legacy.</p>
               </div>
               <div class="description-panel" id="description-panel-2021" role="tabpanel" aria-labelledby="description-tab-2021" data-description-panel="fixed-survey-2021" hidden>
-                <p><strong>Mappatura reti fisse 2021</strong> aggiunge alla ricerca i dati storici della sola Regione selezionata. Il file viene scaricato soltanto quando lo chiedi, così il caricamento iniziale resta più leggero. Quando il civico è presente, nella scheda del risultato puoi trovare operatore, tecnologia, anno di copertura e velocità indicate dalla fonte. Non sostituisce le categorie PA/A/B/C della mappatura 2025 e non usa l’archivio Legacy.</p>
+                <p><strong>Mappatura reti fisse 2021</strong> aggiunge alla ricerca i dati storici della sola Regione selezionata. Il file viene scaricato soltanto quando ci clicchi sopra, e anche perché è inutile data la presenza di "Legacy". Quando il civico è presente, nella scheda del risultato puoi trovare operatore, tecnologia, anno di copertura e velocità indicati dalla fonte. È indipendente da Legacy.</p>
               </div>
             </div>
           </details>
@@ -175,7 +175,7 @@
     <section class="card csv-reader-card" id="csv-reader-card" aria-labelledby="csv-reader-title" hidden>
       <div class="reader-heading">
         <h2 id="csv-reader-title">CSV Reader · archivio completo</h2>
-        <p class="hint">Qui trovi le righe originali del file, con le stesse colonne e lo stesso ordine della fonte. Cerca un valore in tutte le colonne e scegli quante righe vedere per pagina.</p>
+        <p class="hint">Qui trovi le righe originali del file, con le stesse colonne e lo stesso ordine della fonte.</p>
       </div>
       <div class="reader-controls">
         <div class="field">
@@ -218,9 +218,8 @@
     <section class="card" id="legacy-search-card" aria-labelledby="legacy-title" hidden>
       <h2 id="legacy-title">Archivio storico 2017-2021 · Handymenny</h2>
       <p class="hint">
-        Questa modalità usa un archivio esterno indipendente dai CSV MI25-6. Seleziona Regione, Provincia, Città, Via e Civico.
-        Le selezioni vengono inviate all’API di Handymenny per recuperare gli elenchi; il risultato storico è richiesto tramite ID EGON.
-        Il servizio può applicare limiti alle richieste e non certifica la copertura attuale.
+        Questa modalità usa un archivio esterno indipendente dai CSV MI25-6. Seleziona Regione, Provincia, Città, Via e Civico normalmente.
+        Le selezioni vengono inviate all’API di Handymenny (TheEdoRan) per recuperare gli elenchi.
       </p>
       <div class="field-grid">
         <div class="field">
@@ -276,8 +275,8 @@
         </div>
       </div>
       <div class="button-row">
-        <button type="button" class="button button-primary" id="legacy-search" disabled>Esegui ricerca Legacy</button>
-        <button type="button" class="button button-secondary" id="legacy-clear">Pulisci i campi Legacy</button>
+        <button type="button" class="button button-primary" id="legacy-search" disabled>Esegui ricerca [Legacy]</button>
+        <button type="button" class="button button-secondary" id="legacy-clear">Pulisci i campi [Legacy]</button>
       </div>
       <div id="legacy-status" class="file-list" role="status" aria-live="polite"></div>
       <div id="legacy-error" class="error-message" role="alert"></div>
@@ -297,7 +296,7 @@
 
   <footer class="site-footer">
     <p id="footer-source"></p>
-    <div class="author-name">Elper</div>
+   <a href="https://github.com/ElperLFY/" class="author-name" target="_blank" rel="noopener noreferrer">Elper</a>
     <nav class="footer-links" aria-label="Risorse">
       <button type="button" id="open-faq">FAQ</button>
       <span aria-hidden="true">·</span>
